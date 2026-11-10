@@ -325,7 +325,7 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
           if(isGh){
             const r=await gh('', {}, pass);
             if(r.status===401){ err.textContent='GitHub did not accept that key.'; return; }
-            if(r.status===404){ err.textContent=`That key can't see ${GH.owner}/${GH.repo}. Give it access to that repository.`; return; }
+            if(r.status===404){ err.textContent=`GitHub didn't accept that key for ${GH.owner}/${GH.repo}. Check you copied the whole key and gave it access to that repository.`; return; }
             const j=await r.json(); if(j.permissions && !j.permissions.push){ err.textContent='That key can read but not save. Give it Contents: Read and write.'; return; }
           } else {
             const r=await fetch('/api/data?check=1',{headers:{'x-pd-pass':pass},cache:'no-store'});
