@@ -168,7 +168,9 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
 <div id="pop" class="pop" hidden></div>
 <main id="main"><p class="empty">Loading your permit desk…</p></main>
 <div id="toast" class="toast" hidden></div>
-<script>window.PD_MODE="github";</script>
+<link rel="icon" href="data:,">
+<script src="supabase.js"></script>
+<script>window.PD_MODE="supabase";window.PD_SB={url:"https://kxscczhqvkmrwmhnpjuj.supabase.co",key:"sb_publishable_rhR5n-nq6xNw1JVLP1SBxQ_MuexWAPJ"};</script>
 <script>
 /* Permit Desk storage layer: runs the app without Claude.
    MODE "local"  -> everything is saved in this browser (localStorage).
@@ -218,6 +220,7 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
   const auth = () => { try{ return JSON.parse(localStorage.getItem('permitdesk-login')||'null'); }catch(e){ return null; } };
   async function api(method, body){
     if(MODE==='github') return ghApi(method, body);
+    if(MODE==='supabase') return sbApi(method, body);
     const a = auth();
     const r = await fetch('/api/data'+(method==='GET'?'?v='+version:''), {method, cache:'no-store', headers:{'content-type':'application/json','x-pd-pass':a?.pass||''}, body: body?JSON.stringify(body):undefined});
     if(r.status===401){ localStorage.removeItem('permitdesk-login'); location.reload(); throw new Error('Wrong password'); }
@@ -263,8 +266,161 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
     }
     throw new Error('Someone else kept saving at the same moment; try again');
   }
+
+  /* ---------- Supabase backend: email accounts, invites, live updates ---------- */
+  const SB = Object.assign({url:'', key:''}, window.PD_SB||{});
+  let sbReady=false, sb=null, sbUser=null, sbRole=null, sbMembers=[], sbInvites=[], sbChannel=null;
+  const esc2 = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function sbFn(name, body){
+    const { data:{ session } } = await sb.auth.getSession();
+    const r = await fetch(`${SB.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:SB.key, ...(session?{authorization:'Bearer '+session.access_token}:{})}, body:JSON.stringify(body)});
+    const j = await r.json().catch(()=>({error:'Unexpected reply ('+r.status+')'}));
+    if(!r.ok || j.error) throw new Error(j.error || ('Error '+r.status));
+    return j;
+  }
+  async function sbAll(){
+    const out={}; for(let from=0;;from+=1000){
+      const { data, error } = await sb.from('docs').select('path,data').order('path').range(from, from+999);
+      if(error) throw error; data.forEach(r=>out[r.path]=r.data); if(data.length<1000) break; }
+    return out;
+  }
+  async function sbRefreshPeople(){
+    const m = await sb.from('members').select('user_id,email,name,role,created_at').order('created_at');
+    if(!m.error) sbMembers = m.data;
+    const me = sbMembers.find(x=>x.user_id===sbUser?.id); sbRole = me?.role || null;
+    if(sbRole==='admin'){ const i = await sb.from('invites').select('code,email,role,created_at,expires_at,used_at').is('used_at',null).order('created_at',{ascending:false}); if(!i.error) sbInvites = i.data.filter(x=>new Date(x.expires_at)>new Date()); }
+  }
+  async function sbApi(method, body){
+    if(method==='GET') return {version:Date.now(), docs:await sbAll()};
+    if(body.replace){ const { error } = await sb.rpc('docs_replace', {p_docs: body.replace}); if(error) throw new Error(error.message); return {version:Date.now()}; }
+    for(const o of body.ops||[]){
+      let r;
+      if(o.op==='delete') r = await sb.from('docs').delete().eq('path', o.path);
+      else if(o.op==='update') r = await sb.rpc('doc_merge', {p_path:o.path, p_patch:o.data});
+      else r = await sb.from('docs').upsert({path:o.path, data:o.data});
+      if(r.error) throw new Error(r.error.message);
+    }
+    return {version:Date.now()};
+  }
+  function sbSubscribe(){
+    sbChannel = sb.channel('permit-desk')
+      .on('postgres_changes', {event:'*', schema:'public', table:'docs'}, p=>{
+        if(p.eventType==='DELETE'){ if(!p.old?.path) return; docs.delete(p.old.path); emit([p.old.path]); }
+        else { docs.set(p.new.path, p.new.data); emit([p.new.path]); }
+      })
+      .on('postgres_changes', {event:'*', schema:'public', table:'members'}, async ()=>{ await sbRefreshPeople(); window.render?.(); })
+      .subscribe();
+    // Safety net if the live connection drops: full refresh when the tab comes back.
+    document.addEventListener('visibilitychange', async ()=>{ if(document.hidden) return; try{ replaceAll(await sbAll()); emitAll(); }catch(e){} });
+  }
+  function card(inner){ return `<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3f4f2;font:15px -apple-system,Segoe UI,Arial,sans-serif;overflow:auto;padding:16px"><div class="pdcard" style="background:#fff;border:1px solid #d5d9d2;border-radius:8px;padding:24px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">${inner}</div></div>`; }
+  const fld = (label, name, type='text', extra='') => `<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">${label}<input name="${name}" type="${type}" ${extra} style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>`;
+  const btnS = 'font:inherit;padding:9px;border:0;border-radius:6px;background:#1f3b57;color:#fff;cursor:pointer';
+  function sbGate(){
+    return new Promise(resolve=>{
+      const box=document.createElement('div'); document.body.appendChild(box);
+      const join = new URLSearchParams(location.search).get('join');
+      const finish = ()=>{ box.remove(); resolve(); };
+      async function afterSignIn(){
+        const { data:{ user } } = await sb.auth.getUser(); sbUser=user;
+        if(!user){ await sb.auth.signOut({scope:'local'}); showLogin('Your sign-in has expired or this account was removed. Sign in again.'); return; }
+        await sbRefreshPeople();
+        if(!sbRole){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0">You're signed in as <b>${esc2(user?.email)}</b>, but this account hasn't been added to the tracker. Ask an admin to invite you.</p><button data-x="out" style="${btnS}">Sign out</button>`); box.querySelector('[data-x=out]').onclick=async()=>{ await sb.auth.signOut(); location.reload(); }; return; }
+        finish();
+      }
+      function showLogin(msg=''){
+        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2>${fld('Email','e','email','autocomplete="username" required')}${fld('Password','p','password','autocomplete="current-password" required')}<button data-x="in" style="${btnS}">Sign in</button><small class="err" style="color:#b3362c">${esc2(msg)}</small><small style="color:#5d665f">Forgot your password? Ask your admin to set a temporary one. New here? Use the invite link you were sent.</small>`);
+        const go = async()=>{ const e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err'); err.textContent='Signing in…';
+          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent = /invalid/i.test(error.message)?'That email and password don\'t match.':error.message; return; } await afterSignIn(); };
+        box.querySelector('[data-x=in]').onclick=go; box.querySelectorAll('input').forEach(i=>i.onkeydown=ev=>{ if(ev.key==='Enter') go(); });
+      }
+      async function showJoin(){
+        box.innerHTML = card('<p style="margin:0">Checking your invite…</p>');
+        let inv; try{ inv = await sbFn('accept-invite', {action:'check', code:join}); }catch(e){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0;color:#b3362c">${esc2(e.message)}</p><a href="${location.pathname}" style="color:#1f3b57">Go to sign in</a>`); return; }
+        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Join Permit Desk</h2><p style="margin:0;color:#5d665f">You've been invited${inv.role==='admin'?' as an admin':''}. Create your account to get in.</p>${fld('Your name','n','text','autocomplete="name" required')}${fld('Email','e','email',`autocomplete="username" required ${inv.email?`value="${esc2(inv.email)}" readonly`:''}`)}${fld('Choose a password (8+ characters)','p','password','autocomplete="new-password" required minlength="8"')}<button data-x="join" style="${btnS}">Create account</button><small class="err" style="color:#b3362c"></small>`);
+        box.querySelector('[data-x=join]').onclick = async()=>{ const n=box.querySelector('[name=n]').value.trim(), e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err');
+          if(!n){ err.textContent='Enter your name.'; return; } err.textContent='Creating your account…';
+          try{ await sbFn('accept-invite', {code:join, email:e, password:p, name:n}); }catch(x){ err.textContent=x.message; return; }
+          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent=error.message; return; }
+          // remember the name for emails/history and drop the code from the address bar
+          history.replaceState(null,'',location.pathname+location.hash);
+          await afterSignIn(); };
+      }
+      (async()=>{
+        if(join) return showJoin();
+        const { data:{ session } } = await sb.auth.getSession();
+        if(session) return afterSignIn(); showLogin();
+      })();
+    });
+  }
+  async function sbStart(){
+    if(!window.supabase?.createClient) throw new Error('Could not load the sign-in library. Check your connection and reload.');
+    sb = window.supabase.createClient(SB.url, SB.key, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
+    sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT' && sbReady) location.reload(); });
+    await sbGate();
+    replaceAll(await sbAll());
+    sbSubscribe(); sbReady=true;
+  }
+
+  /* ---------- Users screen (Settings → Users) ---------- */
+  function siteLink(code){ return location.origin + location.pathname + '?join=' + code; }
+  function usersView(){
+    const admin = sbRole==='admin';
+    const meId = sbUser?.id;
+    const rows = sbMembers.map(m=>`<tr><td><b>${esc2(m.name||'—')}</b>${m.user_id===meId?' <span class="pill">You</span>':''}<br><small style="color:var(--muted)">${esc2(m.email)}</small></td><td>${admin&&m.user_id!==meId?`<select data-pdu-role="${m.user_id}" style="width:auto"><option value="member"${m.role==='member'?' selected':''}>Member</option><option value="admin"${m.role==='admin'?' selected':''}>Admin</option></select>`:(m.role==='admin'?'Admin':'Member')}</td><td><small style="color:var(--muted)">${new Date(m.created_at).toLocaleDateString()}</small></td><td style="white-space:nowrap">${admin&&m.user_id!==meId?`<button class="btn sm" data-pdu="pw" data-id="${m.user_id}">Set temporary password</button> <button class="btn sm" data-pdu="rm" data-id="${m.user_id}">Remove</button>`:''}</td></tr>`).join('');
+    const inv = sbInvites.map(i=>`<tr><td>${esc2(i.email||'Anyone with the link')}</td><td>${i.role==='admin'?'Admin':'Member'}</td><td><small style="color:var(--muted)">expires ${new Date(i.expires_at).toLocaleDateString()}</small></td><td style="white-space:nowrap"><button class="btn sm" data-pdu="copy" data-code="${i.code}">Copy link</button> <button class="btn sm" data-pdu="mail" data-code="${i.code}" data-email="${esc2(i.email||'')}">Email it</button> <button class="btn sm" data-pdu="unv" data-code="${i.code}">Cancel</button></td></tr>`).join('');
+    return `${admin?`<section class="sec"><header><h3>Invite someone</h3></header><div class="bd stack"><div class="fields"><label class="f">Their email<input type="email" id="pduEmail" placeholder="name@company.com"></label><label class="f">Role<select id="pduRole"><option value="member">Member: works on every project</option><option value="admin">Admin: also manages people and settings</option></select></label><div style="align-self:end"><button class="btn pri" data-pdu="invite">Create invite</button></div></div><small style="color:var(--muted)">You'll get a sign-up link to send them. They open it, choose a password and they're in. Links work once and expire after 14 days.</small><div id="pduNew"></div></div></section>`:''}
+    <section class="sec"><header><h3>People · ${sbMembers.length}</h3></header><div class="bd"><table><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    ${admin&&sbInvites.length?`<section class="sec"><header><h3>Invites waiting · ${sbInvites.length}</h3></header><div class="bd"><table><tbody>${inv}</tbody></table></div></section>`:''}
+    <section class="sec"><header><h3>Your password</h3></header><div class="bd fields"><label class="f">New password (8+ characters)<input type="password" id="pduMyPw" autocomplete="new-password"></label><div style="align-self:end"><button class="btn" data-pdu="mypw">Change my password</button></div></div></section>
+    <div id="pduPanel"></div>`;
+  }
+  function mailFor(code, email){
+    const link = siteLink(code);
+    const subject = 'You\'re invited to Permit Desk';
+    const body = `Hi,\n\nI've added you to Permit Desk, our permit and filing tracker.\n\nOpen this link to create your account (it works once and expires in 14 days):\n${link}\n\nAfter that, sign in any time at ${location.origin+location.pathname}\n\nThanks`;
+    return `mailto:${encodeURIComponent(email||'')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+  const say = (m)=> (window.toast ? window.toast(m) : console.log(m));
+  async function copy(text){ try{ await navigator.clipboard.writeText(text); say('Link copied'); }catch(e){ window.prompt('Copy this link:', text); } }
+  document.addEventListener('click', async e=>{
+    const b = e.target.closest('[data-pdu]'); if(!b || MODE!=='supabase') return; e.preventDefault();
+    const a = b.dataset.pdu; const panel = document.getElementById('pduPanel');
+    try{
+      if(a==='invite'){
+        const email = (document.getElementById('pduEmail').value||'').trim().toLowerCase() || null;
+        if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ say('That email doesn\'t look right.'); return; }
+        const role = document.getElementById('pduRole').value;
+        const { data, error } = await sb.from('invites').insert({email, role, invited_by: sbUser.id}).select('code').single();
+        if(error) throw error;
+        await sbRefreshPeople(); window.render?.();
+        const link = siteLink(data.code);
+        const box = document.getElementById('pduNew');
+        if(box) box.innerHTML = `<div class="card stack"><b>Invite ready${email?` for ${esc2(email)}`:''}</b><input type="text" readonly value="${esc2(link)}" onclick="this.select()"><div class="row"><a class="btn pri" href="${mailFor(data.code,email)}">Email it from my mail app</a><button class="btn" data-pdu="copy" data-code="${data.code}">Copy link</button></div></div>`;
+      }
+      if(a==='copy') await copy(siteLink(b.dataset.code));
+      if(a==='mail') location.href = mailFor(b.dataset.code, b.dataset.email);
+      if(a==='unv'){ const { error } = await sb.from('invites').delete().eq('code', b.dataset.code); if(error) throw error; await sbRefreshPeople(); window.render?.(); say('Invite cancelled'); }
+      if(a==='pw'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id); const temp = Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')+'-'+(100+crypto.getRandomValues(new Uint16Array(1))[0]%900);
+        await sbFn('admin-users', {action:'set-password', user_id:b.dataset.id, password:temp});
+        if(panel) panel.innerHTML = `<div class="card stack"><b>Temporary password for ${esc2(m?.name||m?.email)}</b><input type="text" readonly value="${esc2(temp)}" onclick="this.select()"><small style="color:var(--muted)">Send it to them. They can change it under Settings → Users → Your password.</small></div>`; }
+      if(a==='rm'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id);
+        if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.textContent='Click again to remove'; setTimeout(()=>{ b.dataset.sure=''; b.textContent='Remove'; },4000); return; }
+        await sbFn('admin-users', {action:'remove', user_id:b.dataset.id}); await sbRefreshPeople(); window.render?.(); say(`Removed ${m?.name||m?.email}`); }
+      if(a==='mypw'){ const p=document.getElementById('pduMyPw').value; if(p.length<8){ say('Use at least 8 characters.'); return; } const { error } = await sb.auth.updateUser({password:p}); if(error) throw error; document.getElementById('pduMyPw').value=''; say('Password changed'); }
+    }catch(x){ say('Could not do that: '+(x.message||x)); }
+  }, true);
+  document.addEventListener('change', async e=>{
+    const sel = e.target.closest('[data-pdu-role]'); if(!sel || MODE!=='supabase') return;
+    const { error } = await sb.from('members').update({role: sel.value}).eq('user_id', sel.dataset.pduRole);
+    if(error){ say('Could not change the role: '+error.message); }
+    else say('Role updated');
+    await sbRefreshPeople(); window.render?.();
+  }, true);
+
   function replaceAll(obj){ docs.clear(); Object.entries(obj).forEach(([p,d])=>docs.set(p,d)); }
   async function remoteLoad(){
+    if(MODE==='supabase') return sbStart();
     const res = await api('GET'); version=res.version; replaceAll(res.docs);
     setInterval(async()=>{ if(document.hidden) return; try{ const res=await api('GET'); if(res.docs && res.version!==version){ version=res.version; replaceAll(res.docs); emitAll(); } }catch(e){} }, MODE==='github'?20000:15000);
   }
@@ -290,10 +446,10 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
       onSnapshot(cb, err){ ready.then(()=>cb(snapCol(c)), err); if(!colL.has(c)) colL.set(c,new Set()); colL.get(c).add(cb); return ()=>colL.get(c).delete(cb); }
     }; }
   };
-  const me = () => MODE==='local' ? {id:'me', name:'You'} : (auth()||{id:'user',name:'User'});
+  const me = () => MODE==='local' ? {id:'me', name:'You'} : MODE==='supabase' ? {id:sbUser?.id||'user', name:(sbMembers.find(x=>x.user_id===sbUser?.id)?.name)||sbUser?.email||'User'} : (auth()||{id:'user',name:'User'});
   const user = {
-    async id(){ await ready; return me().id; }, async can(){ return true; }, async canEdit(){ return true; },
-    async profiles(ids){ const o={}; ids.forEach(i=>{ const p=docs.get(`data/users/${i}/profile`); o[i]={name:p?.name || (i===me().id?me().name:i.replace(/^u-/,'').replace(/-/g,' '))}; }); return o; }
+    async id(){ await ready; return me().id; }, async can(){ return true; }, async canEdit(){ await ready; return MODE==='supabase' ? sbRole==='admin' : true; },
+    async profiles(ids){ const o={}; ids.forEach(i=>{ const p=docs.get(`data/users/${i}/profile`); const mm = sbMembers.find(x=>x.user_id===i); o[i]={name:p?.name || mm?.name || (i===me().id?me().name:i.replace(/^u-/,'').replace(/-/g,' '))}; }); return o; }
   };
   const downloads = { async save({filename,data}){ const b=new Blob([data],{type:/\.csv$/i.test(filename)?'text/csv':'application/octet-stream'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); return {status:'saved'}; } };
 
@@ -303,7 +459,8 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
     async importAll(obj){ if(!obj||!obj.docs) throw new Error('Not a Permit Desk backup file');
       if(MODE==='local'){ replaceAll(obj.docs); version++; localSave(); emitAll(); return; }
       const res = await api('POST',{replace:obj.docs}); version=res.version; replaceAll(obj.docs); emitAll(); },
-    logout(){ localStorage.removeItem('permitdesk-login'); location.reload(); }
+    logout(){ if(MODE==='supabase'){ sb.auth.signOut(); return; } localStorage.removeItem('permitdesk-login'); location.reload(); },
+    usersView, get role(){ return sbRole; }
   };
 
   function loginGate(){
@@ -337,7 +494,7 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
     });
   }
 
-  ready = (async()=>{ if(MODE==='remote'||MODE==='github'){ await loginGate(); await remoteLoad(); } else await localLoad(); })();
+  ready = (async()=>{ if(MODE==='supabase') await sbStart(); else if(MODE==='remote'||MODE==='github'){ await loginGate(); await remoteLoad(); } else await localLoad(); })();
   ready.catch(e=>{ document.body.insertAdjacentHTML('afterbegin', `<p style="padding:16px;color:#b3362c">Could not load your data: ${String(e.message||e)}</p>`); });
   window.claude = { use: async name => name==='db'?db : name==='user'?user : name==='downloads'?downloads : null };
 })();
@@ -869,11 +1026,12 @@ function vReports(){
 // ---------- settings ----------
 function vSettings(){
   const tab=S.setTab; const ed=canEditCfg&&canWrite;
-  const tabs=[['people','People & access'],['comms','Communications'],['vocab','Vocabularies'],['life','Lifecycle']];
+  const tabs=[['people','People & access'],...(window.PD_STORE?.mode==='supabase'?[['users','Users']]:[]),['comms','Communications'],['vocab','Vocabularies'],['life','Lifecycle']];
   let body='';
+  if(tab==='users' && window.PD_STORE?.usersView){ body=window.PD_STORE.usersView(); } else
   if(tab==='people'){
     body=`<section class="sec"><header><h3>You</h3></header><div class="bd fields">${uid?`<label class="f">Your name (signs your emails)<input id="meName" type="text" value="${esc(S.me.name)}"></label><label class="f">You are this contact (for your own alerts)<select id="meContact">${opts(activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),S.me.contactId,'Not linked')}</select></label><div style="align-self:end"><button class="btn pri" data-act="meSave">Save</button></div>`:'<p>Sign in to set your name.</p>'}</div></section>
-    <section class="sec"><header><h3>Your data</h3></header><div class="bd stack"><p style="margin:0">${window.PD_STORE?.mode==='github'?'Everything is saved in your private GitHub repository. Every change is a commit, so GitHub keeps the full history and you can roll back anything. Changes from others show up within about 20 seconds.':window.PD_STORE?.mode==='remote'?'Everything is saved online. Anyone with the site password can see and edit it, and changes from others show up within about 15 seconds.':'Everything is saved in this browser on this computer only. Download a backup now and then, and use it to move your data to another computer or browser.'}</p><div class="row"><button class="btn" data-act="pdBackup">Download backup</button><label class="btn" style="cursor:pointer">Restore from backup<input type="file" id="pdRestore" accept=".json,application/json" hidden></label>${(window.PD_STORE?.mode||'local')!=='local'?'<button class="btn" data-act="pdLogout">Sign out</button>':''}</div><small style="color:var(--muted)">Restoring replaces everything in the tracker with the backup file.</small></div></section>`;
+    <section class="sec"><header><h3>Your data</h3></header><div class="bd stack"><p style="margin:0">${window.PD_STORE?.mode==='supabase'?'Everything is saved online in your Permit Desk database. Each person signs in with their own email and password; admins invite and remove people under Settings → Users. Changes from others appear instantly, and every change keeps the previous version.':window.PD_STORE?.mode==='github'?'Everything is saved in your private GitHub repository. Every change is a commit, so GitHub keeps the full history and you can roll back anything. Changes from others show up within about 20 seconds.':window.PD_STORE?.mode==='remote'?'Everything is saved online. Anyone with the site password can see and edit it, and changes from others show up within about 15 seconds.':'Everything is saved in this browser on this computer only. Download a backup now and then, and use it to move your data to another computer or browser.'}</p><div class="row"><button class="btn" data-act="pdBackup">Download backup</button><label class="btn" style="cursor:pointer">Restore from backup<input type="file" id="pdRestore" accept=".json,application/json" hidden></label>${(window.PD_STORE?.mode||'local')!=='local'?'<button class="btn" data-act="pdLogout">Sign out</button>':''}</div><small style="color:var(--muted)">Restoring replaces everything in the tracker with the backup file.</small></div></section>`;
   } else if(tab==='comms'){
     const types=S.me.alertTypes||DEADLINES.map(d=>d[0]);
     body=`<section class="sec"><header><h3>Your alerts</h3></header><div class="bd stack"><p style="margin:0">The bell at the top shows records where you are ball-in-court, responsible or action owner. Pick which deadlines it counts.</p><div class="row">${DEADLINES.map(([k,l])=>`<label class="chk"><input type="checkbox" data-alert="${k}"${types.includes(k)?' checked':''}${uid?'':' disabled'}> ${l}</label>`).join('')}</div><p class="note info">Email digests aren't sent by this tracker. The bell is the alert.</p></div></section>
