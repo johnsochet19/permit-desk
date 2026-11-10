@@ -958,7 +958,7 @@ async function saveCsv(name, header, rows){
 
 // ---------- navigation ----------
 const VIEWS=[['dashboard','Dashboard'],['records','Records'],['projects','Projects'],['catalog','Catalog'],['companies','Companies'],['contacts','Contacts'],['reports','Reports'],['admin','Settings'],['help','Help']];
-function nav(v,extra={}){ if(S.dirty && !confirmLeave()) return; Object.assign(S,{view:v,recId:null,projId:null,typeId:null,newProject:false,email:null,...extra}); S.dirty=false; S.pending=false; if(location.hash!=='#'+v) history.replaceState(null,'','#'+v); renderNav(); render(); window.scrollTo(0,0); }
+function nav(v,extra={}){ if(S.dirty && !confirmLeave()) return; Object.assign(S,{view:v,recId:null,projId:null,typeId:null,newProject:false,email:null,...extra}); S.dirty=false; S.pending=false; renderNav(); render(); window.scrollTo(0,0); }
 function confirmLeave(){ if(S.leaveAsk){ S.leaveAsk=false; return true; } S.leaveAsk=true; toast('You have unsaved changes. Click again to leave without saving.'); setTimeout(()=>S.leaveAsk=false,4000); return false; }
 const ICO={dashboard:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',records:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',projects:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>',reports:'<path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/>',catalog:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',companies:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',contacts:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',admin:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>',dot:'<circle cx="12" cy="12" r="3"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',chev:'<path d="m6 9 6 6 6-6"/>'};
 const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICO[k]||ICO.dot}</svg>`;
@@ -968,12 +968,35 @@ function renderTop(){
   const d=document.documentElement; const ks=$('#kitSel'); if(ks) ks.value=d.dataset.kit||'original';
   const mb=$('#modeBtn'); if(mb){ mb.innerHTML=ico(d.dataset.mode==='dark'?'sun':'moon'); mb.title=d.dataset.mode==='dark'?'Switch to light':'Switch to dark'; }
 }
-window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v) && v!==S.view) nav(v); });
-{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v)) S.view=v; }
+// ---------- browser back / forward ----------
+// Every page you open gets its own address (e.g. #records/REC-12, #projects/p150), so the browser's back arrow walks back through the app.
+const SET_TAB0=S.setTab;
+function pageHash(){ const v=S.view; let id='';
+  if(v==='records'&&S.recId) id=S.recId;
+  else if(v==='projects') id=S.newProject?'new':(S.projId||'');
+  else if(v==='catalog'&&S.typeId) id=S.typeId==='__new'?'new':S.typeId;
+  else if(v==='admin'&&S.setTab&&S.setTab!==SET_TAB0) id=S.setTab;
+  return '#'+v+(id?'/'+encodeURIComponent(id):''); }
+let histReady=false;
+function syncHistory(){ const h=pageHash(); const url=location.pathname+location.search+h;
+  if(!histReady){ histReady=true; if(location.hash!==h) history.replaceState(null,'',url); return; }
+  if(location.hash!==h) history.pushState(null,'',url); }
+function applyHash(){ const [v,raw]=location.hash.slice(1).split('/'); if(!VIEWS.some(x=>x[0]===v)) return false;
+  const id=raw?decodeURIComponent(raw):'';
+  const st={view:v,recId:null,projId:null,typeId:null,newProject:false,email:null};
+  if(v==='records'&&id){ st.recId=id; st.recTab='details'; }
+  if(v==='projects'&&id){ if(id==='new') st.newProject=true; else st.projId=id; }
+  if(v==='catalog'&&id) st.typeId=id==='new'?'__new':id;
+  if(v==='admin') st.setTab=id||SET_TAB0;
+  Object.assign(S,st); return true; }
+window.addEventListener('popstate',()=>{
+  if(S.dirty && !confirmLeave()){ history.pushState(null,'',location.pathname+location.search+pageHash()); return; }
+  S.dirty=false; S.pending=false; if(!applyHash()) return; renderNav(); render(); window.scrollTo(0,0); });
+applyHash();
 
 function render(){
   const m=$('#main'); const ae=document.activeElement; const fid=ae&&ae.id&&m.contains(ae)?ae.id:null; const ss=fid&&ae.selectionStart!=null?[ae.selectionStart,ae.selectionEnd]:null;
-  m.innerHTML=view(); renderBell(); renderBanner(); try{renderNav();}catch(e){}
+  m.innerHTML=view(); renderBell(); renderBanner(); try{renderNav();}catch(e){} try{syncHistory();}catch(e){}
   if(fid){ const el=document.getElementById(fid); if(el){ el.focus(); if(ss&&el.setSelectionRange) try{el.setSelectionRange(ss[0],ss[1]);}catch(e){} } }
 }
 function renderBanner(){ const b=$('#pendingNote'); if(b) b.hidden=!S.pending; }
@@ -1506,7 +1529,7 @@ $('#bell').addEventListener('click',e=>{ e.stopPropagation(); const p=$('#pop');
 document.addEventListener('click',e=>{ const p=$('#pop'); if(!p.hidden && !p.contains(e.target) && e.target.id!=='bell') p.hidden=true; });
 $('#pop').addEventListener('click',e=>{ const o=e.target.closest('[data-open]'); if(o){ $('#pop').hidden=true; openRec(o.dataset.open); } const a=e.target.closest('[data-act]'); if(a){ $('#pop').hidden=true; S.setTab=a.dataset.act==='goPeople'?'people':'comms'; nav('admin'); } });
 // ---------- actions ----------
-function openRec(id){ if(!id) return; if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.pending=false; Object.assign(S,{view:'records',recId:id,recTab:'details',email:null,projId:null,typeId:null}); if(location.hash!=='#records') history.replaceState(null,'','#records'); renderNav(); render(); window.scrollTo(0,0); }
+function openRec(id){ if(!id) return; if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.pending=false; Object.assign(S,{view:'records',recId:id,recTab:'details',email:null,projId:null,typeId:null}); renderNav(); render(); window.scrollTo(0,0); }
 function nextCode(pid,prefix){ let mx=0; recs().forEach(r=>{ if(r.projectId===pid){ const m=(r.code||'').match(new RegExp('^'+prefix+'-(\\d+)$')); if(m) mx=Math.max(mx,+m[1]); }}); return prefix+'-'+String(mx+1).padStart(3,'0'); }
 function nextSeq(coll,prefix){ let mx=0; Object.values(S[coll]).forEach(c=>{ const m=(c.code||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return prefix+'-'+String(mx+1).padStart(3,'0'); }
 function setupFrom(fields){ const f=new Set(fields); return {required:true,renewal:f.has('dRenewalDue'),expires:f.has('dExpiration'),inspection:f.has('dInspection'),signoff:f.has('dSignoff'),payment:f.has('paymentStatus')}; }
