@@ -665,6 +665,66 @@ html[data-kit] .sb nav{display:block;flex:1;min-height:0;overflow:auto;order:0;f
 html[data-kit] .sb nav a{padding:6px 8px;font-weight:400;color:var(--fg)}
 html[data-kit] .sb nav a[aria-current]{background:var(--nav-active-bg);color:var(--nav-active-text);font-weight:500}
 
+/* ===== Dashboard (Datum-style) ===== */
+.dhead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.dhead select{width:auto;min-width:150px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.kpi{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg,12px);box-shadow:var(--shadow-card);padding:18px 20px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi:hover{border-color:var(--line-strong)}
+.kpi:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpi small{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi b{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em;color:var(--fg);font-variant-numeric:tabular-nums}
+.kpi b.good{color:var(--good)} .kpi b.bad{color:var(--bad)} .kpi b.warn{color:#EA8A0C}
+.kpi span{font-size:13px;color:var(--muted)}
+.drow{display:grid;gap:16px;margin-bottom:16px}
+.drow.r3{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr)}
+.drow.r2{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+.dc{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg,12px);box-shadow:var(--shadow-card);padding:18px 20px;min-width:0}
+.dc>header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+.dc>header h3{margin:0;font-size:14px;font-weight:600;color:var(--fg);text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:6px}
+.dc>header small{color:var(--faint);font-size:12px}
+.dc .cnt{color:var(--faint);font-weight:500}
+.dsec{font-size:11px;margin:22px 0 10px;color:var(--muted)}
+.muted,.t-muted{color:var(--faint)} .t-bad{color:var(--bad);font-weight:600}
+.kvs{display:flex;flex-direction:column;gap:9px}
+.kv2{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:13px}
+.kv2>span{color:var(--muted)} .kv2>b{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{border:1px solid var(--line);border-radius:var(--radius-sm,6px);padding:2px 8px;font-size:12px;background:var(--surface)}
+.donut{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut .dn-n{font-size:26px;font-weight:700;fill:var(--fg)} .donut .dn-l{font-size:10.5px;fill:var(--muted)}
+.legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;flex:1;min-width:150px}
+.legend li{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;font-size:13px;cursor:pointer;border-radius:4px;padding:1px 3px}
+.legend li:hover{background:var(--sunk)}
+.legend i{width:9px;height:9px;border-radius:50%} .legend b{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.hbars{display:flex;flex-direction:column;gap:8px}
+.hb{all:unset;display:grid;grid-template-columns:minmax(70px,34%) 1fr auto;gap:10px;align-items:center;cursor:pointer;font-size:12.5px;border-radius:4px}
+.hb:hover .ht span{background:var(--accent-hover)}
+.hl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.ht{height:16px;background:var(--seg-bg,var(--sunk));border-radius:4px;overflow:hidden} .ht span{display:block;height:100%;background:var(--accent);border-radius:4px}
+html[data-kit=classic] .ht span{background:#1FA586} html[data-kit=classic] .hb:hover .ht span{background:#178a70}
+.hn{font-variant-numeric:tabular-nums;font-weight:500;min-width:52px;text-align:right} .hn small{color:var(--faint);font-weight:400}
+.lchart{width:100%;height:auto;display:block} .lchart .gl{stroke:var(--line);stroke-dasharray:3 3} .lchart .ax{font-size:10px;fill:var(--faint)}
+.lchart .l1{fill:none;stroke:var(--accent);stroke-width:2} .lchart .ar{fill:var(--accent);opacity:.08} .lchart .p1{fill:var(--accent)}
+.lchart .l2{fill:none;stroke:#16A34A;stroke-width:2;stroke-dasharray:5 4} .lchart .p2{fill:#16A34A}
+.lg{display:inline-block;width:14px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin:0 4px 0 8px} .lg.l2{border-top:2px dashed #16A34A}
+.att{display:flex;flex-direction:column;margin:0 -20px -18px}
+.ai{all:unset;display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 20px;border-top:1px solid var(--line);cursor:pointer}
+.ai:hover{background:var(--sunk)}
+.ai i{width:8px;height:8px;border-radius:50%;background:#F59E0B} .ai i.b{background:var(--bad)} .ai i.m{background:var(--faint)}
+.ai b{display:block;font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .ai small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai em{max-width:150px;overflow:hidden;text-overflow:ellipsis;font-style:normal;font-size:12.5px;color:var(--muted);white-space:nowrap} .ai em.b{color:var(--bad);font-weight:600}
+.plist{display:flex;flex-direction:column;gap:4px}
+.pl{all:unset;display:grid;grid-template-columns:minmax(0,1fr) 90px 54px;gap:12px;align-items:center;padding:7px 6px;border-radius:6px;cursor:pointer}
+.pl:hover{background:var(--sunk)} .pn b{display:block;font-weight:500;font-size:13px} .pn small{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pb{height:8px;background:var(--seg-bg,var(--sunk));border-radius:4px;overflow:hidden} .pb span{display:block;height:100%;background:var(--good)}
+.pp{text-align:right;font-weight:600;font-variant-numeric:tabular-nums} .pp small{display:block;color:var(--faint);font-weight:400;font-size:11px}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.kgrid>div{border:1px solid var(--line);border-radius:var(--radius-md,8px);padding:10px 12px;background:var(--surface)}
+.kgrid small{display:block;font-size:11px;color:var(--muted)} .kgrid b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+@media (max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.drow.r3{grid-template-columns:1fr 1fr}.drow.r3>.dc:first-child{grid-column:1/-1}.drow.r2{grid-template-columns:1fr}}
+@media (max-width:700px){.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:14px}.kpi b{font-size:24px}.drow.r3{grid-template-columns:1fr}.dhead select{display:none}}
 </style>
 
 <div class="app" id="app">
@@ -861,7 +921,8 @@ document.addEventListener('click',e=>{
   if(t.closest('#modeBtn')){ const d=document.documentElement; d.dataset.mode=d.dataset.mode==='dark'?'light':'dark'; try{localStorage.setItem('pd.mode',d.dataset.mode);}catch(_){} renderTop(); return; }
 });
 document.addEventListener('change',e=>{ if(e.target.id!=='tbProj') return; const v=e.target.value;
-  if(S.view==='projects') nav('projects',v?{projId:v}:{});
+  if(S.view==='dashboard'){ S.dash={...(S.dash||{}),project:v}; render(); }
+  else if(S.view==='projects') nav('projects',v?{projId:v}:{});
   else goRecords(v?{project:[v]}:{}); });
 try{ if(localStorage.getItem('pd.sb')==='0') $('#app').classList.add('collapsed'); }catch(_){}
 
@@ -919,10 +980,10 @@ function renderNav(){
 }
 function renderTop(){
   const pk=$('#tbPick'); if(!pk) return;
-  if(S.view==='projects'||S.view==='records'){
+  if(S.view==='projects'||S.view==='records'||S.view==='dashboard'){
     const projs=Object.entries(S.projects||{}).filter(([,p])=>p&&p.status!=='Archived').sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
-    const cur=S.view==='projects'?(S.projId||''):((S.F&&S.F.project&&S.F.project.length===1)?S.F.project[0]:'');
-    pk.innerHTML=`<select id="tbProj" aria-label="Project"><option value="">${S.view==='projects'?'All projects':'All projects · Records'}</option>${projs.map(([id,p])=>`<option value="${id}"${id===cur?' selected':''}>${esc(p.name||'Untitled')}</option>`).join('')}</select><span class="chev">${ico('chev')}</span>`;
+    const cur=S.view==='dashboard'?((S.dash||{}).project||''):S.view==='projects'?(S.projId||''):((S.F&&S.F.project&&S.F.project.length===1)?S.F.project[0]:'');
+    pk.innerHTML=`<select id="tbProj" aria-label="Project"><option value="">${S.view==='records'?'All projects · Records':'All projects'}</option>${projs.map(([id,p])=>`<option value="${id}"${id===cur?' selected':''}>${esc(p.name||'Untitled')}</option>`).join('')}</select><span class="chev">${ico('chev')}</span>`;
   } else pk.innerHTML=`<span style="padding:4px">${VLABEL[S.view]||'Permit Desk'}</span>`;
   $('#tbDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const d=document.documentElement; $('#modeBtn').innerHTML=ico(d.dataset.mode==='dark'?'sun':'moon');
@@ -953,31 +1014,179 @@ function vDashboard(){
   const base={project:pf.project?[pf.project]:[],agency:pf.agency?[pf.agency]:[]};
   const {all,map}=computed();
   const scope=all.filter(r=>(!pf.project||r.projectId===pf.project)&&(!pf.agency||r.agency===pf.agency));
+  const live=scope.filter(r=>r.recordStatus!=='Archived');
   const act=scope.filter(r=>r.recordStatus==='Active'), q=scope.filter(r=>(r.recordStatus||'Queued')==='Queued');
   const cnt=k=>act.filter(r=>map[r.id].dl.some(d=>d[0]===k)).length;
   const flagged=act.filter(r=>map[r.id].checks.length); const nflags=flagged.reduce((s,r)=>s+map[r.id].checks.length,0);
   const tile=(lab,n,sub,patch,cls='')=>`<button class="tile ${cls}" data-go='${esc(JSON.stringify({...base,...patch}))}'><small>${lab}</small><b>${n}</b>${sub?`<span>${sub}</span>`:''}</button>`;
   const watch=[]; act.forEach(r=>map[r.id].dl.filter(d=>d[0]!=='stale').forEach(d=>watch.push({r,d}))); watch.sort((a,b)=>(a.d[1]||'').localeCompare(b.d[1]||''));
-  const byAg={}; act.forEach(r=>byAg[r.agency]=(byAg[r.agency]||0)+1);
+  const byAg={}; live.forEach(r=>byAg[r.agency||'No agency']=(byAg[r.agency||'No agency']||0)+1);
   const chk={}; act.forEach(r=>map[r.id].checks.forEach(c=>chk[c]=(chk[c]||0)+1));
-  const grp=(key,lab)=>{const o={}; act.forEach(r=>{const k=r[key]; if(k) o[k]=(o[k]||0)+1;}); return o;};
+  const grp=(key)=>{const o={}; act.forEach(r=>{const k=r[key]; if(k) o[k]=(o[k]||0)+1;}); return o;};
   const bc=grp('bicCategory'), bco=grp('bicCompany'), bp=grp('bicPerson');
   const projects=Object.entries(S.projects).filter(([,p])=>p.status!=='Archived').sort((a,b)=>a[1].name.localeCompare(b[1].name));
   const listTbl=(o,lab,fmt,mk)=>Object.keys(o).length?`<table><tbody>${Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<tr class="click" data-go='${esc(JSON.stringify({...base,...mk(k)}))}'><td>${esc(fmt(k))}</td><td class="num">${n}</td></tr>`).join('')}</tbody></table>`:`<p class="empty">${lab}</p>`;
-  return `<h1>Portfolio</h1><p class="lede">Every job at once. Deadlines, flags and the TR rollup are worked out from the records each time this page loads. Click any number to open the records on exactly those rows.</p>
-  <div class="row" style="margin-bottom:14px"><label class="f" style="width:220px">Project<select id="dProj" data-dash="project">${opts(projects.map(([id,p])=>[id,p.name]),pf.project,'All projects')}</select></label>
-  <label class="f" style="width:200px">Agency<select id="dAg" data-dash="agency">${opts(lists('Agency'),pf.agency,'All agencies')}</select></label></div>
+  const P=pf.project?S.projects[pf.project]:null;
+  const pct=(a,b)=>b?Math.round(a*100/b):0;
+  const showAll={show:['Active','Queued']};
+
+  // status buckets
+  const B=DASH_BUCKETS.map(b=>({...b,rows:live.filter(r=>bucketOf(r)===b.k)}));
+  const N=live.length; const done=B.find(b=>b.k==='done').rows.length;
+  const obj=B.find(b=>b.k==='obj').rows;
+  const ageOf=r=>{ const d=r.dResubmission||r.dSubmission||r.dInitialFiling||(r.updatedAt||'').slice(0,10); return d?Math.floor((Date.now()-Date.parse(d.length===10?d+'T12:00:00Z':d))/864e5):null; };
+  const objLate=obj.filter(r=>(ageOf(r)||0)>90);
+  const durs=live.map(r=>{const a=r.dSubmission||r.dInitialFiling, b=r.dApproval||r.dIssue; return a&&b?(Date.parse(b)-Date.parse(a))/864e5:null;}).filter(x=>x!=null&&x>=0).sort((a,b)=>a-b);
+  const med=durs.length?Math.round(durs.length%2?durs[(durs.length-1)/2]:(durs[durs.length/2-1]+durs[durs.length/2])/2):null;
+  const kpi=(lab,val,sub,patch,cls)=>`<button class="kpi" data-go='${esc(JSON.stringify({...base,...patch}))}'><small>${lab}</small><b class="${cls||''}">${val}</b><span>${sub}</span></button>`;
+  const stList=k=>statuses().filter(s=>{const st=stageOf(s); return DASH_BUCKETS.find(b=>b.k===k).test(s,st);});
+
+  // donut
+  const donut=(()=>{ const R=52,C=2*Math.PI*R; let off=0; const segs=B.filter(b=>b.rows.length).map(b=>{const len=C*b.rows.length/N; const s=`<circle r="${R}" cx="64" cy="64" fill="none" stroke="${b.c}" stroke-width="16" stroke-dasharray="${Math.max(len-1.5,0.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 64 64)"><title>${b.l}: ${b.rows.length}</title></circle>`; off+=len; return s;}).join('');
+    return `<div class="donut"><svg viewBox="0 0 128 128" width="140" height="140" role="img" aria-label="Status distribution"><circle r="${R}" cx="64" cy="64" fill="none" stroke="var(--seg-bg,var(--sunk))" stroke-width="16"/>${segs}<text x="64" y="64" text-anchor="middle" class="dn-n">${N}</text><text x="64" y="81" text-anchor="middle" class="dn-l">items</text></svg>
+    <ul class="legend">${B.filter(b=>b.rows.length).map(b=>`<li data-go='${esc(JSON.stringify({...base,...showAll,status:stList(b.k)}))}'><i style="background:${b.c}"></i><span>${b.l}</span><b>${b.rows.length} · ${pct(b.rows.length,N)}%</b></li>`).join('')}</ul></div>`; })();
+
+  // bars
+  const barsBlock=(rows,mk,fmt)=>{ const mx=Math.max(1,...rows.map(r=>r[1])); return `<div class="hbars">${rows.map(([k,n,extra])=>`<button class="hb" data-go='${esc(JSON.stringify({...base,...showAll,...mk(k)}))}'><span class="hl" title="${esc(fmt(k))}">${esc(fmt(k))}</span><span class="ht"><span style="width:${Math.max(2,n*100/mx)}%"></span></span><span class="hn">${n}${extra!=null?` <small>${extra}</small>`:''}</span></button>`).join('')}</div>`; };
+  const agRows=Object.entries(byAg).sort((a,b)=>b[1]-a[1]).map(([k,n])=>[k,n,pct(n,N)+'%']);
+
+  // monthly line chart
+  const months=[]; const now=new Date(); for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.toISOString().slice(0,7)); }
+  const sub={},apr={}; const nycPs=(P?[P]:projects.map(([,p])=>p)).filter(p=>p.nyc); const useNyc=nycPs.length>0;
+  if(useNyc) nycPs.forEach(p=>{ p.nyc.filings.forEach(f=>{const a=(f.filed||'').slice(0,7); if(a) sub[a]=(sub[a]||0)+1;}); p.nyc.permits.forEach(x=>{const b=(x.issued||'').slice(0,7); if(b) apr[b]=(apr[b]||0)+1;}); });
+  else live.forEach(r=>{ const a=(r.dSubmission||r.dInitialFiling||'').slice(0,7), b=(r.dApproval||r.dIssue||'').slice(0,7); if(a) sub[a]=(sub[a]||0)+1; if(b) apr[b]=(apr[b]||0)+1; });
+  const L1=useNyc?'DOB NOW filed':'Submitted', L2=useNyc?'Permits issued':'Approved';
+  const line=(()=>{ const W=560,Hh=170,pl=26,pr=8,pt=10,pb=22; const s1=months.map(m=>sub[m]||0), s2=months.map(m=>apr[m]||0); const mx=Math.max(1,...s1,...s2); const top=mx<=4?mx:Math.ceil(mx/4)*4;
+    const X=i=>pl+i*(W-pl-pr)/11, Y=v=>pt+(Hh-pt-pb)*(1-v/top);
+    const path=s=>s.map((v,i)=>{ if(!i) return `M${X(0)},${Y(v)}`; const x0=X(i-1),x1=X(i),cx=(x0+x1)/2; return `C${cx},${Y(s[i-1])} ${cx},${Y(v)} ${x1},${Y(v)}`; }).join(' ');
+    const ticks=[...new Set([0,top/4,top/2,3*top/4,top].map(v=>Math.round(v)))];
+    return `<svg viewBox="0 0 ${W} ${Hh}" class="lchart" role="img" aria-label="Submissions and approvals per month">${ticks.map(v=>`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" class="gl"/><text x="${pl-6}" y="${Y(v)+3}" text-anchor="end" class="ax">${v}</text>`).join('')}
+    <path d="${path(s1)} L${X(11)},${Y(0)} L${X(0)},${Y(0)} Z" class="ar"/><path d="${path(s1)}" class="l1"/><path d="${path(s2)}" class="l2"/>
+    ${s1.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="2.6" class="p1"><title>${months[i]}: ${v} ${L1.toLowerCase()}</title></circle>`).join('')}${s2.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="2.6" class="p2"><title>${months[i]}: ${v} ${L2.toLowerCase()}</title></circle>`).join('')}
+    ${months.map((m,i)=>`<text x="${X(i)}" y="${Hh-5}" text-anchor="middle" class="ax">${new Date(m+'-15').toLocaleString('en-US',{month:'short'})}</text>`).join('')}</svg>`; })();
+
+  // needs attention
+  const att=[]; const seen=new Set();
+  watch.filter(w=>w.d[0]==='overdue').forEach(w=>{ att.push({r:w.r,txt:`${Math.abs(w.d[2])}d overdue`,bad:true}); seen.add(w.r.id); });
+  objLate.forEach(r=>{ if(!seen.has(r.id)){ att.push({r,txt:`${ageOf(r)}d · objections`,bad:true}); seen.add(r.id);} });
+  watch.filter(w=>w.d[0]!=='overdue').forEach(w=>{ if(!seen.has(w.r.id)){ att.push({r:w.r,txt:w.d[0]==='due7'?`due in ${w.d[2]}d`:w.d[0]==='exp60'?`expires in ${w.d[2]}d`:`renewal in ${w.d[2]}d`,bad:false}); seen.add(w.r.id);} });
+  obj.forEach(r=>{ if(!seen.has(r.id)){ att.push({r,txt:`${ageOf(r)??'—'}d · objections`,bad:false}); seen.add(r.id);} });
+  flagged.forEach(r=>{ if(!seen.has(r.id)){ att.push({r,txt:CHECK_LABEL[map[r.id].checks[0]]||'data check',bad:false,muted:true}); seen.add(r.id);} });
+
+  // project / portfolio card
+  const setup=P?projSetupCard(pf.project,P,live):`<section class="dc"><header><h3>Projects</h3><small>% complete</small></header>${projects.length?`<div class="plist">${projects.map(([id,p])=>{const rs=all.filter(r=>r.projectId===id&&r.recordStatus!=='Archived'); const d=rs.filter(r=>bucketOf(r)==='done').length; const pc=pct(d,rs.length); return `<button class="pl" data-dashproj="${id}"><span class="pn"><b>${esc(p.name)}</b><small>${esc([p.address,p.bin?'BIN '+p.bin:''].filter(Boolean).join(' · ')||'No address yet')}</small></span><span class="pb"><span style="width:${pc}%"></span></span><span class="pp">${pc}%<small>${d}/${rs.length}</small></span></button>`;}).join('')}</div>`:`<p class="empty">No projects yet. <button class="btn link" data-nav="projects">Create one</button></p>`}</section>`;
+
+  const title=P?esc(P.name):'Overall dashboard';
+  const subl=[`${N} items`, P?null:`${projects.length} project${projects.length===1?'':'s'}`, P?.address, pf.agency||null].filter(Boolean).join(' · ');
+  return `<div class="dhead"><div><h1>${title}</h1><p class="lede" style="margin:0">${esc(subl)}</p></div>
+  <div class="row" style="gap:8px;align-items:center"><select id="dProj" data-dash="project" aria-label="Project">${opts(projects.map(([id,p])=>[id,p.name]),pf.project,'All projects')}</select><select id="dAg" data-dash="agency" aria-label="Agency">${opts(lists('Agency'),pf.agency,'All agencies')}</select>
+  <div class="tabs" style="margin:0"><button aria-selected="true">Dashboard</button><button data-nav="records">Records</button><button data-nav="reports">Reports</button></div></div></div>
+  <div class="kpis">
+   ${kpi('Complete',pct(done,N)+'%',`${done} of ${N} items signed off or closed`,{...showAll,status:stList('done'),show:['Active','Queued','Archived']},'good')}
+   ${kpi('Open objections',obj.length,objLate.length?`${objLate.length} late (over 90 days)`:'none over 90 days',{...showAll,status:stList('obj')},obj.length?'bad':'')}
+   ${kpi('Overdue',cnt('overdue'),`${cnt('due7')} more due within 7 days`,{deadline:'overdue'},cnt('overdue')?'bad':'')}
+   ${kpi('Filed → approved',med==null?'—':med,med==null?'needs submission and approval dates':`median days · ${durs.length} item${durs.length===1?'':'s'}`,{},'')}
+  </div>
+  <div class="drow r3">${setup}
+   <section class="dc"><header><h3>Status distribution</h3></header>${N?donut:'<p class="empty">Nothing to show yet.</p>'}</section>
+   <section class="dc"><header><h3>${P?'Items by agency':'Items by agency'}</h3><small>click a bar to open</small></header>${agRows.length?barsBlock(agRows,k=>({agency:[k]}),k=>k):'<p class="empty">No items.</p>'}</section>
+  </div>
+  <div class="drow r2">
+   <section class="dc"><header><h3>${useNyc?'DOB NOW activity per month':'Submitted and approved per month'}</h3><small><i class="lg l1"></i>${L1} <i class="lg l2"></i>${L2} · last 12 months</small></header>${line}</section>
+   <section class="dc"><header><h3><svg class="ico" viewBox="0 0 24 24" style="color:var(--bad)"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></svg> Needs attention <span class="cnt">${att.length}</span></h3></header>
+   ${att.length?`<div class="att">${att.slice(0,8).map(a=>`<button class="ai" data-open="${a.r.id}"><i class="${a.bad?'b':a.muted?'m':'w'}"></i><span><b>${esc(a.r.name)}</b><small>${esc([a.r.code,P?null:projName(a.r.projectId),bicLabel(a.r)].filter(Boolean).join(' · '))}</small></span><em class="${a.bad?'b':''}">${esc(a.txt)}</em></button>`).join('')}${att.length>8?`<button class="btn link" data-go='${esc(JSON.stringify({...base,check:'any'}))}' style="margin:6px 14px">+ ${att.length-8} more</button>`:''}</div>`:'<p class="empty">Nothing needs attention.</p>'}</section>
+  </div>
+  <h3 class="dsec">Deadlines and checks</h3>
   <div class="tiles">${tile('Active records',act.length,'',{})}${tile('Queued',q.length,'not started yet',{show:['Queued']},'acc')}${tile('Open data checks',nflags,`on ${flagged.length} records`,{check:'any'},'warn')}${tile('Due within 7 days',cnt('due7'),'',{deadline:'due7'},'warn')}${tile('Overdue',cnt('overdue'),'',{deadline:'overdue'},'bad')}${tile('Expiring within 60 days',cnt('exp60'),'',{deadline:'exp60'},'warn')}${tile('Renewal due within 30 days',cnt('ren30'),'',{deadline:'ren30'},'warn')}${tile('Not touched in 30+ days',cnt('stale'),'',{deadline:'stale'})}</div>
   <section class="sec" style="margin-bottom:14px"><header><h3>Watchlist</h3><span class="pill">${watch.length} deadlines, soonest first</span></header>
-  ${watch.length?`<div class="tbl-wrap" style="border:none"><table><thead><tr><th>Record</th><th>Project</th><th>What</th><th>Date</th><th class="num">Days</th><th>Ball-in-court</th></tr></thead><tbody>${watch.map(({r,d})=>`<tr class="click ${d[0]==='overdue'?'over':'soon'}" data-open="${r.id}"><td><span class="code">${esc(r.code)}</span> ${esc(r.name)}</td><td>${esc(projName(r.projectId))}</td><td>${esc(DEADLINES.find(x=>x[0]===d[0])[1])}</td><td>${fmtD(d[1])}</td><td class="num">${d[2]}</td><td>${esc(bicLabel(r)||'—')}</td></tr>`).join('')}</tbody></table></div>`:`<p class="empty">Nothing due, expiring or overdue.</p>`}</section>
+  ${watch.length?`<div class="tbl-wrap" style="border:none;box-shadow:none"><table><thead><tr><th>Record</th><th>Project</th><th>What</th><th>Date</th><th class="num">Days</th><th>Ball-in-court</th></tr></thead><tbody>${watch.map(({r,d})=>`<tr class="click ${d[0]==='overdue'?'over':'soon'}" data-open="${r.id}"><td><span class="code">${esc(r.code)}</span> ${esc(r.name)}</td><td>${esc(projName(r.projectId))}</td><td>${esc(DEADLINES.find(x=>x[0]===d[0])[1])}</td><td>${fmtD(d[1])}</td><td class="num">${d[2]}</td><td>${esc(bicLabel(r)||'—')}</td></tr>`).join('')}</tbody></table></div>`:`<p class="empty">Nothing due, expiring or overdue.</p>`}</section>
   <div class="grid2">
    <section class="sec"><header><h3>Open data checks</h3></header><div class="bd">${Object.keys(chk).length?`<table><tbody>${CHECKS.filter(c=>chk[c[0]]).map(c=>`<tr class="click" data-go='${esc(JSON.stringify({...base,check:c[0]}))}'><td>${c[1]}</td><td class="num">${chk[c[0]]}</td></tr>`).join('')}</tbody></table>`:`<p class="empty">All ${CHECKS.length} checks are clear.</p>`}</div></section>
-   <section class="sec"><header><h3>By agency</h3></header><div class="bd">${listTbl(byAg,'No active records in this view.',k=>k,k=>({agency:[k]}))}</div></section>
-   <section class="sec"><header><h3>By project</h3></header><div class="bd">${projects.length?`<table><tbody>${projects.map(([id,p])=>{const n=act.filter(r=>r.projectId===id).length;const t=trStatus(id);return `<tr class="click" data-go='${esc(JSON.stringify({project:[id]}))}'><td>${esc(p.name)}<br><small class="mono" style="color:var(--muted)">${t.label}</small></td><td class="num">${n} active</td></tr>`}).join('')}</tbody></table>`:`<p class="empty">No projects yet. <button class="btn link" data-nav="projects">Create one</button></p>`}</div></section>
+   <section class="sec"><header><h3>By agency</h3></header><div class="bd">${listTbl(Object.fromEntries(Object.entries(byAg).map(([k])=>[k,act.filter(r=>(r.agency||'No agency')===k).length]).filter(x=>x[1])),'No active records in this view.',k=>k,k=>({agency:[k]}))}</div></section>
+   <section class="sec"><header><h3>By project</h3></header><div class="bd">${projects.length?`<table><tbody>${projects.map(([id,p])=>{const n=act.filter(r=>r.projectId===id).length;const t=trStatus(id);return `<tr class="click" data-go='${esc(JSON.stringify({project:[id]}))}'><td>${esc(p.name)}<br><small style="color:var(--muted)">${t.label}</small></td><td class="num">${n} active</td></tr>`}).join('')}</tbody></table>`:`<p class="empty">No projects yet. <button class="btn link" data-nav="projects">Create one</button></p>`}</div></section>
    <section class="sec"><header><h3>Ball-in-court by category</h3></header><div class="bd">${listTbl(bc,'Nobody is assigned as ball-in-court.',k=>k,k=>({bic:[k]}))}</div></section>
    <section class="sec"><header><h3>By company</h3></header><div class="bd">${listTbl(bco,'No ball-in-court company on any record.',coName,k=>({bicCompany:k}))}</div></section>
    <section class="sec"><header><h3>By person</h3></header><div class="bd">${listTbl(bp,'No ball-in-court individual on any record.',ctName,k=>({bicPerson:k}))}</div></section>
   </div>`;
+}
+const DASH_BUCKETS=[
+ {k:'ns',l:'Not started',c:'#9CA3AF',test:(s,st)=>s==='Not Started'},
+ {k:'prep',l:'Preparing',c:'#8B9AF5',test:(s,st)=>st==='Filing'},
+ {k:'rev',l:'In review',c:'#3F51E0',test:(s,st)=>st==='Plan exam'},
+ {k:'obj',l:'Objections',c:'#DC2626',test:(s,st)=>st==='Objections'},
+ {k:'appr',l:'Approved / issued',c:'#F59E0B',test:(s,st)=>st==='Approval'||st==='Issuance'},
+ {k:'insp',l:'Inspections / renewal',c:'#0EA5A0',test:(s,st)=>(st==='Inspections'||st==='Sign-off'||st==='Renewal'||st==='Expiry')&&!['Signed Off'].includes(s)},
+ {k:'done',l:'Done',c:'#16A34A',test:(s,st)=>CLOSED.includes(s)},
+];
+function bucketOf(r){ const s=r.currentStatus||'Not Started', st=stageOf(s); if(CLOSED.includes(s)) return 'done'; for(const b of DASH_BUCKETS){ if(b.k!=='done'&&b.test(s,st)) return b.k; } return 'ns'; }
+
+// ---------- NYC Open Data (BIN / Block / Lot) ----------
+const BORO_CODE={Manhattan:'1',Bronx:'2',Brooklyn:'3',Queens:'4','Staten Island':'5'};
+const BORO_NAME={1:'Manhattan',2:'Bronx',3:'Brooklyn',4:'Queens',5:'Staten Island'};
+const NYC_DS='https://data.cityofnewyork.us/resource/';
+async function soda(ds,params){ const u=new URL(NYC_DS+ds+'.json'); Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v)); const r=await fetch(u); if(!r.ok) throw new Error(ds+' '+r.status); return r.json(); }
+const sq=v=>String(v).replace(/'/g,"''");
+const nz=v=>String(v??'').replace(/^0+(?=\d)/,'').trim();
+async function pullNyc(pid){
+  const p=S.projects[pid]; if(!p) return;
+  let bin=(p.bin||'').trim(), boro=p.borough||'', block=nz(p.block), lot=nz(p.lot);
+  if(!bin && !(boro&&block&&lot)) { toast('Enter a BIN, or the borough with block and lot.'); return; }
+  S.nycBusy=pid; render(); toast('Pulling NYC data…');
+  try{
+    const where=bin?`bin='${sq(bin)}'`:`upper(borough)='${sq(boro.toUpperCase())}' AND block='${sq(block)}' AND lot='${sq(lot)}'`;
+    const fil=await soda('w9ak-ipjd',{'$where':where,'$order':'filing_date DESC','$limit':'300'});
+    if(fil[0]){ bin=bin||fil[0].bin||''; block=block||nz(fil[0].block); lot=lot||nz(fil[0].lot); boro=boro||(fil[0].borough? fil[0].borough.replace(/\b\w/g,c=>c.toUpperCase()).replace(/\B\w/g,c=>c.toLowerCase()):''); }
+    const bc=BORO_CODE[boro]; const bbl=(fil[0]?.bbl)||(bc&&block&&lot?bc+block.padStart(5,'0')+lot.padStart(4,'0'):'');
+    const [pl,per,ecbOpen,ecbAll,dobv]=await Promise.all([
+      bbl?soda('64uk-42ks',{bbl,'$limit':'1'}).catch(()=>[]):[],
+      bin?soda('rbx6-tga4',{bin,'$order':'issued_date DESC','$limit':'300'}).catch(()=>[]):[],
+      bin?soda('6bgk-3dad',{'$where':`bin='${sq(bin)}' AND ecb_violation_status!='RESOLVE'`,'$order':'issue_date DESC','$limit':'50'}).catch(()=>[]):[],
+      bin?soda('6bgk-3dad',{'$select':'count(*) as n','$where':`bin='${sq(bin)}'`}).catch(()=>[]):[],
+      bin?soda('3h2n-5cm9',{'$select':'count(*) as n','$where':`bin='${sq(bin)}' AND violation_category like '%ACTIVE%'`}).catch(()=>[]):[],
+    ]);
+    const L=pl[0]||{};
+    const nyc={pulledAt:new Date().toISOString(),bin,bbl,
+      building:pl[0]?{address:L.address||'',owner:L.ownername||'',floors:L.numfloors?String(Math.round(+L.numfloors)):'',yearBuilt:L.yearbuilt||'',zoning:[L.zonedist1,L.spdist1].filter(Boolean).join(' / '),bldgClass:L.bldgclass||'',bldgArea:L.bldgarea||'',units:L.unitstotal||'',landmark:L.landmark||'',histdist:L.histdist||''}:null,
+      filings:fil.map(f=>({n:f.job_filing_number,st:f.filing_status||'',type:f.job_type||'',work:Object.keys(f).filter(k=>/work_type_?$/.test(k)&&/^yes$/i.test(f[k])).map(k=>k.replace(/_work_type_?$/,'').replace(/_/g,' ')).join(', ')||f.specialinspectionrequirement||'',filed:(f.filing_date||'').slice(0,10),status:(f.current_status_date||'').slice(0,10),applicant:[f.applicant_first_name,f.applicant_last_name].filter(Boolean).join(' '),cost:f.initial_cost||''})),
+      permits:per.map(x=>({n:x.work_permit||x.job_filing_number,job:x.job_filing_number,type:x.work_type||'',reason:x.filing_reason||'',issued:(x.issued_date||'').slice(0,10),expires:(x.expired_date||'').slice(0,10),by:x.applicant_business_name||''})),
+      ecb:{open:ecbOpen.length,total:+(ecbAll[0]?.n||0),list:ecbOpen.slice(0,10).map(v=>({n:v.ecb_violation_number,type:v.violation_type||'',issued:v.issue_date||'',due:v.balance_due||'',desc:(v.violation_description||'').slice(0,140)}))},
+      dobOpen:+(dobv[0]?.n||0)};
+    const patch={nyc,...stamp()};
+    if(!p.bin&&bin) patch.bin=bin; if(!p.block&&block) patch.block=block; if(!p.lot&&lot) patch.lot=lot; if(!p.borough&&boro&&BORO_CODE[boro]) patch.borough=boro;
+    if(!p.address&&nyc.building?.address) patch.address=nyc.building.address.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase());
+    S.nycBusy=null;
+    if(await put('projects',pid,patch,true)) toast(`Pulled ${nyc.filings.length} filings, ${nyc.permits.length} permits${nyc.building?', building info':''}.`);
+    else render();
+  }catch(e){ S.nycBusy=null; render(); toast('NYC Open Data did not answer. Try again in a minute.'); console.error(e); }
+}
+function jobBase(n){ return String(n||'').toUpperCase().match(/[A-Z]\d{8}/)?.[0]||''; }
+function recByJob(pid){ const m={}; recs().filter(r=>r.projectId===pid).forEach(r=>[r.jobNo,r.officialId,r.applicationNo,r.relatedJob,r.name].forEach(v=>{ const s=String(v||'').toUpperCase(); const full=s.match(/[A-Z]\d{8}-[A-Z]\d{1,3}/g)||[]; full.forEach(x=>m[x]=m[x]||r.id); const b=jobBase(s); if(b) m[b]=m[b]||r.id; })); return m; }
+function projSetupCard(pid,p,live){
+  const n=p.nyc; const b=n?.building; const jobs=[...new Set(live.map(r=>jobBase(r.jobNo||r.officialId||r.name)).filter(Boolean))];
+  const row=(k,v)=>v?`<div class="kv2"><span>${k}</span><b>${v}</b></div>`:'';
+  return `<section class="dc"><header><h3>Project setup</h3><button class="btn sm" data-dashedit="${pid}">Edit</button></header>
+  <div class="kvs">${row('Address',esc(p.address||b?.address||''))}${row('BIN',p.bin?`<span class="mono">${esc(p.bin)}</span>`:'<span class="muted">not set</span>')}${row('Block / lot',(p.block||p.lot)?`<span class="mono">${esc([p.borough,p.block&&'Block '+p.block,p.lot&&'Lot '+p.lot].filter(Boolean).join(' · '))}</span>`:'<span class="muted">not set</span>')}
+  ${b?row('Building',esc([b.floors&&b.floors+' floors',b.yearBuilt&&'built '+b.yearBuilt,b.zoning].filter(Boolean).join(' · '))):''}
+  ${n?row('DOB NOW',`${n.filings.length} filings · ${n.permits.length} permits`):''}${n?row('Violations',`<span class="${(n.ecb.open+n.dobOpen)?'t-bad':''}">${n.ecb.open} open ECB · ${n.dobOpen} open DOB</span>`):''}</div>
+  ${jobs.length?`<div class="chips">${jobs.slice(0,8).map(j=>`<span class="chip mono">${j}</span>`).join('')}</div>`:''}
+  <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm pri" data-act="nycPull" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':n?'Refresh NYC data':'Pull NYC data'}</button>${n?`<small class="muted">pulled ${fmtDT(n.pulledAt)}</small>`:''}</div></section>`;
+}
+function nycSection(pid,p,dis){
+  const n=p.nyc; const m=recByJob(pid);
+  const lnk=(num)=>{ const id=m[String(num).toUpperCase()]||m[jobBase(num)]; return id?`<a href="#records" data-open="${id}" class="pill a">On slate</a>`:''; };
+  const b=n?.building;
+  return `<section class="sec" id="nycSec"><header><h3>Building &amp; DOB NOW data</h3><small style="color:var(--muted)">Enter the BIN, or the borough with block and lot, then pull. Data comes from NYC Open Data (DOB NOW filings and permits, ECB and DOB violations, PLUTO).</small></header>
+  <div class="bd stack">
+   <div class="fields"><label class="f">BIN<input id="ny_bin" type="text" inputmode="numeric" value="${esc(p.bin||'')}" placeholder="e.g. 1001280"${dis?' disabled':''}></label><label class="f">Borough<select id="ny_bor"${dis?' disabled':''}>${opts(lists('Borough'),p.borough)}</select></label><label class="f">Block<input id="ny_block" type="text" inputmode="numeric" value="${esc(p.block||'')}"${dis?' disabled':''}></label><label class="f">Lot<input id="ny_lot" type="text" inputmode="numeric" value="${esc(p.lot||'')}"${dis?' disabled':''}></label>
+   <div style="align-self:end" class="row">${dis?'':`<button class="btn pri" data-act="nycSave" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':'Save and pull NYC data'}</button>`}</div></div>
+   ${n?`<p style="margin:0;color:var(--muted);font-size:12px">Pulled ${fmtDT(n.pulledAt)}${n.bbl?` · BBL <span class="mono">${esc(n.bbl)}</span>`:''}</p>
+   ${b?`<div class="kgrid">${[['Address',b.address],['Owner',b.owner],['Floors',b.floors],['Year built',b.yearBuilt],['Zoning',b.zoning],['Building class',b.bldgClass],['Building area',b.bldgArea&&(+b.bldgArea).toLocaleString()+' sf'],['Units',b.units],['Landmark',b.landmark],['Historic district',b.histdist]].filter(x=>x[1]).map(([k,v])=>`<div><small>${k}</small><b>${esc(v)}</b></div>`).join('')}</div>`:''}
+   <div class="kgrid">${[['DOB NOW filings',n.filings.length],['Work permits',n.permits.length],['Open ECB violations',n.ecb.open+' of '+n.ecb.total],['Open DOB violations',n.dobOpen]].map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join('')}</div>
+   ${n.filings.length?`<details open><summary><b>DOB NOW filings</b> · ${n.filings.length}</summary><div class="tbl-wrap" style="max-height:340px;overflow:auto;margin-top:8px"><table><thead><tr><th>Job filing #</th><th>Status</th><th>Job type</th><th>Work</th><th>Filed</th><th>Status date</th><th>Applicant</th><th></th></tr></thead><tbody>${n.filings.map(f=>`<tr><td class="mono">${esc(f.n)}</td><td><span class="pill ${/approved|permit|sign/i.test(f.st)?'good':/objection/i.test(f.st)?'bad':''}">${esc(f.st)}</span></td><td>${esc(f.type)}</td><td>${esc(f.work)}</td><td>${fmtD(f.filed)}</td><td>${fmtD(f.status)}</td><td>${esc(f.applicant)}</td><td>${lnk(f.n)}</td></tr>`).join('')}</tbody></table></div></details>`:'<p class="empty" style="padding:8px 0">No DOB NOW filings found for this building.</p>'}
+   ${n.permits.length?`<details><summary><b>Work permits</b> · ${n.permits.length}</summary><div class="tbl-wrap" style="max-height:340px;overflow:auto;margin-top:8px"><table><thead><tr><th>Permit</th><th>Work type</th><th>Reason</th><th>Issued</th><th>Expires</th><th>Permittee</th><th></th></tr></thead><tbody>${n.permits.map(x=>{const dl=x.expires?daysUntil(x.expires):null;return `<tr><td class="mono">${esc(x.n)}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${fmtD(x.issued)}</td><td class="${dl!=null&&dl<0?'t-muted':dl!=null&&dl<=60?'t-bad':''}">${fmtD(x.expires)}</td><td>${esc(x.by)}</td><td>${lnk(x.job)}</td></tr>`;}).join('')}</tbody></table></div></details>`:''}
+   ${n.ecb.list.length?`<details><summary><b>Open ECB violations</b> · ${n.ecb.open}</summary><div class="tbl-wrap" style="margin-top:8px"><table><thead><tr><th>Violation</th><th>Type</th><th>Issued</th><th class="num">Balance due</th><th>Description</th></tr></thead><tbody>${n.ecb.list.map(v=>`<tr><td class="mono">${esc(v.n)}</td><td>${esc(v.type)}</td><td>${esc(v.issued.replace(/^(\d{4})(\d\d)(\d\d)$/,'$2/$3/$1'))}</td><td class="num">${v.due?'$'+(+v.due).toLocaleString():''}</td><td><small>${esc(v.desc)}</small></td></tr>`).join('')}</tbody></table></div></details>`:''}
+   `:''}
+  </div></section>`;
 }
 
 // ---------- records grid ----------
@@ -1149,6 +1358,7 @@ function vProject(){
   return `<button class="btn link" data-act="projBack">← Projects</button>
   <div class="row" style="justify-content:space-between"><div><h1>${esc(p.name)}</h1><p class="lede">${esc([p.address,p.borough,p.type].filter(Boolean).join(' · '))}</p></div><button class="btn" data-go='${esc(JSON.stringify({project:[id],show:['Active','Queued','Archived']}))}'>Open in the records grid</button></div>
   <div class="stack">
+  ${nycSection(id,p,dis)}
   <section class="sec"><header><h3>Project team</h3><small style="color:var(--muted)">Default consultants by discipline. Nobody is filled in automatically; on a permit you choose to drop them in.</small></header><div class="bd stack">
    ${team.length?`<table><tbody>${team.map((m,i)=>`<tr><td><b>${esc(m.discipline)}</b></td><td>${esc(coName(m.companyId))}${m.contactId?' · '+esc(ctName(m.contactId)):''}</td><td>${esc(m.role||'')}</td><td>${m.isDefault?'<span class="pill a">Default</span>':''}</td><td>${dis?'':`<button class="btn link" data-act="teamDel" data-i="${i}">Remove</button>`}</td></tr>`).join('')}</tbody></table>`:`<p class="note info">No team yet. Add at least the architect and the expediter; those are the two the catalog reaches for most.</p>`}
    ${dis?'':`<div class="fields"><label class="f">Discipline<select id="tmDisc">${opts(lists('Discipline'),'','Pick…')}</select></label><label class="f">Company<select id="tmCo">${opts(activeCos().map(([i,c])=>[i,c.name]),'')}</select></label><label class="f">Person<select id="tmCt">${opts(activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),'')}</select></label><label class="f">Role label<select id="tmRole">${opts(lists('Project Role'),'')}</select></label><label class="chk" style="align-self:end"><input type="checkbox" id="tmDef" checked> Default for this discipline</label><div style="align-self:end"><button class="btn" data-act="teamAdd">Add</button></div></div>`}</div></section>
@@ -1161,7 +1371,7 @@ function vProject(){
    ${rs.length?rs.map(r=>`<div class="slate-item"><span class="code">${esc(r.code)}</span><span><a href="#records" data-open="${r.id}">${esc(r.name)}</a><br><small style="color:var(--muted)">${esc(r.agency)}${r.kind==='Document'?' · Document':''}</small></span>${r.currentStatus==='Not Started'||dis?`<span class="pill ${r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus)}</span>`:`<select id="ss_${r.id}" data-slstat="${r.id}">${opts(stOpts,r.currentStatus,null)}</select>`}<span>${r.currentStatus==='Not Started'&&!dis?`<button class="btn sm acc" data-act="start" data-id="${r.id}">Start</button>`:''}</span></div>`).join(''):'<p class="empty">Nothing on the slate yet.</p>'}</div></section>
   <section class="sec"><header><h3>Building department requirements</h3></header><div class="bd row" style="justify-content:space-between"><span><span class="pill">DOB</span> All TRs signed off <span class="pill">Computed</span></span><span class="pill ${tr.ok===true?'good':tr.ok===false?'warn':''}">${tr.label}</span></div><div class="bd" style="padding-top:0"><small style="color:var(--muted)">DOB won't close a job until its special inspections are complete. This reads the TR items on the slate every time the page loads; it turns satisfied when every TR has a Final received.</small></div></section>
   ${dis?'':`<section class="sec"><header><h3>Add a document line item</h3><small style="color:var(--muted)">A survey, an asbestos report, a stamped set: anything the job must produce gets its own line and can be a prerequisite for a permit.</small></header><div class="bd fields"><label class="f">Name<input id="dlName" type="text"></label><label class="f">Agency (optional)<select id="dlAg">${opts(lists('Agency'),'')}</select></label><label class="f">Category<select id="dlCat">${opts(lists('Permit Category'),'')}</select></label><div style="align-self:end"><button class="btn" data-act="docAdd">Add document</button></div></div></section>`}
-  <details class="sec"><summary style="padding:10px 14px;cursor:pointer"><b>Project details</b></summary><form id="projEdit" data-form="projEdit" class="bd fields"><label class="f">Project name<input id="pe_name" type="text" data-p="name" value="${esc(p.name)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Address<input id="pe_addr" type="text" data-p="address" value="${esc(p.address)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Borough<select id="pe_bor" data-p="borough"${dis?' disabled':''}>${opts(lists('Borough'),p.borough)}</select></label><label class="f">Project type<select id="pe_type" data-p="type"${dis?' disabled':''}>${opts(lists('Project Type'),p.type)}</select></label><label class="f">Status<select id="pe_st" data-p="status"${dis?' disabled':''}>${opts(['Active','Archived'],p.status||'Active',null)}</select></label>${personFields(p)}<label class="f wide">Notes<textarea id="pe_notes" data-p="notes"${dis?' disabled':''}>${esc(p.notes)}</textarea></label>${dis?'':'<div><button class="btn pri" type="submit">Save project</button></div>'}</form></details>
+  <details class="sec"><summary style="padding:10px 14px;cursor:pointer"><b>Project details</b></summary><form id="projEdit" data-form="projEdit" class="bd fields"><label class="f">Project name<input id="pe_name" type="text" data-p="name" value="${esc(p.name)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Address<input id="pe_addr" type="text" data-p="address" value="${esc(p.address)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Borough<select id="pe_bor" data-p="borough"${dis?' disabled':''}>${opts(lists('Borough'),p.borough)}</select></label><label class="f">BIN<input id="pe_bin" type="text" inputmode="numeric" data-p="bin" value="${esc(p.bin||'')}"${dis?' disabled':''}></label><label class="f">Block<input id="pe_block" type="text" inputmode="numeric" data-p="block" value="${esc(p.block||'')}"${dis?' disabled':''}></label><label class="f">Lot<input id="pe_lot" type="text" inputmode="numeric" data-p="lot" value="${esc(p.lot||'')}"${dis?' disabled':''}></label><label class="f">Project type<select id="pe_type" data-p="type"${dis?' disabled':''}>${opts(lists('Project Type'),p.type)}</select></label><label class="f">Status<select id="pe_st" data-p="status"${dis?' disabled':''}>${opts(['Active','Archived'],p.status||'Active',null)}</select></label>${personFields(p)}<label class="f wide">Notes<textarea id="pe_notes" data-p="notes"${dis?' disabled':''}>${esc(p.notes)}</textarea></label>${dis?'':'<div><button class="btn pri" type="submit">Save project</button></div>'}</form></details>
   </div>`;
 }
 
@@ -1362,6 +1572,8 @@ async function renameCascade(listName,from,to){
 async function cfgUpdate(patch){ return put('config','main',patch,true); }
 
 const ACT={
+  async nycPull(a){ await pullNyc(a.dataset.id); },
+  async nycSave(a){ const id=a.dataset.id; const d={bin:$('#ny_bin').value.trim(),borough:$('#ny_bor').value,block:$('#ny_block').value.trim(),lot:$('#ny_lot').value.trim()}; if(await put('projects',id,{...d,...stamp()},true)){ Object.assign(S.projects[id],d); await pullNyc(id); } },
   pdBackup(){ const d=window.PD_STORE.exportAll(); const name='Permit Desk backup '+new Date().toISOString().slice(0,10)+'.json'; downloads.save({filename:name,data:JSON.stringify(d)}); toast('Backup downloaded'); },
   pdLogout(){ window.PD_STORE.logout(); },
   clearF(){ goRecords({}); }, clearBicF(){ delete S.F.bicCompany; delete S.F.bicPerson; render(); },
@@ -1417,6 +1629,8 @@ M.addEventListener('click',async e=>{
   const t=e.target;
   const a=t.closest('[data-act]'); if(a&&a.tagName!=='INPUT'){ e.preventDefault(); const f=ACT[a.dataset.act]; if(f){ if(!canWrite && !['clearF','clearBicF','groupAg','colReset','exportGrid','exportReport','recBack','recDiscard','emClose','projBack','slateClear','catGroup','typeBack','toggleRet','emailOpen','emDel','emAdd','emCopy'].includes(a.dataset.act)){ toast('You can view this tracker but not change it.'); return; } a.disabled=true; try{ await f(a); } finally{ a.disabled=false; } } return; }
   const nv=t.closest('[data-nav]'); if(nv){ e.preventDefault(); nav(nv.dataset.nav); return; }
+  const dp=t.closest('[data-dashproj]'); if(dp){ e.preventDefault(); S.dash={...(S.dash||{}),project:dp.dataset.dashproj}; render(); window.scrollTo(0,0); return; }
+  const de=t.closest('[data-dashedit]'); if(de){ e.preventDefault(); nav('projects',{projId:de.dataset.dashedit}); setTimeout(()=>document.getElementById('nycSec')?.scrollIntoView({block:'start'}),50); return; }
   const go=t.closest('[data-go]'); if(go){ e.preventDefault(); goRecords(JSON.parse(go.dataset.go)); return; }
   const op=t.closest('[data-open]'); if(op){ e.preventDefault(); openRec(op.dataset.open); return; }
   const sl=t.closest('[data-sel]'); if(sl){ S.sel=sl.dataset.sel; render(); return; }
