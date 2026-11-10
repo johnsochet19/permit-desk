@@ -1,0 +1,1095 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Permit Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a fixed top bar over a working area; lists use a filter rail + grid + detail panel, like a plan room. */
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --sunk:#e9ebe7; --line:#d5d9d2; --line-strong:#b8beb4;
+  --fg:#1d2420; --muted:#5d665f; --faint:#8a928b;
+  --ink:#1f3b57; --ink-soft:#dfe8f1;
+  --accent:#c4621d; --accent-soft:#f7e6d7;
+  --good:#2f7a4b; --good-soft:#dcefe2; --warn:#a86a00; --warn-soft:#f6ead0; --bad:#b3362c; --bad-soft:#f5dcd9;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1b211e; --sunk:#232a26; --line:#313a35; --line-strong:#46514a;
+  --fg:#e4e8e3; --muted:#a3ada5; --faint:#76807a;
+  --ink:#8fb6dc; --ink-soft:#22303d; --accent:#e58a45; --accent-soft:#3a281a;
+  --good:#6cc08a; --good-soft:#1d3326; --warn:#e0a941; --warn-soft:#3a2f17; --bad:#ef7d72; --bad-soft:#3d211e;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1b211e; --sunk:#232a26; --line:#313a35; --line-strong:#46514a;
+  --fg:#e4e8e3; --muted:#a3ada5; --faint:#76807a;
+  --ink:#8fb6dc; --ink-soft:#22303d; --accent:#e58a45; --accent-soft:#3a281a;
+  --good:#6cc08a; --good-soft:#1d3326; --warn:#e0a941; --warn-soft:#3a2f17; --bad:#ef7d72; --bad-soft:#3d211e;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+a{color:var(--ink)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));flex-wrap:wrap}
+.brand{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand i{display:inline-block;width:14px;height:14px;background:var(--accent);clip-path:polygon(0 100%,50% 0,100% 100%)}
+nav{display:flex;gap:2px;flex-wrap:wrap;flex:1;min-width:0}
+nav a{text-decoration:none;color:var(--muted);padding:6px 9px;border-radius:var(--r);font-weight:500}
+nav a:hover{background:var(--sunk);color:var(--fg)}
+nav a[aria-current]{color:var(--ink);background:var(--ink-soft)}
+.who{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:13px}
+.bell{position:relative;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:4px 9px;cursor:pointer}
+.bell b{position:absolute;top:-7px;right:-7px;background:var(--accent);color:#fff;border-radius:9px;font-size:11px;padding:0 5px;font-family:var(--f-mono)}
+.pop{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:52px;width:min(380px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:20;max-height:70vh;overflow:auto}
+.pop h4{margin:0;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pop .it{padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.pop .it:hover{background:var(--sunk)}
+main{padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1500px;margin:0 auto}
+h1{font-family:var(--f-display);font-size:26px;font-weight:600;margin:0 0 4px;text-wrap:balance}
+h2{font-family:var(--f-display);font-size:18px;font-weight:600;margin:0 0 8px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 8px;font-weight:600}
+.lede{color:var(--muted);max-width:70ch;margin:0 0 16px}
+.mono,.code{font-family:var(--f-mono);font-size:12.5px}
+.code{color:var(--ink);white-space:nowrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r);padding:6px 11px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--sunk)}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.acc{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+.btn.link{border:none;background:none;color:var(--ink);padding:2px 4px;text-decoration:underline}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+input[type=text],input[type=email],input[type=tel],input[type=number],input[type=date],input[type=url],input[type=search],select,textarea{border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r);padding:6px 8px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+label.f.wide{grid-column:1/-1}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 14px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;cursor:pointer}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:500;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill.q{background:var(--sunk);color:var(--muted)}
+.pill.a{background:var(--ink-soft);color:var(--ink)}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--warn);margin-right:5px;vertical-align:1px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:var(--r);padding:10px 12px;cursor:pointer;text-align:left}
+.tile:hover{border-color:var(--line-strong)}
+.tile.warn{border-top-color:var(--warn)} .tile.bad{border-top-color:var(--bad)} .tile.acc{border-top-color:var(--accent)}
+.tile small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tile b{display:block;font-family:var(--f-display);font-size:30px;font-variant-numeric:tabular-nums;line-height:1.15}
+.tile span{font-size:12px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);background:var(--sunk);white-space:nowrap;position:sticky;top:0}
+th.sort{cursor:pointer} th.sort:hover{color:var(--fg)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--sunk)}
+tr.sel td{background:var(--ink-soft)}
+tr.over td:first-child{box-shadow:inset 3px 0 var(--bad)} tr.soon td:first-child{box-shadow:inset 3px 0 var(--warn)}
+td.num,th.num{text-align:right}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.layout3{display:grid;grid-template-columns:220px minmax(0,1fr) 320px;gap:14px;align-items:start}
+@media (max-width:1100px){.layout3{grid-template-columns:200px minmax(0,1fr)}.layout3 .side{grid-column:1/-1}}
+@media (max-width:720px){.layout3{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:10px}
+.rail h3{margin:0}
+details.ms{border:1px solid var(--line-strong);border-radius:var(--r);background:var(--surface);position:relative}
+details.ms summary{padding:6px 8px;cursor:pointer;list-style:none;font-size:13px;display:flex;justify-content:space-between;gap:6px}
+details.ms summary::after{content:"▾";color:var(--faint)}
+details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.flab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:3px}
+.side{position:sticky;top:70px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;text-align:right}
+.track{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:6px 0}
+.st{flex:1;min-width:84px;text-align:center;position:relative;font-size:12px;color:var(--muted)}
+.st::before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:2px;background:var(--line-strong)}
+.st:first-child::before{display:none}
+.st i{display:grid;place-items:center;width:26px;height:26px;margin:0 auto 4px;border-radius:50%;border:2px solid var(--line-strong);background:var(--surface);font-style:normal;font-family:var(--f-mono);font-size:12px;position:relative}
+.st.done{color:var(--fg)} .st.done i{background:var(--ink);border-color:var(--ink);color:var(--surface)} .st.done::before{background:var(--ink)}
+.st.cur i{border-color:var(--accent);color:var(--accent)} .st.cur{color:var(--fg);font-weight:600}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:12px;flex-wrap:wrap}
+.tabs button{border:none;background:none;padding:8px 12px;cursor:pointer;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}
+.sec{border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.sec>header{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.sec>header h3{margin:0}
+.sec>.bd{padding:14px}
+.note{background:var(--warn-soft);color:var(--warn);border-radius:var(--r);padding:8px 12px;font-size:13px}
+.note.info{background:var(--ink-soft);color:var(--ink)}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.rec-main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+@media (max-width:900px){.rec-main{grid-template-columns:minmax(0,1fr)}}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini div{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--ink);border-radius:var(--r);padding:8px}
+.mini small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.mini b{font-family:var(--f-display);font-size:20px}
+.savebar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-radius:0 0 var(--r) var(--r)}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:var(--r);z-index:30;font-size:13px}
+.bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.slate-item{display:grid;grid-template-columns:90px minmax(0,1fr) 200px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+@media (max-width:700px){.slate-item{grid-template-columns:80px minmax(0,1fr)}}
+.picker{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:var(--r)}
+.picker .grp{padding:6px 10px;background:var(--sunk);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--muted);position:sticky;top:0}
+.picker label{display:grid;grid-template-columns:20px 70px minmax(0,1fr) auto;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);cursor:pointer;align-items:start}
+.picker label:hover{background:var(--sunk)}
+.picker small{color:var(--muted);display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--ink-soft);color:var(--ink);border-radius:12px;padding:2px 4px 2px 10px;font-size:12.5px;display:inline-flex;gap:4px;align-items:center}
+.chip button{border:none;background:none;cursor:pointer;color:inherit}
+.list-row{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center}
+.list-row:hover{background:var(--sunk)}
+.vocab{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px}
+@media (max-width:700px){.vocab{grid-template-columns:minmax(0,1fr)}}
+.vlist button{display:flex;justify-content:space-between;width:100%;border:none;background:none;padding:6px 8px;border-radius:var(--r);cursor:pointer;text-align:left}
+.vlist button[aria-current]{background:var(--ink-soft);color:var(--ink)}
+.help h2{margin-top:22px}
+.help p,.help li{max-width:72ch}
+@media (max-width:760px){nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto}nav a{white-space:nowrap}.top{gap:8px 14px}.who{margin-left:auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand"><i aria-hidden="true"></i>Permit Desk</div>
+  <nav id="nav" aria-label="Main"></nav>
+  <div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span></div>
+</header>
+<div id="pop" class="pop" hidden></div>
+<main id="main"><p class="empty">Loading your permit desk…</p></main>
+<div id="toast" class="toast" hidden></div>
+<script>window.PD_MODE="github";</script>
+<script>
+/* Permit Desk storage layer: runs the app without Claude.
+   MODE "local"  -> everything is saved in this browser (localStorage).
+   MODE "remote" -> everything is saved online through /api/data (password protected). */
+(function(){
+  const MODE = window.PD_MODE || 'local';
+  const LS_KEY = 'permitdesk-data-v1';
+  const docs = new Map();            // path -> data
+  const docL = new Map();            // path -> Set(listener)
+  const colL = new Map();            // collection -> Set(listener)
+  let version = 0, ready = null;
+
+  const clone = v => v==null ? v : JSON.parse(JSON.stringify(v));
+  const isTop = (path, coll) => { const p = path.split('/'); return p.length===2 && p[0]===coll; };
+  function snapDoc(path){ const d = docs.get(path); return { id: path.split('/').pop(), exists: d!==undefined, data: ()=>clone(d), metadata:{fromCache:false} }; }
+  function snapCol(coll){ const out=[]; docs.forEach((d,p)=>{ if(isTop(p,coll)) out.push({id:p.split('/')[1], data:()=>clone(d)}); }); return {docs:out, size:out.length, empty:!out.length, metadata:{fromCache:false}}; }
+  function emit(paths){
+    const colls = new Set();
+    paths.forEach(p=>{ (docL.get(p)||[]).forEach(cb=>{ try{cb(snapDoc(p));}catch(e){console.error(e);} }); const s=p.split('/'); if(s.length===2) colls.add(s[0]); });
+    colls.forEach(c=>(colL.get(c)||[]).forEach(cb=>{ try{cb(snapCol(c));}catch(e){console.error(e);} }));
+  }
+  function emitAll(){ emit([...new Set([...docs.keys(), ...docL.keys()])]); colL.forEach((s,c)=>s.forEach(cb=>cb(snapCol(c)))); }
+  function applyOps(ops){
+    ops.forEach(o=>{
+      if(o.op==='delete') docs.delete(o.path);
+      else if(o.op==='update'){ if(!docs.has(o.path)) throw Object.assign(new Error('Not found'),{code:'not-found'}); docs.set(o.path, {...docs.get(o.path), ...clone(o.data)}); }
+      else docs.set(o.path, clone(o.data));
+    });
+  }
+  function seedDocs(){ const el=document.getElementById('pd-seed'); return el ? JSON.parse(el.textContent) : {}; }
+
+  /* ---------- local backend ---------- */
+  function localSave(){
+    const obj={}; docs.forEach((d,p)=>obj[p]=d);
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({version, docs:obj})); }
+    catch(e){ alert('This browser could not save your changes (storage full or blocked). Use Backup to download a copy.'); throw e; }
+  }
+  async function localLoad(){
+    let raw=null; try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
+    const st = raw ? JSON.parse(raw) : {version:1, docs:seedDocs()};
+    version = st.version||1; Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d));
+    if(!raw) localSave();
+    window.addEventListener('storage', e=>{ if(e.key===LS_KEY && e.newValue){ const st=JSON.parse(e.newValue); docs.clear(); Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d)); version=st.version; emitAll(); } });
+  }
+
+  /* ---------- remote backend ---------- */
+  const auth = () => { try{ return JSON.parse(localStorage.getItem('permitdesk-login')||'null'); }catch(e){ return null; } };
+  async function api(method, body){
+    if(MODE==='github') return ghApi(method, body);
+    const a = auth();
+    const r = await fetch('/api/data'+(method==='GET'?'?v='+version:''), {method, cache:'no-store', headers:{'content-type':'application/json','x-pd-pass':a?.pass||''}, body: body?JSON.stringify(body):undefined});
+    if(r.status===401){ localStorage.removeItem('permitdesk-login'); location.reload(); throw new Error('Wrong password'); }
+    if(!r.ok) throw new Error((await r.text())||('Server error '+r.status));
+    return r.json();
+  }
+
+  /* ---------- GitHub backend: data.json in a private repo; every save is a commit ---------- */
+  const GH = Object.assign({owner:'johnsochet19', repo:'permit-desk-data', path:'data.json', branch:'main', api:'https://api.github.com'}, window.PD_GH||{});
+  const ghBase = () => `${GH.api}/repos/${GH.owner}/${GH.repo}`;
+  async function gh(url, opts={}, token){
+    const r = await fetch(url.startsWith('http')?url:ghBase()+url, {...opts, cache:'no-store', headers:{'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+(token||auth()?.pass||''), ...(opts.headers||{})}});
+    if(r.status===401 && !token){ localStorage.removeItem('permitdesk-login'); alert('Your GitHub access key stopped working (expired or revoked). Sign in again with a new one.'); location.reload(); throw new Error('Bad key'); }
+    return r;
+  }
+  const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g,'')), c=>c.charCodeAt(0)));
+  function b64enc(str){ const bytes=new TextEncoder().encode(str); let bin=''; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
+  function serialize(obj){ const keys=Object.keys(obj).sort(); return '{"app":"Permit Desk","docs":{\n'+keys.map(k=>JSON.stringify(k)+':'+JSON.stringify(obj[k])).join(',\n')+'\n}}\n'; }
+  async function ghRead(){
+    const r = await gh(`/contents/${GH.path}?ref=${GH.branch}`);
+    if(r.status===404) return {sha:null, docs:{}};
+    if(!r.ok) throw new Error('GitHub said '+r.status+' reading the data');
+    const m = await r.json(); let b64 = m.content;
+    if(!b64 || !b64.trim()){ const r2 = await gh(`/git/blobs/${m.sha}`); if(!r2.ok) throw new Error('GitHub said '+r2.status+' reading the data'); b64=(await r2.json()).content; }
+    return {sha:m.sha, docs:JSON.parse(b64dec(b64)).docs||{}};
+  }
+  function describe(ops, docs){
+    const o=ops[0]; if(!o) return 'Update'; const d={...(docs&&docs[o.path]||{}), ...(o.data||{})};
+    const proj = d.projectId && docs ? docs['projects/'+d.projectId]?.name : ''; const what = (d.code&&d.name ? `${d.code} ${d.name}` : (d.name || o.path)) + (proj?` (${proj})`:'');
+    return (o.op==='delete'?'Delete ':'Update ')+what+(ops.length>1?` (+${ops.length-1} more)`:'');
+  }
+  async function ghApi(method, body){
+    if(method==='GET'){ const st=await ghRead(); return {version:st.sha||0, docs:st.docs}; }
+    for(let attempt=0; attempt<5; attempt++){
+      const st = await ghRead(); const d = st.docs;
+      if(body.replace) Object.keys(d).forEach(k=>delete d[k]), Object.assign(d, body.replace);
+      else for(const o of body.ops||[]){ if(o.op==='delete') delete d[o.path]; else if(o.op==='update') d[o.path]={...(d[o.path]||{}),...o.data}; else d[o.path]=o.data; }
+      const msg = `${auth()?.name||'Someone'}: ${body.replace?'Restore from backup':describe(body.ops||[], d)}`;
+      const r = await gh(`/contents/${GH.path}`, {method:'PUT', headers:{'content-type':'application/json'}, body:JSON.stringify({message:msg, content:b64enc(serialize(d)), branch:GH.branch, ...(st.sha?{sha:st.sha}:{})})});
+      if(r.status===409 || r.status===422){ await new Promise(res=>setTimeout(res, 400*(attempt+1))); continue; }
+      if(!r.ok) throw new Error('GitHub said '+r.status+' saving: '+((await r.json().catch(()=>({}))).message||''));
+      return {version:(await r.json()).content.sha};
+    }
+    throw new Error('Someone else kept saving at the same moment; try again');
+  }
+  function replaceAll(obj){ docs.clear(); Object.entries(obj).forEach(([p,d])=>docs.set(p,d)); }
+  async function remoteLoad(){
+    const res = await api('GET'); version=res.version; replaceAll(res.docs);
+    setInterval(async()=>{ if(document.hidden) return; try{ const res=await api('GET'); if(res.docs && res.version!==version){ version=res.version; replaceAll(res.docs); emitAll(); } }catch(e){} }, MODE==='github'?20000:15000);
+  }
+  let queue = Promise.resolve();
+  function write(ops){
+    applyOps(ops); emit(ops.map(o=>o.path));
+    if(MODE==='local'){ version++; localSave(); return Promise.resolve(); }
+    const p = queue.then(()=>api('POST',{ops})).then(res=>{ version=res.version; });
+    queue = p.catch(()=>{});
+    return p.catch(e=>{ alert('Your last change was not saved online: '+e.message+'\nReloading to show what is saved.'); location.reload(); throw e; });
+  }
+
+  /* ---------- Firestore-like surface used by the app ---------- */
+  const db = {
+    doc(path){ return {
+      onSnapshot(cb, err){ ready.then(()=>cb(snapDoc(path)), err); if(!docL.has(path)) docL.set(path,new Set()); docL.get(path).add(cb); return ()=>docL.get(path).delete(cb); },
+      async get(){ await ready; return snapDoc(path); },
+      async set(data){ await ready; return write([{op:'set',path,data}]); },
+      async update(data){ await ready; return write([{op:'update',path,data}]); },
+      async delete(){ await ready; return write([{op:'delete',path}]); }
+    }; },
+    collection(c){ return {
+      onSnapshot(cb, err){ ready.then(()=>cb(snapCol(c)), err); if(!colL.has(c)) colL.set(c,new Set()); colL.get(c).add(cb); return ()=>colL.get(c).delete(cb); }
+    }; }
+  };
+  const me = () => MODE==='local' ? {id:'me', name:'You'} : (auth()||{id:'user',name:'User'});
+  const user = {
+    async id(){ await ready; return me().id; }, async can(){ return true; }, async canEdit(){ return true; },
+    async profiles(ids){ const o={}; ids.forEach(i=>{ const p=docs.get(`data/users/${i}/profile`); o[i]={name:p?.name || (i===me().id?me().name:i.replace(/^u-/,'').replace(/-/g,' '))}; }); return o; }
+  };
+  const downloads = { async save({filename,data}){ const b=new Blob([data],{type:/\.csv$/i.test(filename)?'text/csv':'application/octet-stream'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); return {status:'saved'}; } };
+
+  window.PD_STORE = {
+    mode: MODE,
+    exportAll(){ const obj={}; docs.forEach((d,p)=>obj[p]=d); return {app:'Permit Desk', exportedAt:new Date().toISOString(), docs:obj}; },
+    async importAll(obj){ if(!obj||!obj.docs) throw new Error('Not a Permit Desk backup file');
+      if(MODE==='local'){ replaceAll(obj.docs); version++; localSave(); emitAll(); return; }
+      const res = await api('POST',{replace:obj.docs}); version=res.version; replaceAll(obj.docs); emitAll(); },
+    logout(){ localStorage.removeItem('permitdesk-login'); location.reload(); }
+  };
+
+  function loginGate(){
+    return new Promise(resolve=>{
+      if(auth()) return resolve();
+      const isGh = MODE==='github';
+      const box=document.createElement('div');
+      box.innerHTML=`<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3f4f2;font:15px -apple-system,Segoe UI,Arial,sans-serif">
+        <form style="background:#fff;border:1px solid #d5d9d2;border-radius:8px;padding:24px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">
+          <h2 style="margin:0;font-size:20px">Permit Desk</h2>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">Your name<input name="n" required autocomplete="name" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">${isGh?'GitHub access key':'Password'}<input name="p" type="password" required autocomplete="off" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
+          ${isGh?`<small style="color:#5d665f;line-height:1.4">A fine-grained GitHub token with read and write access to <b>${GH.owner}/${GH.repo}</b> (Contents). It stays in this browser and is only sent to GitHub.</small>`:''}
+          <button style="font:inherit;padding:9px;border:0;border-radius:6px;background:#1f3b57;color:#fff;cursor:pointer">Sign in</button>
+          <small class="err" style="color:#b3362c"></small></form></div>`;
+      document.body.appendChild(box);
+      box.querySelector('form').onsubmit=async e=>{ e.preventDefault(); const f=e.target; const name=f.n.value.trim(), pass=f.p.value.trim(); const err=f.querySelector('.err'); err.textContent='Checking…';
+        try{
+          if(isGh){
+            const r=await gh('', {}, pass);
+            if(r.status===401){ err.textContent='GitHub did not accept that key.'; return; }
+            if(r.status===404){ err.textContent=`That key can't see ${GH.owner}/${GH.repo}. Give it access to that repository.`; return; }
+            const j=await r.json(); if(j.permissions && !j.permissions.push){ err.textContent='That key can read but not save. Give it Contents: Read and write.'; return; }
+          } else {
+            const r=await fetch('/api/data?check=1',{headers:{'x-pd-pass':pass},cache:'no-store'});
+            if(r.status===401){ err.textContent='That password is not right.'; return; }
+          }
+        }catch(x){ err.textContent='Could not reach '+(isGh?'GitHub':'the server')+'. Check your connection.'; return; }
+        localStorage.setItem('permitdesk-login', JSON.stringify({name, pass, id:'u-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}));
+        box.remove(); resolve(); };
+    });
+  }
+
+  ready = (async()=>{ if(MODE==='remote'||MODE==='github'){ await loginGate(); await remoteLoad(); } else await localLoad(); })();
+  ready.catch(e=>{ document.body.insertAdjacentHTML('afterbegin', `<p style="padding:16px;color:#b3362c">Could not load your data: ${String(e.message||e)}</p>`); });
+  window.claude = { use: async name => name==='db'?db : name==='user'?user : name==='downloads'?downloads : null };
+})();
+
+</script>
+<script>
+// ---------- constants ----------
+const FIELDS = [
+ ['code','Record code','text','Identity',1],['name','Name','text','Identity',1],['agency','Agency','agency','Identity',1],['category','Category','category','Identity',1],['kind','Kind','kind','Identity',1],['recordStatus','Record status','recstatus','Identity',1],['description','Description','textarea','Identity'],
+ ['officialId','Official agency ID','text','Reference numbers'],['applicationNo','Application #','text','Reference numbers'],['jobNo','Job #','text','Reference numbers'],['relatedJob','Related DOB job #','text','Reference numbers'],['deviceNo','Device #','text','Reference numbers'],['trackingNo','Tracking #','text','Reference numbers'],['bin','BIN','text','Reference numbers'],
+ ['dInitialFiling','Initial filing','date','Dates'],['dSubmission','Submission','date','Dates'],['dResubmission','Resubmission','date','Dates'],['dApproval','Approval','date','Dates'],['dIssue','Issue','date','Dates'],['dEffective','Effective','date','Dates'],['dExpiration','Expiration','date','Dates'],['dRenewalNotice','Renewal notice','date','Dates'],['dRenewalDue','Renewal due','date','Dates'],['dInspRequested','Inspection requested','date','Dates'],['dInspection','Inspection','date','Dates'],['dSignoff','Sign-off','date','Dates'],['dTarget','Target completion','date','Dates'],['dActual','Actual completion','date','Dates'],
+ ['currentStatus','Current status','status','Status & responsibility',1],['priority','Priority','list:Priority','Status & responsibility'],['bicCategory','Ball-in-court category','list:Ball-in-Court Category','Status & responsibility',1],['bicCompany','Ball-in-court company','company','Status & responsibility'],['bicPerson','Ball-in-court individual','contact','Status & responsibility'],['respCompany','Responsible company','company','Status & responsibility'],['respPerson','Responsible individual','contact','Status & responsibility'],['actionOwner','Action owner','contact','Status & responsibility'],['reviewer','Agency reviewer','text','Status & responsibility'],['nextAction','Next required action','text','Status & responsibility',1],
+ ['trInitial','Initial received','date','Special inspections (TR)'],['trFinal','Final received','date','Special inspections (TR)'],
+ ['paymentStatus','Payment status','list:Payment Status','Money & documents'],['docLink','Document link','url','Money & documents'],['folder','Project folder','url','Money & documents'],
+ ['comments','Comments','textarea','Notes'],['issues','Outstanding issues','textarea','Notes']];
+const FD = Object.fromEntries(FIELDS.map(f=>[f[0],{key:f[0],label:f[1],type:f[2],group:f[3],core:!!f[4]}]));
+const GROUPS = ['Identity','Reference numbers','Dates','Status & responsibility','Special inspections (TR)','Money & documents','Notes'];
+const PAIRS = {bicCompany:'bicPerson',respCompany:'respPerson'};
+const STAGE_FIELDS = {filing:['dInitialFiling'],planExam:['dSubmission'],objections:['dResubmission'],approval:['dApproval'],issuance:['dIssue'],payment:['paymentStatus'],inspection:['dInspRequested','dInspection'],testing:[],signoff:['dSignoff'],renewal:['dRenewalNotice','dRenewalDue'],expires:['dEffective','dExpiration']};
+const STAGE_LABEL = {filing:'Initial filing required',planExam:'Plan examination / review',objections:'Objections / comments cycle',approval:'Approval before issuance',issuance:'Issuance step',payment:'Payment / fees required',inspection:'Inspection(s) required',testing:'Testing required',signoff:'Final sign-off / CO required',renewal:'Renewal required',expires:'Expires (has a validity period)'};
+const STAGES = ['Filing','Plan exam','Objections','Approval','Issuance','Inspections','Sign-off'];
+const FINAL_IN_STAGE = ['Approved','Issued','Inspection Passed','Signed Off'];
+const CLOSED = ['Closed','Signed Off','Cancelled','Superseded','Not Applicable'];
+const PREFIX = {'DOB':'DOB','DOT':'DOT','DEP':'DEP','FDNY':'FDNY','DOHMH':'DOHMH','Parks':'PARKS','Landmarks':'LPC','MTA':'MTA','Utilities':'UTIL','TR (Special Inspections)':'TR','Other Agencies':'OTHER'};
+const CHECKS = [
+ ['dupOfficial','Duplicate official agency ID'],['dupCode','Duplicate record code in a project'],['issuedNoDate','Issued with no issue date'],['issuedNoId','Issued with no official agency ID'],['issueAfterExp','Issue date after expiration'],['renewAfterExp','Renewal due after expiration'],['archivedNoClose','Archived with no completion or explanation'],['noName','No name'],['noStatus','No current status'],['noBic','Nobody is ball-in-court'],['bicMismatch','Ball-in-court person is not at that company']];
+const CHECK_LABEL = Object.fromEntries(CHECKS);
+const DEADLINES = [['due7','Due within 7 days'],['overdue','Overdue'],['exp60','Expiring within 60 days'],['ren30','Renewal due within 30 days'],['stale','Not touched in 30+ days']];
+const VOCAB_INFO = {
+ 'Agency':['Records','The desks a filing goes to. Every permit type is tagged to one.'],
+ 'Permit Category':['Records','The groups the catalog is browsed by, and the one list scoped per agency.'],
+ 'Ball-in-Court Category':['Records','Who the next move belongs to.'],
+ 'Priority':['Records','How urgent a record is.'],
+ 'Payment Status':['Records','Where a fee stands.'],
+ 'Reference Number Type':['Records','The kinds of number a permit type carries.'],
+ 'Dependency Type':['Records','How one item blocks another.'],
+ 'Project Type':['Projects','The kinds of job a permit type applies to.'],
+ 'Borough':['Projects','Where a project is.'],
+ 'Company Type':['Directory','What kind of firm a directory company is.'],
+ 'Discipline':['Directory','The trades. Used by companies, contacts, the project team and the catalog.'],
+ 'Project Role':['Directory','How a person or firm is described on a job.'],
+ 'Inspection Result':['Inspections','How an inspection went.'],
+ 'Inspection Performed By':['Inspections','Who carries out an inspection.'],
+ 'Capitalization Exception':['Text & formatting','All-caps words smart capitalization leaves alone.']};
+const STAGE_OPTS = ['none','Filing','Plan exam','Objections','Approval','Issuance','Inspections','Sign-off','Renewal','Expiry','done'];
+
+// ---------- helpers ----------
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = ()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+const dayN = d=>Math.round(Date.parse(d+'T12:00:00Z')/864e5);
+const daysUntil = d=>d? dayN(d)-dayN(today()) : null;
+const fmtD = d=>{ if(!d) return '—'; const t=new Date(d.length===10?d+'T12:00:00Z':d); return t.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric',timeZone: d.length===10?'UTC':'America/New_York'}); };
+const fmtDT = d=>d? new Date(d).toLocaleString('en-US',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}) : '';
+const uidGen = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const opts = (list,sel,blank='—')=>(blank!==null?`<option value="">${esc(blank)}</option>`:'')+list.map(v=>{const [val,lab]=Array.isArray(v)?v:[v,v];return `<option value="${esc(val)}"${val===sel?' selected':''}>${esc(lab)}</option>`}).join('');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600);}
+function smartCap(s){ if(!s) return s; const ex=new Set((S.cfg?.lists['Capitalization Exception']||[]).map(x=>x.toUpperCase()));
+  return s.replace(/[A-Za-z][A-Za-z']*/g,(w,pos)=>{const u=w.toUpperCase(); if(ex.has(u)) return u; if(w!==w.toLowerCase()) return w; if(/^mc[a-z]/.test(w)) return 'Mc'+w[2].toUpperCase()+w.slice(3); if(/^o'[a-z]/.test(w)) return "O'"+w[2].toUpperCase()+w.slice(3); if(pos>0&&/^(of|and|the|at|on|in|for|to)$/.test(w)) return w; return w[0].toUpperCase()+w.slice(1);}); }
+
+// ---------- state ----------
+const S = {cfg:null,catalog:{},projects:{},records:{},companies:{},contacts:{},ready:{},me:{},names:{},
+  view:'dashboard', recId:null, projId:null, typeId:null, newProject:false, sel:null,
+  F:{project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:''},
+  sort:{col:'dTarget',dir:1}, cols:null, groupAgency:false, dirty:false, pending:false, recTab:'details',
+  report:'status', rp:{project:'',agency:'',status:'',group:'',show:'Active',from:'',to:''}, setTab:'vocab', vocab:'Agency',
+  catF:{agency:'',category:'',template:'',q:'',retired:false}, slateSel:new Set(), slateF:{agency:'',category:'',q:''},
+  dirQ:'', dirInactive:false, openRow:null, email:null, noDb:false, offline:false};
+let db=null,user=null,uid=null,canWrite=true,canEditCfg=false,downloads=null;
+const COLS_DEFAULT=['code','name','agency','category','currentStatus','bic','nextAction','priority','dTarget','updated'];
+try{const c=JSON.parse(localStorage.getItem('pd.cols')||'null'); if(Array.isArray(c)) S.cols=c;}catch(e){}
+if(!S.cols) S.cols=COLS_DEFAULT.slice();
+
+// lookups
+const lists = n=>(S.cfg?.lists?.[n]||[]).filter(v=>!(S.cfg.retired?.[n]||[]).includes(v));
+const statuses = ()=>(S.cfg?.statuses||[]).filter(s=>!s[2]).map(s=>s[0]);
+const stageOf = st=>(S.cfg?.statuses||[]).find(s=>s[0]===st)?.[1]||'none';
+const coName = id=>S.companies[id]?.name||'';
+const ctName = id=>S.contacts[id]?.name||'';
+const projName = id=>S.projects[id]?.name||'';
+const activeCos = ()=>Object.entries(S.companies).filter(([,c])=>c.active!==false).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+const activeCts = ()=>Object.entries(S.contacts).filter(([,c])=>c.active!==false).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+const recs = ()=>Object.entries(S.records).map(([id,r])=>({...r,id}));
+const bicLabel = r=>r.bicPerson?ctName(r.bicPerson):r.bicCompany?coName(r.bicCompany):(r.bicCategory||'');
+function catScopeOK(cat,agency){const sc=S.cfg?.scope?.[cat]; return !sc||!agency||sc.includes(agency);}
+
+// ---------- computed ----------
+function checksFor(r, all){
+  const out=[];
+  if(r.officialId && all.some(o=>o.id!==r.id && o.officialId && o.officialId.trim()===r.officialId.trim())) out.push('dupOfficial');
+  if(r.code && all.some(o=>o.id!==r.id && o.projectId===r.projectId && o.code===r.code)) out.push('dupCode');
+  if(r.currentStatus==='Issued' && !r.dIssue) out.push('issuedNoDate');
+  if(r.currentStatus==='Issued' && !r.officialId) out.push('issuedNoId');
+  if(r.dIssue && r.dExpiration && r.dIssue>r.dExpiration) out.push('issueAfterExp');
+  if(r.dRenewalDue && r.dExpiration && r.dRenewalDue>r.dExpiration) out.push('renewAfterExp');
+  if(r.recordStatus==='Archived' && !r.dActual && !(r.comments||'').trim()) out.push('archivedNoClose');
+  if(!(r.name||'').trim()) out.push('noName');
+  if(!r.currentStatus) out.push('noStatus');
+  if(!r.bicCategory && !r.bicCompany && !r.bicPerson) out.push('noBic');
+  if(r.bicPerson && r.bicCompany && S.contacts[r.bicPerson] && S.contacts[r.bicPerson].companyId!==r.bicCompany) out.push('bicMismatch');
+  return out;
+}
+function deadlinesFor(r){
+  const out=[]; if(r.recordStatus!=='Active' || CLOSED.includes(r.currentStatus)) return out;
+  const t=daysUntil(r.dTarget); if(t!==null && !r.dActual){ if(t<0) out.push(['overdue',r.dTarget,t]); else if(t<=7) out.push(['due7',r.dTarget,t]); }
+  if(r.setup?.expires!==false){ const e=daysUntil(r.dExpiration); if(e!==null && e>=0 && e<=60) out.push(['exp60',r.dExpiration,e]); }
+  if(r.setup?.renewal!==false){ const n=daysUntil(r.dRenewalDue); if(n!==null && n>=0 && n<=30) out.push(['ren30',r.dRenewalDue,n]); }
+  if(r.updatedAt && (Date.now()-Date.parse(r.updatedAt))/864e5>=30) out.push(['stale',r.updatedAt.slice(0,10),null]);
+  return out;
+}
+let CMP=null;
+function computed(){
+  if(CMP) return CMP;
+  const all=recs(); const map={};
+  all.forEach(r=>{ map[r.id]={checks:checksFor(r,all),dl:deadlinesFor(r)}; });
+  return CMP={all,map};
+}
+function progress(r){
+  const st=stageOf(r.currentStatus);
+  if(st==='done') return {done:7,cur:-1,label:'Complete'};
+  const i=STAGES.indexOf(st);
+  if(i<0) return {done:0,cur:-1,label:st==='Renewal'||st==='Expiry'?st:'Not yet started'};
+  const done=i+(FINAL_IN_STAGE.includes(r.currentStatus)?1:0);
+  return {done,cur:done<7?done:-1,label:r.currentStatus};
+}
+function trStatus(pid){
+  const trs=recs().filter(r=>r.projectId===pid && r.agency==='TR (Special Inspections)' && r.recordStatus!=='Archived');
+  if(!trs.length) return {n:0,label:'No TRs on this job',ok:null};
+  const done=trs.filter(r=>r.trFinal || ['Signed Off','Closed'].includes(r.currentStatus)).length;
+  return {n:trs.length,done,ok:done===trs.length,label:done===trs.length?`All ${trs.length} TRs signed off`:`${done} of ${trs.length} TRs have a Final`};
+}
+function myAlerts(){
+  const cid=S.me.contactId; if(!cid) return null;
+  const {all,map}=computed(); const out=[];
+  all.forEach(r=>{ if(r.bicPerson===cid||r.respPerson===cid||r.actionOwner===cid){ map[r.id].dl.forEach(d=>{ if((S.me.alertTypes||DEADLINES.map(x=>x[0])).includes(d[0])) out.push({r,d}); }); }});
+  return out.sort((a,b)=>(a.d[1]||'').localeCompare(b.d[1]||''));
+}
+
+// ---------- filtering ----------
+function filtered(F=S.F){
+  const {all,map}=computed();
+  return all.filter(r=>{
+    if(F.project.length && !F.project.includes(r.projectId)) return false;
+    if(F.agency.length && !F.agency.includes(r.agency)) return false;
+    if(F.category.length && !F.category.includes(r.category)) return false;
+    if(F.status.length && !F.status.includes(r.currentStatus)) return false;
+    if(F.priority.length && !F.priority.includes(r.priority)) return false;
+    if(F.bic.length && !F.bic.includes(r.bicCategory)) return false;
+    if(F.show.length && !F.show.includes(r.recordStatus||'Queued')) return false;
+    if(F.check==='any' && !map[r.id].checks.length) return false;
+    if(F.check && F.check!=='any' && !map[r.id].checks.includes(F.check)) return false;
+    if(F.deadline && !map[r.id].dl.some(d=>d[0]===F.deadline)) return false;
+    if(F.bicCompany && r.bicCompany!==F.bicCompany) return false;
+    if(F.bicPerson && r.bicPerson!==F.bicPerson) return false;
+    return true;
+  });
+}
+function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:'',...patch}; S.sel=null; nav('records'); }
+
+// ---------- db ----------
+async function boot(){
+  renderNav(); render();
+  if(!window.claude?.use){ S.noDb=true; render(); return; }
+  try{ db=await claude.use('db'); }catch(e){ db=null; }
+  if(!db){ S.noDb=true; render(); return; }
+  try{ user=await claude.use('user'); if(user){ uid=await user.id(); const c=await user.can('data.write'); canWrite=c!==false; canEditCfg=!!(await user.canEdit()); } }catch(e){}
+  try{ downloads=await claude.use('downloads'); }catch(e){}
+  const timer=setTimeout(()=>{ if(!S.ready.config){ S.offline=true; render(); } },10000);
+  db.doc('config/main').onSnapshot(s=>{ S.cfg=s.exists?s.data():null; S.ready.config=true; if(!s.metadata.fromCache){clearTimeout(timer);S.offline=false;} changed(); }, e=>{S.err=e.message;render();});
+  ['catalog','projects','records','companies','contacts'].forEach(c=>{
+    db.collection(c).onSnapshot(s=>{ const o={}; s.docs.forEach(d=>o[d.id]=d.data()); S[c]=o; S.ready[c]=true; changed(); }, e=>{S.err=e.message;render();});
+  });
+  if(uid){ db.doc(`data/users/${uid}/profile`).onSnapshot(s=>{ S.me=s.exists?s.data():{}; changed(); },()=>{}); }
+}
+let rTimer=null;
+function changed(){ CMP=null; clearTimeout(rTimer); rTimer=setTimeout(()=>{ if(S.dirty){ S.pending=true; renderBanner(); } else render(); },30); }
+async function put(coll,id,data,merge){
+  try{ const ref=db.doc(`${coll}/${id}`); if(merge) await ref.update(data); else await ref.set(data); return true; }
+  catch(e){ if(e.code==='invalid_argument' && canWrite){ canWrite=false; toast('You can view this tracker but not change it.'); render(); } else if(e.code==='quota_exceeded') toast('The tracker is full. Archive or delete old items first.'); else toast('Could not save: '+(e.message||e.code)); return false; }
+}
+async function del(coll,id){ try{ await db.doc(`${coll}/${id}`).delete(); return true;}catch(e){ toast('Could not delete: '+(e.message||e.code)); return false; } }
+function stamp(){ return {updatedAt:new Date().toISOString(), updatedBy:uid||''}; }
+async function personName(id){ if(!id) return 'Someone'; if(S.names[id]) return S.names[id]; try{ const p=await user.profiles([id]); S.names[id]=p[id]?.name||'Someone'; }catch(e){ S.names[id]='Someone'; } return S.names[id]; }
+async function resolveNames(ids){ ids=[...new Set(ids.filter(i=>i&&!S.names[i]))]; if(!ids.length||!user) return; try{ const p=await user.profiles(ids); ids.forEach(i=>S.names[i]=p[i]?.name||'Someone'); render(); }catch(e){} }
+
+// ---------- export ----------
+async function saveCsv(name, header, rows){
+  const q=v=>{v=String(v??''); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv=[header,...rows].map(r=>r.map(q).join(',')).join('\r\n');
+  if(!downloads){ toast('Downloads are not available in this view.'); return; }
+  try{ const res=await downloads.save({filename:name, data:'﻿'+csv}); if(res.status==='saved') toast('Saved '+name); }catch(e){ if(e.code!=='cancelled') toast('Could not save the file.'); }
+}
+
+// ---------- navigation ----------
+const VIEWS=[['dashboard','Dashboard'],['records','Records'],['projects','Projects'],['catalog','Catalog'],['companies','Companies'],['contacts','Contacts'],['reports','Reports'],['admin','Settings'],['help','Help']];
+function nav(v,extra={}){ if(S.dirty && !confirmLeave()) return; Object.assign(S,{view:v,recId:null,projId:null,typeId:null,newProject:false,email:null,...extra}); S.dirty=false; S.pending=false; if(location.hash!=='#'+v) history.replaceState(null,'','#'+v); renderNav(); render(); window.scrollTo(0,0); }
+function confirmLeave(){ if(S.leaveAsk){ S.leaveAsk=false; return true; } S.leaveAsk=true; toast('You have unsaved changes. Click again to leave without saving.'); setTimeout(()=>S.leaveAsk=false,4000); return false; }
+function renderNav(){ $('#nav').innerHTML=VIEWS.map(([k,l])=>`<a href="#${k}" data-nav="${k}"${S.view===k?' aria-current="page"':''}>${l}</a>`).join(''); }
+window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v) && v!==S.view) nav(v); });
+{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v)) S.view=v; }
+
+function render(){
+  const m=$('#main'); const ae=document.activeElement; const fid=ae&&ae.id&&m.contains(ae)?ae.id:null; const ss=fid&&ae.selectionStart!=null?[ae.selectionStart,ae.selectionEnd]:null;
+  m.innerHTML=view(); renderBell(); renderBanner();
+  if(fid){ const el=document.getElementById(fid); if(el){ el.focus(); if(ss&&el.setSelectionRange) try{el.setSelectionRange(ss[0],ss[1]);}catch(e){} } }
+}
+function renderBanner(){ const b=$('#pendingNote'); if(b) b.hidden=!S.pending; }
+function view(){
+  if(S.noDb) return `<div class="card"><h2>Permit Desk couldn't start</h2><p class="lede">The storage layer didn't load. Reload the page.</p></div>`;
+  if(!S.ready.config||!S.ready.records||!S.ready.catalog) return `<p class="empty">${S.offline?'Your data can\'t be reached yet. Check your connection; this page will fill in as soon as it answers.':'Loading your permit desk…'}</p>`;
+  if(!S.cfg) return `<div class="card"><h2>Nothing set up yet</h2><p class="lede">The master catalog and dropdown lists haven't been loaded. Restore a backup file in Settings → People & access.</p></div>`;
+  const ro=!canWrite?`<p class="note info" style="margin-bottom:12px">You can view this tracker but not change it.</p>`:'';
+  const pend=`<p class="note info" id="pendingNote" hidden style="margin-bottom:12px">Someone else changed this data while you were editing. Save or discard your changes to see their update.</p>`;
+  const fn={dashboard:vDashboard,records:vRecords,projects:vProjects,catalog:vCatalog,companies:vCompanies,contacts:vContacts,reports:vReports,admin:vSettings,help:vHelp}[S.view]||vDashboard;
+  return ro+pend+fn();
+}
+// ---------- dashboard ----------
+function vDashboard(){
+  const pf=S.dash||{project:'',agency:''};
+  const base={project:pf.project?[pf.project]:[],agency:pf.agency?[pf.agency]:[]};
+  const {all,map}=computed();
+  const scope=all.filter(r=>(!pf.project||r.projectId===pf.project)&&(!pf.agency||r.agency===pf.agency));
+  const act=scope.filter(r=>r.recordStatus==='Active'), q=scope.filter(r=>(r.recordStatus||'Queued')==='Queued');
+  const cnt=k=>act.filter(r=>map[r.id].dl.some(d=>d[0]===k)).length;
+  const flagged=act.filter(r=>map[r.id].checks.length); const nflags=flagged.reduce((s,r)=>s+map[r.id].checks.length,0);
+  const tile=(lab,n,sub,patch,cls='')=>`<button class="tile ${cls}" data-go='${esc(JSON.stringify({...base,...patch}))}'><small>${lab}</small><b>${n}</b>${sub?`<span>${sub}</span>`:''}</button>`;
+  const watch=[]; act.forEach(r=>map[r.id].dl.filter(d=>d[0]!=='stale').forEach(d=>watch.push({r,d}))); watch.sort((a,b)=>(a.d[1]||'').localeCompare(b.d[1]||''));
+  const byAg={}; act.forEach(r=>byAg[r.agency]=(byAg[r.agency]||0)+1);
+  const chk={}; act.forEach(r=>map[r.id].checks.forEach(c=>chk[c]=(chk[c]||0)+1));
+  const grp=(key,lab)=>{const o={}; act.forEach(r=>{const k=r[key]; if(k) o[k]=(o[k]||0)+1;}); return o;};
+  const bc=grp('bicCategory'), bco=grp('bicCompany'), bp=grp('bicPerson');
+  const projects=Object.entries(S.projects).filter(([,p])=>p.status!=='Archived').sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  const listTbl=(o,lab,fmt,mk)=>Object.keys(o).length?`<table><tbody>${Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<tr class="click" data-go='${esc(JSON.stringify({...base,...mk(k)}))}'><td>${esc(fmt(k))}</td><td class="num">${n}</td></tr>`).join('')}</tbody></table>`:`<p class="empty">${lab}</p>`;
+  return `<h1>Portfolio</h1><p class="lede">Every job at once. Deadlines, flags and the TR rollup are worked out from the records each time this page loads. Click any number to open the records on exactly those rows.</p>
+  <div class="row" style="margin-bottom:14px"><label class="f" style="width:220px">Project<select id="dProj" data-dash="project">${opts(projects.map(([id,p])=>[id,p.name]),pf.project,'All projects')}</select></label>
+  <label class="f" style="width:200px">Agency<select id="dAg" data-dash="agency">${opts(lists('Agency'),pf.agency,'All agencies')}</select></label></div>
+  <div class="tiles">${tile('Active records',act.length,'',{})}${tile('Queued',q.length,'not started yet',{show:['Queued']},'acc')}${tile('Open data checks',nflags,`on ${flagged.length} records`,{check:'any'},'warn')}${tile('Due within 7 days',cnt('due7'),'',{deadline:'due7'},'warn')}${tile('Overdue',cnt('overdue'),'',{deadline:'overdue'},'bad')}${tile('Expiring within 60 days',cnt('exp60'),'',{deadline:'exp60'},'warn')}${tile('Renewal due within 30 days',cnt('ren30'),'',{deadline:'ren30'},'warn')}${tile('Not touched in 30+ days',cnt('stale'),'',{deadline:'stale'})}</div>
+  <section class="sec" style="margin-bottom:14px"><header><h3>Watchlist</h3><span class="pill">${watch.length} deadlines, soonest first</span></header>
+  ${watch.length?`<div class="tbl-wrap" style="border:none"><table><thead><tr><th>Record</th><th>Project</th><th>What</th><th>Date</th><th class="num">Days</th><th>Ball-in-court</th></tr></thead><tbody>${watch.map(({r,d})=>`<tr class="click ${d[0]==='overdue'?'over':'soon'}" data-open="${r.id}"><td><span class="code">${esc(r.code)}</span> ${esc(r.name)}</td><td>${esc(projName(r.projectId))}</td><td>${esc(DEADLINES.find(x=>x[0]===d[0])[1])}</td><td>${fmtD(d[1])}</td><td class="num">${d[2]}</td><td>${esc(bicLabel(r)||'—')}</td></tr>`).join('')}</tbody></table></div>`:`<p class="empty">Nothing due, expiring or overdue.</p>`}</section>
+  <div class="grid2">
+   <section class="sec"><header><h3>Open data checks</h3></header><div class="bd">${Object.keys(chk).length?`<table><tbody>${CHECKS.filter(c=>chk[c[0]]).map(c=>`<tr class="click" data-go='${esc(JSON.stringify({...base,check:c[0]}))}'><td>${c[1]}</td><td class="num">${chk[c[0]]}</td></tr>`).join('')}</tbody></table>`:`<p class="empty">All ${CHECKS.length} checks are clear.</p>`}</div></section>
+   <section class="sec"><header><h3>By agency</h3></header><div class="bd">${listTbl(byAg,'No active records in this view.',k=>k,k=>({agency:[k]}))}</div></section>
+   <section class="sec"><header><h3>By project</h3></header><div class="bd">${projects.length?`<table><tbody>${projects.map(([id,p])=>{const n=act.filter(r=>r.projectId===id).length;const t=trStatus(id);return `<tr class="click" data-go='${esc(JSON.stringify({project:[id]}))}'><td>${esc(p.name)}<br><small class="mono" style="color:var(--muted)">${t.label}</small></td><td class="num">${n} active</td></tr>`}).join('')}</tbody></table>`:`<p class="empty">No projects yet. <button class="btn link" data-nav="projects">Create one</button></p>`}</div></section>
+   <section class="sec"><header><h3>Ball-in-court by category</h3></header><div class="bd">${listTbl(bc,'Nobody is assigned as ball-in-court.',k=>k,k=>({bic:[k]}))}</div></section>
+   <section class="sec"><header><h3>By company</h3></header><div class="bd">${listTbl(bco,'No ball-in-court company on any record.',coName,k=>({bicCompany:k}))}</div></section>
+   <section class="sec"><header><h3>By person</h3></header><div class="bd">${listTbl(bp,'No ball-in-court individual on any record.',ctName,k=>({bicPerson:k}))}</div></section>
+  </div>`;
+}
+
+// ---------- records grid ----------
+const COLDEFS = {
+ code:['Record code',r=>`<span class="code">${esc(r.code)}</span>`,r=>r.code], name:['Name',r=>esc(r.name),r=>r.name], agency:['Agency',r=>esc(r.agency),r=>r.agency], category:['Category',r=>esc(r.category),r=>r.category],
+ kind:['Kind',r=>esc(r.kind),r=>r.kind], project:['Project',r=>esc(projName(r.projectId)),r=>projName(r.projectId)], recordStatus:['Active/archived',r=>esc(r.recordStatus),r=>r.recordStatus], description:['Description',r=>esc(r.description),r=>r.description],
+ currentStatus:['Current status',r=>`<span class="pill ${CLOSED.includes(r.currentStatus)?'good':r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus||'—')}</span>`,r=>r.currentStatus],
+ bic:['Ball-in-court',r=>esc(bicLabel(r)||'—'),r=>bicLabel(r)], nextAction:['Next required action',r=>esc(r.nextAction||'—'),r=>r.nextAction], priority:['Priority',r=>r.priority?`<span class="pill ${r.priority==='Critical'?'bad':r.priority==='High'?'warn':''}">${esc(r.priority)}</span>`:'—',r=>['Critical','High','Medium','Low'].indexOf(r.priority)+1||9],
+ responsible:['Responsible',r=>esc(ctName(r.respPerson)||coName(r.respCompany)||'—'),r=>ctName(r.respPerson)||coName(r.respCompany)], actionOwner:['Action owner',r=>esc(ctName(r.actionOwner)||'—'),r=>ctName(r.actionOwner)], reviewer:['Agency reviewer',r=>esc(r.reviewer||'—'),r=>r.reviewer], paymentStatus:['Payment status',r=>esc(r.paymentStatus||'—'),r=>r.paymentStatus],
+ ...Object.fromEntries(FIELDS.filter(f=>f[2]==='date').map(f=>[f[0],[f[1],r=>fmtD(r[f[0]]),r=>r[f[0]]||'9999']])),
+ ...Object.fromEntries(['officialId','applicationNo','jobNo','relatedJob','deviceNo','trackingNo','bin','comments','issues','docLink','folder'].map(k=>[k,[FD[k].label,r=>esc(r[k]||'—'),r=>r[k]]])),
+ updated:['Last updated',r=>fmtD(r.updatedAt),r=>r.updatedAt], dueIn:['Days until due',r=>daysUntil(r.dTarget)??'—',r=>daysUntil(r.dTarget)??1e9], expIn:['Days until expiration',r=>daysUntil(r.dExpiration)??'—',r=>daysUntil(r.dExpiration)??1e9], renIn:['Days until renewal',r=>daysUntil(r.dRenewalDue)??'—',r=>daysUntil(r.dRenewalDue)??1e9],
+ checks:['Data checks',r=>computed().map[r.id].checks.length||'—',r=>computed().map[r.id].checks.length]};
+const COLGROUPS=[['Identity',['code','name','agency','category','kind','project','recordStatus','description']],['Status & people',['currentStatus','bic','nextAction','priority','responsible','actionOwner','reviewer','paymentStatus']],['Dates',FIELDS.filter(f=>f[2]==='date').map(f=>f[0])],['Reference',['officialId','applicationNo','jobNo','relatedJob','deviceNo','trackingNo','bin']],['Computed',['updated','dueIn','expIn','renIn','checks']],['Notes',['comments','issues','docLink','folder']]];
+function msFilter(key,label,items){
+  const sel=S.F[key]; const sum=sel.length?(sel.length===1?(items.find(i=>i[0]===sel[0])?.[1]||sel[0]):sel.length+' selected'):'All';
+  return `<div><div class="flab">${label}</div><details class="ms"><summary>${esc(sum)}</summary><div class="opts">${items.map(([v,l])=>`<label class="chk"><input type="checkbox" data-ms="${key}" value="${esc(v)}"${sel.includes(v)?' checked':''}> ${esc(l)}</label>`).join('')}</div></details></div>`;
+}
+function sortedRows(rows){ const d=COLDEFS[S.sort.col]; if(!d) return rows; return rows.slice().sort((a,b)=>{const x=d[2](a),y=d[2](b); return (x>y?1:x<y?-1:0)*S.sort.dir;}); }
+function vRecords(){
+  if(S.recId) return vRecord();
+  const F=S.F; const rows=sortedRows(filtered()); const {map}=computed();
+  const qn=recs().filter(r=>(r.recordStatus||'Queued')==='Queued').length;
+  const cols=S.cols.filter(c=>COLDEFS[c]);
+  const head=`<tr><th style="width:28px"></th>${cols.map(c=>`<th class="sort" data-sort="${c}">${COLDEFS[c][0]}${S.sort.col===c?(S.sort.dir>0?' ↑':' ↓'):''}</th>`).join('')}</tr>`;
+  const line=r=>{const dl=map[r.id].dl;const cls=dl.some(d=>d[0]==='overdue')?'over':dl.some(d=>d[0]!=='stale')?'soon':'';return `<tr class="click ${cls}${S.sel===r.id?' sel':''}" data-sel="${r.id}"><td>${map[r.id].checks.length?'<span class="dot" title="Open data check"></span>':''}</td>${cols.map(c=>`<td>${COLDEFS[c][1](r)}</td>`).join('')}</tr>`;};
+  let body='';
+  if(S.groupAgency){ const g={}; rows.forEach(r=>(g[r.agency]=g[r.agency]||[]).push(r)); body=Object.entries(g).map(([a,rs])=>`<tr><td colspan="${cols.length+1}" style="background:var(--sunk);font-weight:600">${esc(a)} · ${rs.length}</td></tr>`+rs.map(line).join('')).join(''); }
+  else body=rows.map(line).join('');
+  const sel=S.sel&&S.records[S.sel]?{...S.records[S.sel],id:S.sel}:null;
+  const projects=Object.entries(S.projects).map(([id,p])=>[id,p.name]);
+  return `<div class="layout3">
+   <aside class="rail"><div class="row" style="justify-content:space-between"><h3>Filters</h3><button class="btn link" data-act="clearF">Clear</button></div>
+    ${msFilter('project','Project',projects)}${msFilter('agency','Agency',lists('Agency').map(v=>[v,v]))}${msFilter('category','Category',lists('Permit Category').map(v=>[v,v]))}${msFilter('status','Current status',statuses().map(v=>[v,v]))}${msFilter('bic','Ball-in-court',lists('Ball-in-Court Category').map(v=>[v,v]))}${msFilter('priority','Priority',lists('Priority').map(v=>[v,v]))}${msFilter('show','Show',[['Active','Active'],['Queued','Queued'],['Archived','Archived']])}
+    <label class="f">Data check<select id="fCheck" data-fsel="check">${opts([['any','Has an open check'],...CHECKS],F.check,'Any (no filter)')}</select></label>
+    <label class="f">Deadline<select id="fDl" data-fsel="deadline">${opts(DEADLINES,F.deadline,'Any')}</select></label>
+    ${F.bicCompany||F.bicPerson?`<p class="note info">Ball-in-court: ${esc(coName(F.bicCompany)||ctName(F.bicPerson))} <button class="btn link" data-act="clearBicF">remove</button></p>`:''}
+   </aside>
+   <section style="min-width:0"><div class="row" style="justify-content:space-between;margin-bottom:8px"><div><h1 style="margin:0">Records</h1><span class="lede">${rows.length} records · ${cols.length} columns</span></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn" data-act="groupAg">${S.groupAgency?'Ungroup':'Group by agency'}</button>
+     <details class="ms" style="min-width:150px"><summary>Columns (${cols.length})</summary><div class="opts" style="max-height:360px">${COLGROUPS.map(([g,ks])=>`<div class="flab" style="margin-top:6px">${g}</div>`+ks.map(k=>`<label class="chk"><input type="checkbox" data-col="${k}"${S.cols.includes(k)?' checked':''}> ${COLDEFS[k][0]}</label>`).join('')).join('')}<button class="btn sm" data-act="colReset" style="margin-top:6px">Reset</button></div></details>
+     <button class="btn" data-act="exportGrid">Export to CSV (Excel)</button><button class="btn pri" data-nav="projects">Add a record</button></div>
+    ${rows.length?`<div class="tbl-wrap" style="max-height:72vh"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`:`<div class="card empty">${F.show.length===1&&F.show[0]==='Active'&&qn?`Nothing active. ${qn} records are queued. <button class="btn link" data-go='${esc(JSON.stringify({show:['Queued']}))}'>Pick what you're working on</button>`:'No records match these filters.'}</div>`}
+   </section>
+   <aside class="side card">${sel?recSummary(sel):`<p class="empty">Pick a row to see its status, who has it and what happens next.</p>`}</aside></div>`;
+}
+function recSummary(r){
+  const {map}=computed(); const p=progress(r); const c=map[r.id].checks;
+  return `<div class="stack"><div><span class="code">${esc(r.code)}</span> <span class="pill ${r.recordStatus==='Active'?'a':'q'}">${esc(r.recordStatus)}</span><h2 style="margin:4px 0 0">${esc(r.name)}</h2><small style="color:var(--muted)">${esc(projName(r.projectId))} · ${esc(r.agency)} · ${esc(r.category)}</small></div>
+  <dl class="kv"><dt>Current status</dt><dd>${esc(r.currentStatus||'—')}</dd><dt>Ball-in-court</dt><dd>${esc(bicLabel(r)||'—')}</dd><dt>Responsible</dt><dd>${esc(ctName(r.respPerson)||coName(r.respCompany)||'—')}</dd><dt>Next action</dt><dd>${esc(r.nextAction||'—')}</dd><dt>Target completion</dt><dd>${fmtD(r.dTarget)}</dd><dt>Reference</dt><dd>${esc(r.officialId||r.jobNo||'—')}</dd></dl>
+  <div><h3>Progress</h3><small>${STAGES.join(' → ')}</small><br><small style="color:var(--muted)">${p.done} of 7 complete</small></div>
+  ${c.length?`<div class="note"><b>${c.length} open data check${c.length>1?'s':''}</b><br>${c.map(x=>esc(CHECK_LABEL[x])).join('<br>')}</div>`:''}
+  <div class="row"><button class="btn pri" data-open="${r.id}">Open full</button>${r.recordStatus!=='Active'&&canWrite?`<button class="btn" data-act="activate" data-id="${r.id}">Move to active</button>`:''}</div></div>`;
+}
+
+// ---------- record full ----------
+function fieldInput(r,k,dis){
+  const f=FD[k], v=r[k]??'', id='rf_'+k, d=dis?' disabled':'';
+  let ctl;
+  switch(f.type.split(':')[0]){
+    case 'textarea': ctl=`<textarea id="${id}" data-f="${k}"${d}>${esc(v)}</textarea>`; break;
+    case 'date': ctl=`<input type="date" id="${id}" data-f="${k}" value="${esc(v)}"${d}>`; break;
+    case 'url': ctl=`<input type="url" id="${id}" data-f="${k}" value="${esc(v)}" placeholder="https://"${d}>`; break;
+    case 'agency': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(lists('Agency'),v)}</select>`; break;
+    case 'category': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(lists('Permit Category').filter(c=>catScopeOK(c,r.agency)||c===v),v)}</select>`; break;
+    case 'kind': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(['Permit','Document'],v)}</select>`; break;
+    case 'recstatus': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(['Active','Queued','Archived'],v)}</select>`; break;
+    case 'status': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(statuses(),v)}</select>`; break;
+    case 'list': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(lists(f.type.split(':')[1]),v)}</select>`; break;
+    case 'company': ctl=`<select id="${id}" data-f="${k}"${d}>${opts(activeCos().map(([i,c])=>[i,c.name]).concat(v&&!activeCos().some(c=>c[0]===v)?[[v,coName(v)+' (inactive)']]:[]),v)}</select>`; break;
+    case 'contact': { const cs=activeCts(); ctl=`<select id="${id}" data-f="${k}"${d}>${opts(cs.map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]).concat(v&&!cs.some(c=>c[0]===v)?[[v,ctName(v)||'(removed)']]:[]),v)}</select>`; break; }
+    default: ctl=`<input type="text" id="${id}" data-f="${k}" value="${esc(v)}"${d}${['name','reviewer'].includes(k)?' data-cap="1"':''}>`;
+  }
+  return `<label class="f${f.type==='textarea'?' wide':''}">${f.label}${ctl}</label>`;
+}
+function recNeighbors(){ const ids=sortedRows(filtered()).map(r=>r.id); const i=ids.indexOf(S.recId); return {i,n:ids.length,prev:i>0?ids[i-1]:null,next:i>=0&&i<ids.length-1?ids[i+1]:null}; }
+function vRecord(){
+  const r0=S.records[S.recId]; if(!r0) return `<p class="empty">This record no longer exists. <button class="btn link" data-nav="records">Back to records</button></p>`;
+  const r={...r0,id:S.recId}; const {map}=computed(); const cm=map[r.id]; const p=progress(r); const t=S.catalog[r.catalogCode]; const proj=S.projects[r.projectId]||{};
+  const nb=recNeighbors(); const dis=!canWrite;
+  const show=new Set(r.fields&&r.fields.length?r.fields:FIELDS.map(f=>f[0]));
+  const setup=r.setup||{}; const team=proj.team||[];
+  const track=STAGES.map((s,i)=>`<div class="st ${i<p.done?'done':i===p.cur?'cur':''}"><i>${i<p.done?'✓':i+1}</i>${s}</div>`).join('');
+  const clock=[]; if(setup.expires!==false&&r.dExpiration) clock.push('expires '+fmtD(r.dExpiration)); if(setup.renewal!==false&&r.dRenewalDue) clock.push('renewal due '+fmtD(r.dRenewalDue));
+  const groups=GROUPS.map(g=>{const ks=FIELDS.filter(f=>f[3]===g&&show.has(f[0])).map(f=>f[0]); if(!ks.length) return ''; return `<section class="sec"><header><h3>${g}</h3>${g==='Status & responsibility'&&team.length&&!dis?`<label class="row" style="font-size:12.5px;gap:6px">Drop in a team member as <select id="dropWhich" style="width:auto">${opts([['resp','Responsible'],['bic','Ball-in-court'],['owner','Action owner']],'resp',null)}</select><select id="dropWho" style="width:auto">${opts(team.map((m,i)=>[String(i),(ctName(m.contactId)||coName(m.companyId))+' ('+(m.role||m.discipline)+')']),'','Pick…')}</select></label>`:''}</header><div class="bd fields">${ks.map(k=>fieldInput(r,k,dis||(k==='code'&&false))).join('')}</div></section>`;}).join('');
+  const insp=(r.inspections||[]);
+  const deps=(r.deps||[]); const blockedBy=deps.filter(d=>d.dir==='by'); const blocking=deps.filter(d=>d.dir==='blocks');
+  const sameProj=recs().filter(o=>o.projectId===r.projectId&&o.id!==r.id).sort((a,b)=>a.code.localeCompare(b.code));
+  const depLine=d=>`<li><span class="code">${esc(S.records[d.rid]?.code||'?')}</span> ${esc(S.records[d.rid]?.name||'(removed)')} <small style="color:var(--muted)">· ${esc(d.type)}</small> ${dis?'':`<button class="btn link" data-act="depDel" data-i="${deps.indexOf(d)}">remove</button>`}</li>`;
+  const typeInsp=(t?.inspectionTypes||[]).map(x=>x.name);
+  const hist=(r.history||[]).slice().reverse();
+  resolveNames(hist.map(h=>h.by));
+  const tab=S.recTab;
+  return `<div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+   <div><div class="row"><span class="code" style="font-size:14px">${esc(r.code)}</span><h1 style="margin:0">${esc(r.name)}</h1><span class="pill ${r.recordStatus==='Active'?'a':'q'}">${esc(r.recordStatus)}</span>${t?`<span class="pill ${t.review==='reviewed'?'good':'acc'}">${t.review==='reviewed'?'Reviewed type':'Auto template'}</span>`:''}</div>
+   <p class="lede" style="margin:4px 0 0">${esc(proj.name||'')} · ${esc(r.agency)} · ${esc(r.category)} · ${esc(r.currentStatus||'No status')}</p></div>
+   <div class="row">${r.recordStatus!=='Active'&&!dis?`<button class="btn acc" data-act="activate" data-id="${r.id}">Move to active</button>`:''}<button class="btn" data-act="emailOpen">Email</button><button class="btn" data-act="recBack">Back</button><button class="btn" data-open="${nb.prev||''}"${nb.prev?'':' disabled'}>← Previous</button><span class="mono">${nb.i>=0?nb.i+1:'–'} of ${nb.n}</span><button class="btn" data-open="${nb.next||''}"${nb.next?'':' disabled'}>Next →</button></div></div>
+  ${S.email?emailPanel(r):''}
+  <section class="card" style="margin-bottom:14px"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Progress</h3><small style="color:var(--muted)">${p.label} · ${p.done} of 7 stages complete${clock.length?' · '+clock.join(' · '):''}</small></div><div class="track">${track}</div></section>
+  <div class="tabs" role="tablist"><button role="tab" aria-selected="${tab==='details'}" data-rtab="details">Details</button><button role="tab" aria-selected="${tab==='history'}" data-rtab="history">History (${(r.history||[]).length})</button></div>
+  ${tab==='history'?`<section class="sec"><div class="bd">${hist.length?`<table><tbody>${hist.map(h=>`<tr><td style="white-space:nowrap">${fmtDT(h.at)}</td><td><b>${esc(h.type)}</b>${h.field?` · ${esc(FD[h.field]?.label||h.field)}: <span style="color:var(--muted)">${esc(h.from||'—')}</span> → ${esc(h.to||'—')}`:h.note?' · '+esc(h.note):''}</td><td>${esc(S.names[h.by]||'')}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">No history yet.</p>'}</div></section>`:`
+  <div class="rec-main"><form id="recForm" class="stack" data-form="rec" autocomplete="off">
+   <section class="sec"><header><h3>Setup</h3><label class="chk"><input type="checkbox" id="rs_override" data-setup="override"${r.override?' checked':''}${dis?' disabled':''}> Override for this record</label></header><div class="bd stack">
+    <small style="color:var(--muted)">Inherited from the catalog type "${esc(t?.name||r.name)}".</small>
+    ${t&&t.review!=='reviewed'?`<p class="note">This type's template was applied automatically and not yet confirmed by a person. The toggles are a close starting point, not a verified one.</p>`:''}
+    <div class="row" style="gap:16px">${[['required','Required?'],['renewal','Renewal required?'],['expires','Does it expire?'],['inspection','Inspection required?'],['signoff','Final sign-off required?'],['payment','Payment required?']].map(([k,l])=>`<label class="chk"><input type="checkbox" id="rs_${k}" data-setup="${k}"${setup[k]?' checked':''}${!r.override||dis?' disabled':''}> ${l}</label>`).join('')}</div>
+    <div class="row"><button type="button" class="btn sm" data-act="loadDefaults"${dis?' disabled':''}>Load all defaults</button><small style="color:var(--muted)">${defaultsFor(r).length?'Fills Responsible and Action owner from the project team.':"No team member matches this type's typical consultant."}</small></div></div></section>
+   ${groups}
+   <div class="savebar"><small style="color:var(--muted)">Every change is recorded in the History tab.</small><div class="row"><button type="button" class="btn" data-act="recDiscard">Discard</button><button type="submit" class="btn pri"${dis?' disabled':''}>Save changes</button></div></div>
+  </form>
+  <aside class="stack">
+   ${cm.checks.length?`<p class="note">${cm.checks.length} open data check${cm.checks.length>1?'s':''} on this record.</p>`:''}
+   <div class="mini"><div><small>Days until due</small><b>${daysUntil(r.dTarget)??'—'}</b></div><div><small>Days until expiration</small><b>${daysUntil(r.dExpiration)??'—'}</b></div><div><small>Days until renewal</small><b>${daysUntil(r.dRenewalDue)??'—'}</b></div></div>
+   <div class="mini" style="grid-template-columns:1fr 1fr"><div><small>Last updated</small><b style="font-size:15px">${fmtD(r.updatedAt)}</b></div><div style="border-top-color:${cm.dl.some(d=>d[0]==='stale')?'var(--warn)':'var(--good)'}"><small>Stale</small><b style="font-size:15px">${cm.dl.some(d=>d[0]==='stale')?'Not touched in 30+ days':'No'}</b></div></div>
+   <section class="sec"><header><h3>Data checks · ${cm.checks.length} open</h3></header><div class="bd">${cm.checks.length?cm.checks.map(c=>`<div><span class="dot"></span>${esc(CHECK_LABEL[c])}</div>`).join(''):'<small style="color:var(--muted)">All clear.</small>'}</div></section>
+   <section class="sec"><header><h3>Inspections</h3></header><div class="bd stack">${insp.length?`<table><thead><tr><th>Type</th><th>Location</th><th>Scheduled</th><th>Result</th><th></th></tr></thead><tbody>${insp.map((x,i)=>`<tr><td>${esc(x.type)}</td><td>${esc(x.loc)}</td><td>${fmtD(x.date)}</td><td><select id="ir_${i}" data-insp="${i}"${dis?' disabled':''}>${opts(lists('Inspection Result'),x.result,null)}</select></td><td>${dis?'':`<button class="btn link" data-act="inspDel" data-i="${i}">×</button>`}</td></tr>`).join('')}</tbody></table>`:`<small style="color:var(--muted)">${typeInsp.length?'No inspections added yet.':"This type has no inspection list yet. Type the inspection name."}</small>`}
+    ${dis?'':`<div class="fields" style="grid-template-columns:1fr 1fr"><label class="f">Type<input id="niType" list="niList" type="text"><datalist id="niList">${typeInsp.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label><label class="f">Location / floors<input id="niLoc" type="text"></label><label class="f">Scheduled<input id="niDate" type="date"></label><label class="f">Result<select id="niRes">${opts(lists('Inspection Result'),'Not Scheduled',null)}</select></label></div><button class="btn sm" data-act="inspAdd">Add inspection</button>`}</div></section>
+   <section class="sec"><header><h3>Dependencies</h3></header><div class="bd stack"><div><div class="flab">Blocked by</div>${blockedBy.length?`<ul style="margin:0;padding-left:18px">${blockedBy.map(depLine).join('')}</ul>`:'<small style="color:var(--muted)">Nothing.</small>'}</div><div><div class="flab">Blocking</div>${blocking.length?`<ul style="margin:0;padding-left:18px">${blocking.map(depLine).join('')}</ul>`:'<small style="color:var(--muted)">Nothing.</small>'}</div>
+    ${dis?'':`<label class="f">Direction<select id="ndDir">${opts([['by','This item is blocked by…'],['blocks','This item is blocking…']],'by',null)}</select></label><label class="f">Item<select id="ndItem">${opts(sameProj.map(o=>[o.id,o.code+' — '+o.name]),'','Pick an item in this project…')}</select></label><label class="f">Type<select id="ndType">${opts(lists('Dependency Type'),'',null)}</select></label><button class="btn sm" data-act="depAdd">Link</button>`}</div></section>
+  </aside></div>`}`;
+}
+function defaultsFor(r){
+  const t=S.catalog[r.catalogCode]||{}; const team=S.projects[r.projectId]?.team||[]; const role=(t.typicalRole||'').toLowerCase();
+  return team.filter(m=>(t.disciplines||[]).includes(m.discipline) || (role && m.discipline && role.includes(m.discipline.toLowerCase().slice(0,5))) || (role && m.role && role.includes(m.role.toLowerCase())));
+}
+function mergeTpl(s,r){ const p=S.projects[r.projectId]||{}; const v={record_name:r.name,record_code:r.code,project_name:p.name,agency:r.agency,category:r.category,current_status:r.currentStatus,official_agency_id:r.officialId,target_completion_date:r.dTarget?fmtD(r.dTarget):'',expiration_date:r.dExpiration?fmtD(r.dExpiration):'',next_required_action:r.nextAction,sender_name:S.me.name||'',today:fmtD(today())}; return (s||'').replace(/\{\{(\w+)\}\}/g,(m,k)=>k in v?(v[k]||''):m); }
+function emailPanel(r){
+  const e=S.email; const tpls=S.cfg.templates||[];
+  const to=e.to.map((a,i)=>`<span class="chip">${esc(a)}<button type="button" data-act="emDel" data-i="${i}" aria-label="Remove">×</button></span>`).join('');
+  const full=`To: ${e.to.join(', ')}\nSubject: ${e.subject}\n\n${e.body}`;
+  return `<section class="sec" style="margin-bottom:14px"><header><h3>Compose email · ${esc(r.code)} — ${esc(r.name)}</h3><button class="btn sm" data-act="emClose">Close</button></header><div class="bd stack">
+   <div><div class="flab">To</div><div class="chips">${to||'<small style="color:var(--muted)">Nobody yet.</small>'}</div></div>
+   <div class="row"><select id="emPick" style="width:auto;flex:1">${opts(activeCts().filter(([,c])=>c.email).map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),'','Add from the directory…')}</select><input id="emAddr" type="email" placeholder="or type an address" style="flex:1"><button class="btn sm" data-act="emAdd">Add</button></div>
+   <label class="f">Start from a template<select id="emTpl">${opts(tpls.map((t,i)=>[String(i),t.name]),e.tpl,'No template — write your own')}</select></label>
+   <label class="f">Subject<input id="emSubj" type="text" value="${esc(e.subject)}"></label><label class="f">Message<textarea id="emBody" style="min-height:160px">${esc(e.body)}</textarea></label>
+   <p class="note info">This tracker doesn't send email itself. Copy the message into your mail app; the copy is logged in the History tab.</p>
+   <div class="row"><button class="btn pri" data-act="emCopy"${e.subject&&e.to.length?'':' disabled'}>Copy email</button><small style="color:var(--muted)">${!e.subject?'The message needs a subject.':!e.to.length?'Add at least one recipient.':''}</small></div>
+   <textarea id="emAll" readonly style="min-height:80px;font-family:var(--f-mono);font-size:12px">${esc(full)}</textarea></div></section>`;
+}
+// ---------- projects ----------
+function vProjects(){
+  if(S.newProject) return vNewProject();
+  if(S.projId) return vProject();
+  const ps=Object.entries(S.projects).sort((a,b)=>a[1].name.localeCompare(b[1].name)); const all=recs();
+  return `<div class="row" style="justify-content:space-between"><div><h1>Projects</h1><p class="lede">Create a project with its team of default consultants, then pick its whole permit slate from the catalog in one pass.</p></div>${canWrite?`<button class="btn pri" data-act="newProject">New project</button>`:''}</div>
+  ${ps.length?`<div class="card" style="padding:0">${ps.map(([id,p])=>{const rs=all.filter(r=>r.projectId===id);const q=rs.filter(r=>(r.recordStatus||'Queued')==='Queued').length;return `<div class="list-row" data-proj="${id}"><span class="pill ${p.status==='Archived'?'q':'a'}">${esc(p.status||'Active')}</span><div><b>${esc(p.name)}</b><br><small style="color:var(--muted)">${esc([p.address,p.borough,p.type].filter(Boolean).join(' · '))}</small></div><small class="mono">${(p.team||[]).length} on the team · ${rs.length} items · ${q} queued</small></div>`}).join('')}</div>`:`<div class="card empty">No projects yet. Create your first job, add its team, then pick its permits from the catalog.</div>`}`;
+}
+function personFields(p={}){
+  const ct=activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]);
+  return `<label class="f">Development manager<select id="np_devMgr" data-p="devMgr">${opts(ct,p.devMgr)}</select></label><label class="f">GC / CM<select id="np_gc" data-p="gc">${opts(activeCos().map(([i,c])=>[i,c.name]),p.gc)}</select></label><label class="f">Project executive<select id="np_pe" data-p="pe">${opts(ct,p.pe)}</select></label><label class="f">Project manager<select id="np_pm" data-p="pm">${opts(ct,p.pm)}</select></label><label class="f">Tracker maintained by<select id="np_tb" data-p="trackerBy">${opts(ct,p.trackerBy)}</select></label>`;
+}
+function vNewProject(){
+  return `<button class="btn link" data-act="projBack">← Projects</button><h1>New project</h1><p class="lede">Name the job. The next screen is where you set its team and pick its permit slate.</p>
+  <form id="projForm" data-form="proj" class="card fields" style="max-width:900px"><label class="f">Project name<input id="np_name" type="text" data-p="name" data-cap="1" required></label><label class="f">Address<input id="np_addr" type="text" data-p="address" data-cap="1"></label><label class="f">Borough<select id="np_bor" data-p="borough">${opts(lists('Borough'),'')}</select></label><label class="f">Project type<select id="np_type" data-p="type">${opts(lists('Project Type'),'')}</select></label>${personFields()}<label class="f wide">Notes<textarea id="np_notes" data-p="notes"></textarea></label><div><button class="btn pri" type="submit">Create project</button></div></form>`;
+}
+function vProject(){
+  const id=S.projId, p=S.projects[id]; if(!p) return `<p class="empty">Project not found. <button class="btn link" data-act="projBack">Back</button></p>`;
+  const team=p.team||[]; const rs=recs().filter(r=>r.projectId===id).sort((a,b)=>a.code.localeCompare(b.code)); const dis=!canWrite;
+  const onSlate={}; rs.forEach(r=>{ if(r.catalogCode) onSlate[r.catalogCode]=(onSlate[r.catalogCode]||0)+1; });
+  const sf=S.slateF; const q=sf.q.toLowerCase();
+  const types=Object.values(S.catalog).filter(t=>t.active!==false&&(!sf.agency||t.agency===sf.agency)&&(!sf.category||t.category===sf.category)&&(!q||(t.name+' '+t.code+' '+(t.description||'')).toLowerCase().includes(q)));
+  const groupBy=sf.group||'agency'; const g={}; types.forEach(t=>{const k=groupBy==='category'?t.category:groupBy==='discipline'?((t.disciplines||[])[0]||'No discipline'):t.agency;(g[k]=g[k]||[]).push(t);});
+  const counts={}; Object.values(S.catalog).forEach(t=>counts[t.agency]=(counts[t.agency]||0)+1);
+  const tr=trStatus(id);
+  const stOpts=statuses().filter(s=>!['Not Started','Inspection Required','Inspection Scheduled','Inspection Failed','Inspection Passed','Renewal Required','Renewal Submitted'].includes(s));
+  return `<button class="btn link" data-act="projBack">← Projects</button>
+  <div class="row" style="justify-content:space-between"><div><h1>${esc(p.name)}</h1><p class="lede">${esc([p.address,p.borough,p.type].filter(Boolean).join(' · '))}</p></div><button class="btn" data-go='${esc(JSON.stringify({project:[id],show:['Active','Queued','Archived']}))}'>Open in the records grid</button></div>
+  <div class="stack">
+  <section class="sec"><header><h3>Project team</h3><small style="color:var(--muted)">Default consultants by discipline. Nobody is filled in automatically; on a permit you choose to drop them in.</small></header><div class="bd stack">
+   ${team.length?`<table><tbody>${team.map((m,i)=>`<tr><td><b>${esc(m.discipline)}</b></td><td>${esc(coName(m.companyId))}${m.contactId?' · '+esc(ctName(m.contactId)):''}</td><td>${esc(m.role||'')}</td><td>${m.isDefault?'<span class="pill a">Default</span>':''}</td><td>${dis?'':`<button class="btn link" data-act="teamDel" data-i="${i}">Remove</button>`}</td></tr>`).join('')}</tbody></table>`:`<p class="note info">No team yet. Add at least the architect and the expediter; those are the two the catalog reaches for most.</p>`}
+   ${dis?'':`<div class="fields"><label class="f">Discipline<select id="tmDisc">${opts(lists('Discipline'),'','Pick…')}</select></label><label class="f">Company<select id="tmCo">${opts(activeCos().map(([i,c])=>[i,c.name]),'')}</select></label><label class="f">Person<select id="tmCt">${opts(activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),'')}</select></label><label class="f">Role label<select id="tmRole">${opts(lists('Project Role'),'')}</select></label><label class="chk" style="align-self:end"><input type="checkbox" id="tmDef" checked> Default for this discipline</label><div style="align-self:end"><button class="btn" data-act="teamAdd">Add</button></div></div>`}</div></section>
+  ${dis?'':`<section class="sec"><header><h3>Build the slate · ${S.slateSel.size} selected</h3><small style="color:var(--muted)">Narrow the catalog, then check off everything this job needs in one pass. Selected types land as Queued, Not Started records.</small></header><div class="bd stack">
+   <div class="row"><label class="f" style="width:180px">Agency<select id="slAg" data-sf="agency">${opts(lists('Agency'),sf.agency,'All')}</select></label><label class="f" style="width:200px">Category<select id="slCat" data-sf="category">${opts(lists('Permit Category').filter(c=>catScopeOK(c,sf.agency)),sf.category,'All')}</select></label><label class="f" style="width:150px">Group by<select id="slGrp" data-sf="group">${opts([['agency','Agency'],['category','Category'],['discipline','Discipline']],groupBy,null)}</select></label><label class="f" style="flex:1;min-width:180px">Search<input id="slQ" type="search" data-sf="q" value="${esc(sf.q)}" placeholder="Name, code or description"></label></div>
+   <div class="row" style="font-size:12.5px;color:var(--muted)">${types.length} of ${Object.keys(S.catalog).length} types · ${Object.entries(counts).map(([a,n])=>`${esc(a)} ${n}`).join(' · ')}</div>
+   <div class="picker">${Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,ts])=>`<div class="grp">${esc(k)} · ${ts.length}</div>`+ts.sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name)).map(t=>`<label><input type="checkbox" data-slate="${esc(t.code)}"${S.slateSel.has(t.code)?' checked':''}><span class="code">${esc(t.code)}</span><span>${esc(t.name)}<small>${esc(t.description||t.category)}</small></span><span class="row" style="gap:4px">${onSlate[t.code]?`<span class="pill a">On slate${onSlate[t.code]>1?' ('+onSlate[t.code]+')':''}</span>`:''}<span class="pill ${t.review==='reviewed'?'good':'acc'}">${t.review==='reviewed'?'Reviewed':'Auto'}</span></span></label>`).join('')).join('')||'<p class="empty">No types match.</p>'}</div>
+   <div class="row"><button class="btn pri" data-act="slateAdd"${S.slateSel.size?'':' disabled'}>Add ${S.slateSel.size||''} to the slate</button>${S.slateSel.size?`<button class="btn" data-act="slateClear">Clear selection</button>`:''}</div></div></section>`}
+  <section class="sec"><header><h3>The slate</h3><small style="color:var(--muted)">${rs.length} items · ${rs.filter(r=>r.currentStatus==='Not Started').length} not started · ${rs.filter(r=>r.recordStatus==='Active').length} active. Starting an item moves it out of Not Started.</small></header><div class="bd">
+   ${rs.length?rs.map(r=>`<div class="slate-item"><span class="code">${esc(r.code)}</span><span><a href="#records" data-open="${r.id}">${esc(r.name)}</a><br><small style="color:var(--muted)">${esc(r.agency)}${r.kind==='Document'?' · Document':''}</small></span>${r.currentStatus==='Not Started'||dis?`<span class="pill ${r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus)}</span>`:`<select id="ss_${r.id}" data-slstat="${r.id}">${opts(stOpts,r.currentStatus,null)}</select>`}<span>${r.currentStatus==='Not Started'&&!dis?`<button class="btn sm acc" data-act="start" data-id="${r.id}">Start</button>`:''}</span></div>`).join(''):'<p class="empty">Nothing on the slate yet.</p>'}</div></section>
+  <section class="sec"><header><h3>Building department requirements</h3></header><div class="bd row" style="justify-content:space-between"><span><span class="pill">DOB</span> All TRs signed off <span class="pill">Computed</span></span><span class="pill ${tr.ok===true?'good':tr.ok===false?'warn':''}">${tr.label}</span></div><div class="bd" style="padding-top:0"><small style="color:var(--muted)">DOB won't close a job until its special inspections are complete. This reads the TR items on the slate every time the page loads; it turns satisfied when every TR has a Final received.</small></div></section>
+  ${dis?'':`<section class="sec"><header><h3>Add a document line item</h3><small style="color:var(--muted)">A survey, an asbestos report, a stamped set: anything the job must produce gets its own line and can be a prerequisite for a permit.</small></header><div class="bd fields"><label class="f">Name<input id="dlName" type="text"></label><label class="f">Agency (optional)<select id="dlAg">${opts(lists('Agency'),'')}</select></label><label class="f">Category<select id="dlCat">${opts(lists('Permit Category'),'')}</select></label><div style="align-self:end"><button class="btn" data-act="docAdd">Add document</button></div></div></section>`}
+  <details class="sec"><summary style="padding:10px 14px;cursor:pointer"><b>Project details</b></summary><form id="projEdit" data-form="projEdit" class="bd fields"><label class="f">Project name<input id="pe_name" type="text" data-p="name" value="${esc(p.name)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Address<input id="pe_addr" type="text" data-p="address" value="${esc(p.address)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Borough<select id="pe_bor" data-p="borough"${dis?' disabled':''}>${opts(lists('Borough'),p.borough)}</select></label><label class="f">Project type<select id="pe_type" data-p="type"${dis?' disabled':''}>${opts(lists('Project Type'),p.type)}</select></label><label class="f">Status<select id="pe_st" data-p="status"${dis?' disabled':''}>${opts(['Active','Archived'],p.status||'Active',null)}</select></label>${personFields(p)}<label class="f wide">Notes<textarea id="pe_notes" data-p="notes"${dis?' disabled':''}>${esc(p.notes)}</textarea></label>${dis?'':'<div><button class="btn pri" type="submit">Save project</button></div>'}</form></details>
+  </div>`;
+}
+
+// ---------- catalog ----------
+function vCatalog(){
+  if(S.typeId) return vType();
+  const F=S.catF; const q=F.q.toLowerCase(); const all=Object.values(S.catalog);
+  const n={reviewed:0,auto:0,unreviewed:0}; all.forEach(t=>n[t.review||'unreviewed']++);
+  const rows=all.filter(t=>(F.retired||t.active!==false)&&(!F.agency||t.agency===F.agency)&&(!F.category||t.category===F.category)&&(!F.template||t.review===F.template)&&(!q||(t.code+' '+t.name+' '+(t.description||'')).toLowerCase().includes(q))).sort((a,b)=>(F.group?a.agency.localeCompare(b.agency):0)||a.code.localeCompare(b.code,undefined,{numeric:true}));
+  const pct=k=>all.length?n[k]/all.length*100:0;
+  let lastAg=null;
+  return `<div class="row" style="justify-content:space-between"><div><h1>Master catalog</h1><p class="lede">Author a permit type once: its agency, its fields, its defaults. Every record created from it inherits the lot.</p></div>${canWrite?`<button class="btn pri" data-act="typeNew">Add a permit type</button>`:''}</div>
+  <div class="card stack" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><b>${n.reviewed} reviewed · ${n.auto} auto · ${n.unreviewed} unreviewed of ${all.length}</b><small style="color:var(--muted)">Auto types carry a starter template that a person hasn't confirmed yet.</small></div><div class="bar"><span style="width:${pct('reviewed')}%;background:var(--good)"></span><span style="width:${pct('auto')}%;background:var(--accent)"></span><span style="width:${pct('unreviewed')}%;background:var(--line-strong)"></span></div></div>
+  <div class="row" style="margin-bottom:10px"><label class="f" style="width:170px">Agency<select id="cfAg" data-cf="agency">${opts(lists('Agency'),F.agency,'All')}</select></label><label class="f" style="width:190px">Category<select id="cfCat" data-cf="category">${opts(lists('Permit Category'),F.category,'All')}</select></label><label class="f" style="width:140px">Template<select id="cfT" data-cf="template">${opts([['unreviewed','Unreviewed'],['auto','Auto'],['reviewed','Reviewed']],F.template,'All')}</select></label><label class="f" style="flex:1;min-width:180px">Search<input id="cfQ" type="search" data-cf="q" value="${esc(F.q)}" placeholder="Name, code or description"></label><label class="chk" style="align-self:end"><input type="checkbox" id="cfR" data-cf="retired"${F.retired?' checked':''}> Show retired</label><button class="btn" style="align-self:end" data-act="catGroup">${F.group?'Ungroup':'Group by agency'}</button></div>
+  <p style="color:var(--muted);margin:0 0 8px">Showing ${rows.length} of ${all.length}.</p>
+  <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Agency</th><th>Category</th><th class="num">Fields</th><th>Template</th></tr></thead><tbody>${rows.map(t=>{let pre='';if(F.group&&t.agency!==lastAg){lastAg=t.agency;pre=`<tr><td colspan="6" style="background:var(--sunk);font-weight:600">${esc(t.agency)}</td></tr>`;}return pre+`<tr class="click" data-type="${esc(t.code)}"><td><span class="code">${esc(t.code)}</span></td><td>${esc(t.name)}${t.active===false?' <span class="pill">Retired</span>':''}</td><td>${esc(t.agency)}</td><td>${esc(t.category)}</td><td class="num">${(t.fields||[]).length}</td><td><span class="pill ${t.review==='reviewed'?'good':t.review==='auto'?'acc':''}">${t.review==='reviewed'?'Reviewed':t.review==='auto'?'Auto':'Unreviewed'}</span></td></tr>`}).join('')}</tbody></table></div>`;
+}
+function vType(){
+  const isNew=S.typeId==='__new'; const t=isNew?(S.typeDraft||{code:'',name:'',agency:'',category:'',fields:FIELDS.filter(f=>f[4]).map(f=>f[0]),review:'unreviewed',active:true,disciplines:[],projectTypes:[],inspectionTypes:[]}):S.catalog[S.typeId];
+  if(!t) return `<p class="empty">Type not found.</p>`;
+  const dis=!canWrite; const fs=new Set(t.fields||[]); const used=recs().filter(r=>r.catalogCode===t.code).length;
+  const stageOn=k=>STAGE_FIELDS[k].length?STAGE_FIELDS[k].every(f=>fs.has(f)):!!(t.testing);
+  const expOn=fs.has('dExpiration');
+  return `<button class="btn link" data-act="typeBack">← Master catalog</button>
+  <div class="row"><span class="code" style="font-size:14px">${esc(t.code||'New')}</span><h1 style="margin:0">${esc(t.name||'New permit type')}</h1><span class="pill ${t.review==='reviewed'?'good':t.review==='auto'?'acc':''}">${t.review==='reviewed'?'Reviewed':t.review==='auto'?'Auto':'Unreviewed'}</span></div>
+  <p class="lede">${esc(t.agency)} · ${esc(t.category)} · ${used} records inherit this template</p>
+  ${t.review==='auto'?`<p class="note" style="margin-bottom:12px">A starter template was applied automatically. Open it, adjust what is off, and mark it reviewed when you save.</p>`:''}
+  <form id="typeForm" data-form="type" class="stack" autocomplete="off">
+  <section class="sec"><header><h3>Identity & classification</h3></header><div class="bd fields">
+   <label class="f">Name<input id="ty_name" type="text" data-t="name" value="${esc(t.name)}" required${dis?' disabled':''}></label><label class="f">Catalog code<input id="ty_code" type="text" data-t="code" value="${esc(t.code)}" placeholder="auto"${isNew&&!dis?'':' disabled'}></label>
+   <label class="f">Agency<select id="ty_ag" data-t="agency"${dis?' disabled':''}>${opts(lists('Agency'),t.agency)}</select></label><label class="f">Permit category<select id="ty_cat" data-t="category"${dis?' disabled':''}>${opts(lists('Permit Category').filter(c=>catScopeOK(c,t.agency)||c===t.category),t.category)}</select></label>
+   <label class="f">Agency bureau / unit<input id="ty_bur" type="text" data-t="bureau" value="${esc(t.bureau)}"${dis?' disabled':''}></label><label class="f">Typical trigger / when required<input id="ty_trig" type="text" data-t="trigger" value="${esc(t.trigger)}"${dis?' disabled':''}></label>
+   <label class="f wide">Description / scope<textarea id="ty_desc" data-t="description"${dis?' disabled':''}>${esc(t.description)}</textarea></label>
+   <div class="wide"><div class="flab">Disciplines</div><div class="row">${lists('Discipline').map(d=>`<label class="chk"><input type="checkbox" data-tdisc="${esc(d)}"${(t.disciplines||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div>
+   <div class="wide"><div class="flab">Applicable project types</div><div class="row">${lists('Project Type').map(d=>`<label class="chk"><input type="checkbox" data-tpt="${esc(d)}"${(t.projectTypes||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div></div></section>
+  <section class="sec"><header><h3>Lifecycle stages</h3><small style="color:var(--muted)">Shortcuts: each ticks or unticks its field group below. The field list is what governs the record.</small></header><div class="bd row" style="gap:14px">${Object.keys(STAGE_FIELDS).map(k=>`<label class="chk"><input type="checkbox" data-stage="${k}"${stageOn(k)?' checked':''}${dis||(k==='renewal'&&!expOn)?' disabled':''}> ${STAGE_LABEL[k]} <small style="color:var(--muted)">${k==='renewal'?'only while expiry is on · ':''}${STAGE_FIELDS[k].length?STAGE_FIELDS[k].length+' field'+(STAGE_FIELDS[k].length>1?'s':''):''}</small></label>`).join('')}</div></section>
+  <section class="sec"><header><h3>Field set · ${fs.size} of 45 fields</h3><small style="color:var(--muted)">Core fields are always on. A person always brings their company.</small></header><div class="bd stack">${GROUPS.map(g=>`<div><div class="flab">${g}</div><div class="row" style="gap:12px">${FIELDS.filter(f=>f[3]===g).filter(f=>!(['dRenewalNotice','dRenewalDue'].includes(f[0])&&!expOn)).map(f=>`<label class="chk"><input type="checkbox" data-tf="${f[0]}"${fs.has(f[0])||f[4]?' checked':''}${f[4]||dis?' disabled':''}> ${f[1]}${f[4]?' <span class="pill">Core</span>':''}</label>`).join('')}</div></div>`).join('')}</div></section>
+  <section class="sec"><header><h3>Responsibility, fees & timing</h3></header><div class="bd fields">
+   <label class="f">Typical responsible discipline / role<input id="ty_role" type="text" data-t="typicalRole" value="${esc(t.typicalRole)}" placeholder="e.g. Architect of Record"${dis?' disabled':''}></label><label class="f">Typical starting ball-in-court<select id="ty_bic" data-t="typicalBic"${dis?' disabled':''}>${opts(lists('Ball-in-Court Category'),t.typicalBic)}</select></label>
+   <label class="f">Fee basis<input id="ty_fb" type="text" data-t="feeBasis" value="${esc(t.feeBasis)}"${dis?' disabled':''}></label><label class="f">Typical fee ($)<input id="ty_fee" type="number" data-t="typicalFee" value="${esc(t.typicalFee)}"${dis?' disabled':''}></label>
+   <label class="f">Lead time (days)<input id="ty_lead" type="number" data-t="leadDays" value="${esc(t.leadDays)}"${dis?' disabled':''}></label><label class="f">Review time (days)<input id="ty_rev" type="number" data-t="reviewDays" value="${esc(t.reviewDays)}"${dis?' disabled':''}></label>
+   <label class="f">Validity period<input id="ty_val" type="text" data-t="validity" value="${esc(t.validity)}"${dis?' disabled':''}></label><label class="f">Renewal interval<input id="ty_ri" type="text" data-t="renewalInterval" value="${esc(t.renewalInterval)}"${dis?' disabled':''}></label>
+   <label class="f wide">Notes for whoever fills this type<textarea id="ty_notes" data-t="notes"${dis?' disabled':''}>${esc(t.notes)}</textarea></label></div></section>
+  ${dis?'':`<div class="savebar card"><div class="row"><label class="chk"><input type="checkbox" id="ty_reviewed"${t.review==='reviewed'?' checked':''}> Mark this type as reviewed</label><label class="chk"><input type="checkbox" id="ty_active"${t.active!==false?' checked':''}> Active (offered in the slate)</label></div><div class="row"><button type="button" class="btn" data-act="typeBack">Cancel</button><button class="btn pri" type="submit">Save type</button></div></div>`}
+  </form>
+  ${isNew?'':`<section class="sec" style="margin-top:14px"><header><h3>Inspection types</h3><small style="color:var(--muted)">The list this type's permits pick from, e.g. Rough, Fixtures, Finish. Actual inspection rows are added on each permit.</small></header><div class="bd stack">${(t.inspectionTypes||[]).length?`<table><thead><tr><th>#</th><th>Inspection</th><th>Performed by</th><th>Witnessed</th><th></th></tr></thead><tbody>${t.inspectionTypes.map((x,i)=>`<tr><td>${esc(x.seq)}</td><td>${esc(x.name)}</td><td>${esc(x.by||'—')}</td><td>${x.witnessed?'Yes':'No'}</td><td>${dis?'':`<button class="btn link" data-act="itDel" data-i="${i}">Remove</button>`}</td></tr>`).join('')}</tbody></table>`:'<small style="color:var(--muted)">No inspection types yet.</small>'}
+   ${dis?'':`<div class="fields"><label class="f">Inspection name<input id="itName" type="text"></label><label class="f">Sequence<input id="itSeq" type="number"></label><label class="f">Performed by<select id="itBy">${opts(lists('Inspection Performed By'),'')}</select></label><label class="chk" style="align-self:end"><input type="checkbox" id="itW"> Witnessed</label><div style="align-self:end"><button class="btn" data-act="itAdd">Add</button></div></div>`}</div></section>`}`;
+}
+
+// ---------- directory ----------
+function vCompanies(){
+  const q=S.dirQ.toLowerCase(); const dis=!canWrite;
+  const rows=Object.entries(S.companies).filter(([,c])=>(S.dirInactive||c.active!==false)&&(!q||(c.name+' '+(c.code||'')+' '+(c.email||'')).toLowerCase().includes(q))).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  const form=(id,c={})=>`<form data-form="co" data-id="${id}" class="fields bd"><label class="f">Name<input id="co_n_${id}" type="text" data-c="name" value="${esc(c.name)}" data-cap="1" required${dis?' disabled':''}></label><label class="f">Code<input type="text" value="${esc(c.code||'auto')}" disabled></label><label class="f">Company type<select id="co_t_${id}" data-c="type"${dis?' disabled':''}>${opts(lists('Company Type'),c.type)}</select></label><label class="f">Main phone<input id="co_p_${id}" type="tel" data-c="phone" value="${esc(c.phone)}"${dis?' disabled':''}></label><label class="f">General email<input id="co_e_${id}" type="email" data-c="email" value="${esc(c.email)}"${dis?' disabled':''}></label><label class="f">Website<input id="co_w_${id}" type="url" data-c="website" value="${esc(c.website)}"${dis?' disabled':''}></label><label class="f wide">Address<input id="co_a_${id}" type="text" data-c="address" value="${esc(c.address)}" data-cap="1"${dis?' disabled':''}></label>${id!=='__new'?`<label class="f">Primary contact<select id="co_pc_${id}" data-c="primaryContact"${dis?' disabled':''}>${opts(Object.entries(S.contacts).filter(([,k])=>k.companyId===id).map(([i,k])=>[i,k.name]),c.primaryContact)}</select></label><label class="chk" style="align-self:end"><input type="checkbox" data-c="active"${c.active!==false?' checked':''}${dis?' disabled':''}> Active</label>`:''}<label class="f wide">Notes<textarea id="co_no_${id}" data-c="notes"${dis?' disabled':''}>${esc(c.notes)}</textarea></label>${dis?'':`<div><button class="btn pri" type="submit">${id==='__new'?'Add company':'Save'}</button></div>`}</form>`;
+  return `<h1>Companies</h1><p class="lede">The shared directory that feeds every picker. Companies are set inactive, never deleted, so they stay attached to the records that already use them.</p>
+  <div class="row" style="margin-bottom:10px"><input type="search" id="dirQ" data-dirq="1" value="${esc(S.dirQ)}" placeholder="Search name, code or email" style="max-width:320px"><label class="chk"><input type="checkbox" id="dirI" data-dirinact="1"${S.dirInactive?' checked':''}> Show inactive</label></div>
+  ${dis?'':`<details class="sec" style="margin-bottom:12px"${S.openRow==='__newco'?' open':''}><summary style="padding:10px 14px;cursor:pointer"><b>Add a company</b></summary>${form('__new')}</details>`}
+  <p style="color:var(--muted)">${rows.length} companies</p>
+  <div class="card" style="padding:0">${rows.map(([id,c])=>{const n=Object.values(S.contacts).filter(k=>k.companyId===id).length;return `<div class="list-row" data-row="${id}"><span class="code">${esc(c.code)}</span><div><b>${esc(c.name)}</b> ${c.type?`<span class="pill">${esc(c.type)}</span>`:''}${c.active===false?' <span class="pill">Inactive</span>':''}</div><small>${n} contact${n===1?'':'s'}</small></div>${S.openRow===id?form(id,c):''}`}).join('')||'<p class="empty">No companies yet.</p>'}</div>`;
+}
+function vContacts(){
+  const q=S.dirQ.toLowerCase(); const dis=!canWrite;
+  const rows=Object.entries(S.contacts).filter(([,c])=>(S.dirInactive||c.active!==false)&&(!q||(c.name+' '+(c.code||'')+' '+(c.email||'')+' '+coName(c.companyId)).toLowerCase().includes(q))).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  const form=(id,c={})=>{const co=S.companies[c.companyId]; return `<form data-form="ct" data-id="${id}" class="fields bd"><label class="f">Name<input id="ct_n_${id}" type="text" data-c="name" value="${esc(c.name)}" data-cap="1" required${dis?' disabled':''}></label><label class="f">Company<select id="ct_co_${id}" data-c="companyId" required${dis?' disabled':''}>${opts(activeCos().map(([i,k])=>[i,k.name]),c.companyId,'Pick a company…')}</select></label><label class="f">Title<input id="ct_t_${id}" type="text" data-c="title" value="${esc(c.title)}"${dis?' disabled':''}></label><label class="f">Department<input id="ct_d_${id}" type="text" data-c="department" value="${esc(c.department)}"${dis?' disabled':''}></label><label class="f">Discipline<select id="ct_di_${id}" data-c="discipline"${dis?' disabled':''}>${opts(lists('Discipline'),c.discipline)}</select></label><label class="f">Project role<select id="ct_r_${id}" data-c="role"${dis?' disabled':''}>${opts(lists('Project Role'),c.role)}</select></label><label class="f">Email<input id="ct_e_${id}" type="email" data-c="email" value="${esc(c.email)}"${dis?' disabled':''}></label><label class="f">Mobile (cell)<input id="ct_m_${id}" type="tel" data-c="mobile" value="${esc(c.mobile)}"${dis?' disabled':''}></label><label class="f">Direct line<input id="ct_dl_${id}" type="tel" data-c="direct" value="${esc(c.direct)}"${dis?' disabled':''}></label><label class="f">Extension${co?.phone?' on '+esc(co.phone)+' · '+esc(co.name):' (pick a company to see its main line)'}<input id="ct_x_${id}" type="text" data-c="ext" value="${esc(c.ext)}"${dis?' disabled':''}></label><label class="f wide">Notes<textarea id="ct_no_${id}" data-c="notes"${dis?' disabled':''}>${esc(c.notes)}</textarea></label>${id!=='__new'?`<label class="chk"><input type="checkbox" data-c="active"${c.active!==false?' checked':''}${dis?' disabled':''}> Active</label>`:''}${dis?'':`<div><button class="btn pri" type="submit">${id==='__new'?'Add contact':'Save'}</button></div>`}</form>`;};
+  return `<h1>Contacts</h1><p class="lede">The people behind the companies. Every contact belongs to one company. Set someone inactive when they leave; they stay on the records they worked.</p>
+  <div class="row" style="margin-bottom:10px"><input type="search" id="dirQ" data-dirq="1" value="${esc(S.dirQ)}" placeholder="Search name, company or email" style="max-width:320px"><label class="chk"><input type="checkbox" id="dirI" data-dirinact="1"${S.dirInactive?' checked':''}> Show inactive</label></div>
+  ${dis?'':`<details class="sec" style="margin-bottom:12px"><summary style="padding:10px 14px;cursor:pointer"><b>Add a contact</b></summary>${activeCos().length?form('__new'):'<p class="bd">Add a company first; every contact needs one. <button class="btn link" data-nav="companies">Go to Companies</button></p>'}</details>`}
+  <p style="color:var(--muted)">${rows.length} contacts</p>
+  <div class="card" style="padding:0">${rows.map(([id,c])=>{const pri=S.companies[c.companyId]?.primaryContact===id;return `<div class="list-row" data-row="${id}"><span class="code">${esc(c.code)}</span><div><b>${esc(c.name)}</b> <small style="color:var(--muted)">${esc(coName(c.companyId))}</small>${pri?' <span class="pill a">Primary</span>':''}${c.active===false?' <span class="pill">Inactive</span>':''}</div><small class="mono">${esc(c.email||'')}</small></div>${S.openRow===id?form(id,c):''}`}).join('')||'<p class="empty">No contacts yet.</p>'}</div>`;
+}
+// ---------- reports ----------
+const REPORTS=[['status','Status distribution','Records by current status, portfolio-wide or for one job.',[['status','Current status'],['statusProject','Status by project']]],['agency','Rollup by agency','Counts and open items per agency, across every project.',[['agency','Agency'],['project','Project']]],['bic','Ball-in-court load','Who is holding up the most items: the chase list.',[['category','Category'],['company','Company'],['person','Person']]],['aging','Aging / overdue','How long items have sat, and what is past its target date.',[['overdue','Overdue only'],['all','Every open item, oldest first']]],['upcoming','Upcoming deadlines','Everything due, expiring or renewing in a chosen window.',[]],['quality','Data quality','Open data-check flags, by project or by check.',[['project','Project'],['check','Check']]],['payment','Payment status','Outstanding fees across the portfolio.',[['outstanding','Outstanding items'],['status','By payment status']]]];
+function reportData(){
+  const P=S.rp; const R=REPORTS.find(r=>r[0]===S.report); const grp=P.group||(R[3][0]?.[0]);
+  const {map}=computed();
+  const base=recs().filter(r=>(!P.project||r.projectId===P.project)&&(!P.agency||r.agency===P.agency)&&(!P.status||r.currentStatus===P.status)&&(P.show==='All'||(P.show==='Archived'?r.recordStatus==='Archived':r.recordStatus==='Active')));
+  const count=(fn)=>{const o={};base.forEach(r=>{const k=fn(r);if(k!=null&&k!=='')o[k]=(o[k]||0)+1;});return Object.entries(o).sort((a,b)=>b[1]-a[1]);};
+  const recRow=r=>[r.code,r.name,projName(r.projectId),r.agency,r.currentStatus];
+  switch(S.report){
+    case 'status': if(grp==='statusProject'){ const o={}; base.forEach(r=>{const k=projName(r.projectId)+' · '+r.currentStatus;o[k]=(o[k]||0)+1;}); return {h:['Project · status','Records'],rows:Object.entries(o).sort()}; } return {h:['Current status','Records'],rows:count(r=>r.currentStatus)};
+    case 'agency': { const key=grp==='project'?(r=>projName(r.projectId)):(r=>r.agency); const o={}; base.forEach(r=>{const k=key(r);o[k]=o[k]||[0,0,0];o[k][0]++;if(map[r.id].dl.some(d=>d[0]==='overdue'))o[k][1]++;o[k][2]+=map[r.id].checks.length;}); return {h:[grp==='project'?'Project':'Agency','Records','Overdue','Open flags'],rows:Object.entries(o).sort((a,b)=>b[1][0]-a[1][0]).map(([k,v])=>[k,...v])}; }
+    case 'bic': { const fn=grp==='company'?(r=>coName(r.bicCompany)):grp==='person'?(r=>ctName(r.bicPerson)):(r=>r.bicCategory); const rows=count(fn); return {h:[grp==='company'?'Company':grp==='person'?'Person':'Category','Records'],rows,empty:'Nothing is assigned to a ball-in-court '+(grp||'category')+'.'}; }
+    case 'aging': { let rs=base.filter(r=>!CLOSED.includes(r.currentStatus)); if(grp!=='all') rs=rs.filter(r=>map[r.id].dl.some(d=>d[0]==='overdue')); rs.sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||'')); return {h:['Code','Name','Project','Agency','Status','Days open','Days overdue'],rows:rs.map(r=>[...recRow(r),Math.floor((Date.now()-Date.parse(r.createdAt||r.updatedAt||Date.now()))/864e5),r.dTarget&&daysUntil(r.dTarget)<0?-daysUntil(r.dTarget):'']),empty:'Nothing is overdue in this scope.',rec:rs}; }
+    case 'upcoming': { const from=P.from||today(); const to=P.to||new Date(Date.now()+60*864e5).toISOString().slice(0,10); const out=[]; base.forEach(r=>{ if(r.dTarget&&!r.dActual) out.push([r,'Due',r.dTarget]); if(r.setup?.expires!==false&&r.dExpiration) out.push([r,'Expires',r.dExpiration]); if(r.setup?.renewal!==false&&r.dRenewalDue) out.push([r,'Renewal due',r.dRenewalDue]); }); const rs=out.filter(x=>x[2]>=from&&x[2]<=to).sort((a,b)=>a[2].localeCompare(b[2])); return {h:['Date','What','Code','Name','Project','Agency'],rows:rs.map(([r,w,d])=>[fmtD(d),w,r.code,r.name,projName(r.projectId),r.agency]),empty:'Nothing falls due, expires or renews in this window.',note:'A record with two deadlines in the window appears once per deadline.'}; }
+    case 'quality': if(grp==='check'){ const o={}; base.forEach(r=>map[r.id].checks.forEach(c=>o[c]=(o[c]||0)+1)); return {h:['Check','Records flagged'],rows:CHECKS.filter(c=>o[c[0]]).map(c=>[c[1],o[c[0]]]),empty:'Every check is clear in this scope.'}; } else { const rows=Object.entries(S.projects).map(([id,p])=>{const rs=base.filter(r=>r.projectId===id);const f=rs.filter(r=>map[r.id].checks.length);const cc={};rs.forEach(r=>map[r.id].checks.forEach(c=>cc[c]=(cc[c]||0)+1));const top=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];return [p.name,rs.length,f.length,rs.reduce((s,r)=>s+map[r.id].checks.length,0),top?CHECK_LABEL[top[0]]:'—'];}); return {h:['Project','Records','Flagged records','Open flags','Most common check'],rows}; }
+    case 'payment': { const out=['Not Yet Paid','Invoice Received','Payment Requested']; if(grp==='status') return {h:['Payment status','Records'],rows:count(r=>r.paymentStatus)}; const rs=base.filter(r=>out.includes(r.paymentStatus)); return {h:['Code','Name','Project','Agency','Status','Payment'],rows:rs.map(r=>[...recRow(r),r.paymentStatus]),empty:'Nothing outstanding. Every fee-bearing record in scope is settled.',note:'Outstanding means Not Yet Paid, Invoice Received or Payment Requested. Refund Pending is money owed the other way.'}; }
+  }
+}
+function vReports(){
+  const R=REPORTS.find(r=>r[0]===S.report); const P=S.rp; const d=reportData();
+  return `<div class="row" style="justify-content:space-between"><div><h1>Reports</h1><p class="lede">The whole portfolio, cut seven ways, computed live from the records. Export takes exactly what is on screen.</p></div><button class="btn" data-act="exportReport">Export to CSV (Excel)</button></div>
+  <div class="tabs">${REPORTS.map(r=>`<button aria-selected="${r[0]===S.report}" data-rep="${r[0]}">${r[1]}</button>`).join('')}</div>
+  <div class="row" style="margin-bottom:12px"><label class="f" style="width:190px">Project<select id="rpP" data-rp="project">${opts(Object.entries(S.projects).map(([i,p])=>[i,p.name]),P.project,'All projects')}</select></label><label class="f" style="width:170px">Agency<select id="rpA" data-rp="agency">${opts(lists('Agency'),P.agency,'All')}</select></label><label class="f" style="width:200px">Current status<select id="rpS" data-rp="status">${opts(statuses(),P.status,'All')}</select></label>
+  ${S.report==='upcoming'?`<label class="f" style="width:150px">From<input id="rpF" type="date" data-rp="from" value="${esc(P.from||today())}"></label><label class="f" style="width:150px">To<input id="rpT" type="date" data-rp="to" value="${esc(P.to||new Date(Date.now()+60*864e5).toISOString().slice(0,10))}"></label>`:`<label class="f" style="width:200px">Group by<select id="rpG" data-rp="group">${opts(R[3],P.group||R[3][0]?.[0],null)}</select></label>`}
+  <label class="f" style="width:120px">Show<select id="rpSh" data-rp="show">${opts(['Active','Archived','All'],P.show,null)}</select></label></div>
+  <section class="sec"><header><h3>${R[1]}</h3><span class="pill">${d.rows.length} rows</span></header><div class="bd"><p style="color:var(--muted);margin-top:0">${R[2]}</p>
+  ${d.rows.length?`<div class="tbl-wrap"><table><thead><tr>${d.h.map((h,i)=>`<th${i&&typeof d.rows[0][i]==='number'?' class="num"':''}>${h}</th>`).join('')}</tr></thead><tbody>${d.rows.map(r=>`<tr>${r.map(c=>`<td${typeof c==='number'?' class="num"':''}>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:`<p class="empty">${d.empty||'No records match these settings.'}</p>`}
+  ${d.note?`<p style="color:var(--muted);font-size:12.5px">${d.note}</p>`:''}</div></section>`;
+}
+
+// ---------- settings ----------
+function vSettings(){
+  const tab=S.setTab; const ed=canEditCfg&&canWrite;
+  const tabs=[['people','People & access'],['comms','Communications'],['vocab','Vocabularies'],['life','Lifecycle']];
+  let body='';
+  if(tab==='people'){
+    body=`<section class="sec"><header><h3>You</h3></header><div class="bd fields">${uid?`<label class="f">Your name (signs your emails)<input id="meName" type="text" value="${esc(S.me.name)}"></label><label class="f">You are this contact (for your own alerts)<select id="meContact">${opts(activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),S.me.contactId,'Not linked')}</select></label><div style="align-self:end"><button class="btn pri" data-act="meSave">Save</button></div>`:'<p>Sign in to set your name.</p>'}</div></section>
+    <section class="sec"><header><h3>Your data</h3></header><div class="bd stack"><p style="margin:0">${window.PD_STORE?.mode==='github'?'Everything is saved in your private GitHub repository. Every change is a commit, so GitHub keeps the full history and you can roll back anything. Changes from others show up within about 20 seconds.':window.PD_STORE?.mode==='remote'?'Everything is saved online. Anyone with the site password can see and edit it, and changes from others show up within about 15 seconds.':'Everything is saved in this browser on this computer only. Download a backup now and then, and use it to move your data to another computer or browser.'}</p><div class="row"><button class="btn" data-act="pdBackup">Download backup</button><label class="btn" style="cursor:pointer">Restore from backup<input type="file" id="pdRestore" accept=".json,application/json" hidden></label>${(window.PD_STORE?.mode||'local')!=='local'?'<button class="btn" data-act="pdLogout">Sign out</button>':''}</div><small style="color:var(--muted)">Restoring replaces everything in the tracker with the backup file.</small></div></section>`;
+  } else if(tab==='comms'){
+    const types=S.me.alertTypes||DEADLINES.map(d=>d[0]);
+    body=`<section class="sec"><header><h3>Your alerts</h3></header><div class="bd stack"><p style="margin:0">The bell at the top shows records where you are ball-in-court, responsible or action owner. Pick which deadlines it counts.</p><div class="row">${DEADLINES.map(([k,l])=>`<label class="chk"><input type="checkbox" data-alert="${k}"${types.includes(k)?' checked':''}${uid?'':' disabled'}> ${l}</label>`).join('')}</div><p class="note info">Email digests aren't sent by this tracker. The bell is the alert.</p></div></section>
+    <section class="sec"><header><h3>Email templates</h3><small style="color:var(--muted)">Merge fields in double braces: {{record_name}} {{record_code}} {{project_name}} {{agency}} {{category}} {{current_status}} {{official_agency_id}} {{target_completion_date}} {{expiration_date}} {{next_required_action}} {{sender_name}} {{today}}</small></header><div class="bd stack">${(S.cfg.templates||[]).map((t,i)=>`<div class="card fields"><label class="f">Name<input id="tp_n_${i}" type="text" data-tpl="${i}" data-k="name" value="${esc(t.name)}"${ed?'':' disabled'}></label><label class="f wide">Subject<input id="tp_s_${i}" type="text" data-tpl="${i}" data-k="subject" value="${esc(t.subject)}"${ed?'':' disabled'}></label><label class="f wide">Body<textarea id="tp_b_${i}" data-tpl="${i}" data-k="body" style="min-height:120px"${ed?'':' disabled'}>${esc(t.body)}</textarea></label>${ed?`<div class="row"><button class="btn sm" data-act="tplDel" data-i="${i}">Remove template</button></div>`:''}</div>`).join('')}
+    ${ed?`<div class="row"><button class="btn" data-act="tplAdd">Add template</button><button class="btn pri" data-act="tplSave">Save templates</button></div>`:'<p style="color:var(--muted)">Only an owner or editor can change these.</p>'}</div></section>`;
+  } else if(tab==='vocab'){
+    const L=S.vocab; const ret=S.cfg.retired?.[L]||[]; const vals=S.cfg.lists[L]||[]; const showRet=S.showRet;
+    const groups={}; Object.keys(VOCAB_INFO).forEach(k=>(groups[VOCAB_INFO[k][0]]=groups[VOCAB_INFO[k][0]]||[]).push(k));
+    body=`<div class="vocab"><div class="card vlist">${Object.entries(groups).map(([g,ks])=>`<div class="flab" style="margin-top:8px">${g}</div>`+ks.map(k=>`<button data-vocab="${esc(k)}"${k===L?' aria-current="true"':''}><span>${esc(k)}</span><span class="mono">${(S.cfg.lists[k]||[]).length}</span></button>`).join('')).join('')}</div>
+    <section class="sec"><header><h3>${esc(L)}</h3><label class="chk"><input type="checkbox" data-act="toggleRet"${showRet?' checked':''}> Show retired</label></header><div class="bd stack"><p style="margin:0;color:var(--muted)">${esc(VOCAB_INFO[L]?.[1]||'')}</p>
+     <table><tbody>${vals.filter(v=>showRet||!ret.includes(v)).map((v,i)=>{const vi=vals.indexOf(v);return `<tr><td>${ed?`<input type="text" id="vv_${vi}" data-vv="${vi}" value="${esc(v)}">`:esc(v)}${L==='Permit Category'?`<br><small style="color:var(--muted)">Offered by ${esc((S.cfg.scope?.[v]||['every agency']).join(', '))}</small>`:''}</td><td>${ret.includes(v)?'<span class="pill">Retired</span>':''}</td><td style="text-align:right">${ed?`<button class="btn sm" data-act="vRename" data-i="${vi}">Rename</button> <button class="btn sm" data-act="vRetire" data-i="${vi}">${ret.includes(v)?'Restore':'Retire'}</button>`:''}</td></tr>`}).join('')}</tbody></table>
+     ${ed?`<div class="row"><input type="text" id="vNew" placeholder="New value" style="max-width:280px"><button class="btn" data-act="vAdd">Add</button></div>${L==='Permit Category'?`<p style="color:var(--muted);font-size:12.5px;margin:0">Agency scoping for categories is set by editing the configuration; values offered by every agency need no setting.</p>`:''}`:'<p style="color:var(--muted)">Only an owner or editor can change these lists.</p>'}
+     <p style="color:var(--muted);font-size:12.5px;margin:0">Renaming a value carries every record and type using it along. Retiring hides it from new entries and leaves it on the records that already carry it. Nothing here is ever deleted.</p></div></section></div>`;
+  } else {
+    const st=S.cfg.statuses||[];
+    body=`<section class="sec"><header><h3>Current status</h3><small style="color:var(--muted)">Each status sits at a lifecycle stage, which is what the record's progress tracker draws.</small></header><div class="bd"><table><thead><tr><th>Status</th><th>Progress stage</th><th>Records</th><th></th></tr></thead><tbody>${st.map((s,i)=>`<tr><td>${ed?`<input type="text" id="ls_${i}" data-ls="${i}" value="${esc(s[0])}">`:esc(s[0])}</td><td>${ed?`<select id="lg_${i}" data-lg="${i}">${opts(STAGE_OPTS.map(o=>[o,o==='none'?'Not part of the process':o==='done'?'Past every stage':o]),s[1],null)}</select>`:esc(s[1])}</td><td class="mono">${recs().filter(r=>r.currentStatus===s[0]).length}</td><td>${s[2]?'<span class="pill">Retired</span>':''}${ed?` <button class="btn sm" data-act="lsRetire" data-i="${i}">${s[2]?'Restore':'Retire'}</button>`:''}</td></tr>`).join('')}</tbody></table>
+    ${ed?`<div class="row" style="margin-top:10px"><input type="text" id="lsNew" placeholder="New status" style="max-width:240px"><select id="lgNew" style="max-width:200px">${opts(STAGE_OPTS,'Filing',null)}</select><button class="btn" data-act="lsAdd">Add</button><button class="btn pri" data-act="lsSave">Save lifecycle</button></div>`:''}</div></section>`;
+  }
+  return `<h1>Settings</h1><p class="lede">Everything you set up yourself: who you are here, what the app sends, and every list it offers.</p>${ed?'':`<p class="note info" style="margin-bottom:12px">Only the owner or an editor can change the lists, lifecycle and templates.</p>`}<div class="tabs">${tabs.map(([k,l])=>`<button aria-selected="${k===tab}" data-stab="${k}">${l}</button>`).join('')}</div>${body}`;
+}
+
+// ---------- help ----------
+function vHelp(){
+  return `<div class="help"><h1>How to use Permit Desk</h1><p class="lede">One place for every NYC permit, filing, approval, inspection and sign-off across your jobs.</p>
+  <h2>The idea</h2><ol><li><b>Master catalog</b>: each kind of permit is described once: its agency, its fields, its lifecycle.</li><li><b>Project</b>: create the job and its team of default consultants.</li><li><b>Slate</b>: on the project page, tick every permit type the job needs. Each becomes a record that is Queued and Not Started.</li><li><b>Work it</b>: start an item, fill in dates, numbers and who has the ball, until it is signed off.</li><li><b>Rollups</b>: the Dashboard, Reports and the alert bell add everything up live.</li></ol>
+  <h2>Records</h2><p>The Records screen is for finding and scanning. Filters with two values mean "either one"; two different filters mean "both". Pick columns with the Columns menu. Click a row for a summary, then <b>Open full</b> to edit. Only the fields the permit type uses are shown.</p>
+  <p>The four "who" fields answer different questions: <b>Ball-in-court</b> is whose turn it is now, <b>Responsible</b> owns it overall, <b>Action owner</b> does the next step, and <b>Agency reviewer</b> is the examiner. People are never filled in for you; use <b>Load all defaults</b> or drop in a team member.</p>
+  <h2>Deadlines and data checks</h2><p>Only Active records count. Due within 7 days and Overdue read Target completion; Expiring reads Expiration (60 days); Renewal reads Renewal due (30 days); Stale means nobody touched it in 30 days. Eleven data checks flag records that look wrong, such as Issued with no issue date or nobody ball-in-court.</p>
+  <h2>TRs</h2><p>Special inspections are their own agency in the catalog. When every TR on a project has a Final received, the project's "All TRs signed off" line turns satisfied on its own.</p>
+  <h2>Rules</h2><ul><li>Companies, contacts and list values are set inactive or retired, never deleted.</li><li>Names and addresses tidy to proper case when you leave the field. Exceptions (HQ, LLC, DOB…) live in Settings.</li><li>All dates are New York time.</li><li>Every change to a record is kept in its History tab.</li></ul>
+  <h2>Sharing</h2><p>Use Claude's Share button on this page. Contributors can do all the daily work; owners and editors can also change Settings.</p></div>`;
+}
+
+// ---------- bell ----------
+function renderBell(){
+  const a=myAlerts(); const n=a?a.length:0; const b=$('#bellN'); b.hidden=!n; b.textContent=n;
+  $('#whoName').textContent=S.me.name||'';
+  const p=$('#pop'); if(p.hidden) return;
+  p.innerHTML=`<h4>Alerts · ${n}</h4>`+(a===null?`<p class="it" style="cursor:default">Your login isn't linked to a contact yet, so nothing is routed to you. <button class="btn link" data-act="goPeople">Link it in Settings</button></p>`:n?a.map(({r,d})=>`<div class="it" data-open="${r.id}"><span class="code">${esc(r.code)}</span> ${esc(r.name)}<br><small style="color:var(--muted)">${esc(DEADLINES.find(x=>x[0]===d[0])[1])} · ${fmtD(d[1])}</small></div>`).join(''):`<p class="it" style="cursor:default">Nothing needs you right now.</p>`)+`<p class="it" style="cursor:default"><button class="btn link" data-act="goComms">Choose alert types</button></p>`;
+}
+$('#bell').addEventListener('click',e=>{ e.stopPropagation(); const p=$('#pop'); p.hidden=!p.hidden; renderBell(); });
+document.addEventListener('click',e=>{ const p=$('#pop'); if(!p.hidden && !p.contains(e.target) && e.target.id!=='bell') p.hidden=true; });
+$('#pop').addEventListener('click',e=>{ const o=e.target.closest('[data-open]'); if(o){ $('#pop').hidden=true; openRec(o.dataset.open); } const a=e.target.closest('[data-act]'); if(a){ $('#pop').hidden=true; S.setTab=a.dataset.act==='goPeople'?'people':'comms'; nav('admin'); } });
+// ---------- actions ----------
+function openRec(id){ if(!id) return; if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.pending=false; Object.assign(S,{view:'records',recId:id,recTab:'details',email:null,projId:null,typeId:null}); if(location.hash!=='#records') history.replaceState(null,'','#records'); renderNav(); render(); window.scrollTo(0,0); }
+function nextCode(pid,prefix){ let mx=0; recs().forEach(r=>{ if(r.projectId===pid){ const m=(r.code||'').match(new RegExp('^'+prefix+'-(\\d+)$')); if(m) mx=Math.max(mx,+m[1]); }}); return prefix+'-'+String(mx+1).padStart(3,'0'); }
+function nextSeq(coll,prefix){ let mx=0; Object.values(S[coll]).forEach(c=>{ const m=(c.code||'').match(/(\d+)$/); if(m) mx=Math.max(mx,+m[1]); }); return prefix+'-'+String(mx+1).padStart(3,'0'); }
+function setupFrom(fields){ const f=new Set(fields); return {required:true,renewal:f.has('dRenewalDue'),expires:f.has('dExpiration'),inspection:f.has('dInspection'),signoff:f.has('dSignoff'),payment:f.has('paymentStatus')}; }
+const H=(type,extra={})=>({at:new Date().toISOString(),by:uid||'',type,...extra});
+const capHist=h=>h.slice(-200);
+const plain=html=>{ const d=document.createElement('div'); d.innerHTML=html; return d.textContent.trim(); };
+
+async function recUpdate(id,patch,hist){
+  const r=S.records[id]; if(!r) return;
+  const history=capHist([...(r.history||[]),...hist]);
+  await put('records',id,{...patch,history,...stamp()},true);
+}
+async function addToSlate(pid,codes){
+  let made=0;
+  for(const code of codes){
+    const t=S.catalog[code]; if(!t) continue;
+    const id=uidGen(); const prefix=PREFIX[t.agency]||'REC';
+    const rec={projectId:pid,catalogCode:code,code:nextCode(pid,prefix),name:t.name,agency:t.agency,category:t.category,kind:t.kind||'Permit',recordStatus:'Queued',currentStatus:'Not Started',description:t.description||'',fields:t.fields||[],setup:setupFrom(t.fields||[]),override:false,bicCategory:t.typicalBic||'',inspections:[],deps:[],history:[H('Created',{note:code+' — '+t.name})],createdAt:new Date().toISOString(),createdBy:uid||'',...stamp()};
+    S.records[id]=rec; CMP=null; // so the next code counts it
+    if(await put('records',id,rec)) made++;
+  }
+  return made;
+}
+async function saveRecord(form){
+  const id=S.recId, r=S.records[id]; if(!r) return;
+  const patch={}, hist=[];
+  form.querySelectorAll('[data-f]').forEach(el=>{ const k=el.dataset.f; const v=el.value.trim(); if((r[k]??'')!==v){ patch[k]=v; const lab=x=>FD[k].type==='company'?coName(x):FD[k].type==='contact'?ctName(x):x; hist.push(H('Changed',{field:k,from:lab(r[k]??''),to:lab(v)})); } });
+  const ov=form.querySelector('[data-setup=override]').checked; const setup={...(r.setup||{})}; let sc=false;
+  form.querySelectorAll('[data-setup]:not([data-setup=override])').forEach(el=>{ const k=el.dataset.setup; if(!!setup[k]!==el.checked){ setup[k]=el.checked; sc=true; } });
+  if(ov!==!!r.override){ patch.override=ov; hist.push(H('Setup',{note:ov?'Override turned on':'Override turned off'})); }
+  if(sc){ patch.setup=setup; hist.push(H('Setup',{note:'Setup toggles changed'})); }
+  if(patch.recordStatus && patch.recordStatus!==r.recordStatus) hist.forEach(h=>{ if(h.field==='recordStatus') h.type='Status changed'; });
+  if(patch.currentStatus) hist.forEach(h=>{ if(h.field==='currentStatus') h.type='Status changed'; });
+  S.dirty=false; S.pending=false;
+  if(!hist.length){ toast('No changes to save.'); render(); return; }
+  if(await recUpdate(id,patch,hist)!==false) toast('Saved');
+}
+async function renameCascade(listName,from,to){
+  const map={'Agency':[['records','agency'],['catalog','agency']],'Permit Category':[['records','category'],['catalog','category']],'Ball-in-Court Category':[['records','bicCategory'],['catalog','typicalBic']],'Priority':[['records','priority']],'Payment Status':[['records','paymentStatus']],'Project Type':[['projects','type']],'Borough':[['projects','borough']],'Company Type':[['companies','type']],'Discipline':[['contacts','discipline']],'Project Role':[['contacts','role']]};
+  for(const [coll,field] of (map[listName]||[])){ for(const [id,d] of Object.entries(S[coll])){ if(d[field]===from) await put(coll,id,{[field]:to},true); } }
+  if(listName==='Discipline'){ for(const [id,t] of Object.entries(S.catalog)){ if((t.disciplines||[]).includes(from)) await put('catalog',id,{disciplines:t.disciplines.map(x=>x===from?to:x)},true); } for(const [id,p] of Object.entries(S.projects)){ if((p.team||[]).some(m=>m.discipline===from)) await put('projects',id,{team:p.team.map(m=>m.discipline===from?{...m,discipline:to}:m)},true); } }
+  if(listName==='Project Type'){ for(const [id,t] of Object.entries(S.catalog)){ if((t.projectTypes||[]).includes(from)) await put('catalog',id,{projectTypes:t.projectTypes.map(x=>x===from?to:x)},true); } }
+}
+async function cfgUpdate(patch){ return put('config','main',patch,true); }
+
+const ACT={
+  pdBackup(){ const d=window.PD_STORE.exportAll(); const name='Permit Desk backup '+new Date().toISOString().slice(0,10)+'.json'; downloads.save({filename:name,data:JSON.stringify(d)}); toast('Backup downloaded'); },
+  pdLogout(){ window.PD_STORE.logout(); },
+  clearF(){ goRecords({}); }, clearBicF(){ delete S.F.bicCompany; delete S.F.bicPerson; render(); },
+  groupAg(){ S.groupAgency=!S.groupAgency; render(); },
+  colReset(){ S.cols=COLS_DEFAULT.slice(); try{localStorage.setItem('pd.cols',JSON.stringify(S.cols));}catch(e){} render(); },
+  exportGrid(){ const rows=sortedRows(filtered()); const cols=S.cols.filter(c=>COLDEFS[c]); saveCsv('records-'+today()+'.csv',cols.map(c=>COLDEFS[c][0]),rows.map(r=>cols.map(c=>plain(String(COLDEFS[c][1](r)))))); },
+  exportReport(){ const d=reportData(); saveCsv('report-'+S.report+'-'+today()+'.csv',d.h,d.rows); },
+  async activate(el){ const id=el.dataset.id; const r=S.records[id]; await recUpdate(id,{recordStatus:'Active'},[H('Status changed',{field:'recordStatus',from:r.recordStatus,to:'Active'})]); toast('Moved to active'); },
+  async start(el){ const id=el.dataset.id; const r=S.records[id]; await recUpdate(id,{recordStatus:'Active',currentStatus:'Information Being Collected'},[H('Status changed',{field:'currentStatus',from:r.currentStatus,to:'Information Being Collected'}),...(r.recordStatus!=='Active'?[H('Status changed',{field:'recordStatus',from:r.recordStatus,to:'Active'})]:[])]); toast('Started'); },
+  recBack(){ if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.recId=null; S.email=null; render(); },
+  recDiscard(){ S.dirty=false; S.pending=false; render(); toast('Changes discarded'); },
+  loadDefaults(){ const r=S.records[S.recId]; const m=defaultsFor(r)[0]; if(!m){ toast("No team member matches this type's typical consultant."); return; } const set=(k,v)=>{const el=document.querySelector(`[data-f=${k}]`); if(el&&v) el.value=v;}; set('respCompany',m.companyId); set('respPerson',m.contactId); set('actionOwner',m.contactId); S.dirty=true; toast('Filled from the project team. Save to keep it.'); },
+  async inspAdd(){ const type=$('#niType').value.trim(); if(!type){ toast('Type the inspection name.'); return; } const x={type,loc:$('#niLoc').value.trim(),date:$('#niDate').value,result:$('#niRes').value}; const r=S.records[S.recId]; await recUpdate(S.recId,{inspections:[...(r.inspections||[]),x]},[H('Inspection added',{note:type})]); },
+  async inspDel(el){ const r=S.records[S.recId]; const i=+el.dataset.i; const x=r.inspections[i]; await recUpdate(S.recId,{inspections:r.inspections.filter((_,j)=>j!==i)},[H('Inspection removed',{note:x?.type})]); },
+  async depAdd(){ const rid=$('#ndItem').value; if(!rid){ toast('Pick an item in this project.'); return; } const dir=$('#ndDir').value, type=$('#ndType').value; const r=S.records[S.recId], o=S.records[rid];
+    await recUpdate(S.recId,{deps:[...(r.deps||[]),{dir,rid,type}]},[H('Dependency added',{note:(dir==='by'?'Blocked by ':'Blocking ')+o.code})]);
+    await recUpdate(rid,{deps:[...(o.deps||[]),{dir:dir==='by'?'blocks':'by',rid:S.recId,type}]},[H('Dependency added',{note:(dir==='by'?'Blocking ':'Blocked by ')+r.code})]); },
+  async depDel(el){ const r=S.records[S.recId]; const d=r.deps[+el.dataset.i]; const o=S.records[d.rid];
+    await recUpdate(S.recId,{deps:r.deps.filter((_,j)=>j!==+el.dataset.i)},[H('Dependency removed',{note:o?.code})]);
+    if(o) await recUpdate(d.rid,{deps:(o.deps||[]).filter(x=>x.rid!==S.recId)},[H('Dependency removed',{note:r.code})]); },
+  emailOpen(){ const r=S.records[S.recId]; const team=(S.projects[r.projectId]?.team||[]).map(m=>S.contacts[m.contactId]?.email).filter(Boolean); S.email={to:team.slice(0,1),tpl:'',subject:'',body:''}; render(); },
+  emClose(){ S.email=null; render(); },
+  emDel(el){ S.email.to.splice(+el.dataset.i,1); render(); },
+  emAdd(){ const pick=$('#emPick').value, addr=$('#emAddr').value.trim(); const a=pick?S.contacts[pick]?.email:addr; if(!a||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a)){ toast('Enter a valid email address.'); return; } if(!S.email.to.includes(a)) S.email.to.push(a); render(); },
+  async emCopy(){ const e=S.email; const text=`To: ${e.to.join(', ')}\nSubject: ${e.subject}\n\n${e.body}`; try{ await navigator.clipboard.writeText(text); toast('Email copied. Paste it into your mail app.'); }catch(err){ const t=$('#emAll'); t.focus(); t.select(); toast('Press Ctrl+C / Cmd+C to copy.'); } await recUpdate(S.recId,{},[H('Email drafted',{note:e.subject+' → '+e.to.join(', ')})]); },
+  newProject(){ S.newProject=true; render(); }, projBack(){ if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.newProject=false; S.projId=null; S.slateSel=new Set(); render(); },
+  async teamAdd(){ const d=$('#tmDisc').value; if(!d){ toast('Pick a discipline.'); return; } const co=$('#tmCo').value, ct=$('#tmCt').value; if(!co&&!ct){ toast('Pick a company or a person.'); return; } const p=S.projects[S.projId]; const m={discipline:d,companyId:co||S.contacts[ct]?.companyId||'',contactId:ct,role:$('#tmRole').value,isDefault:$('#tmDef').checked}; let team=[...(p.team||[])]; if(m.isDefault) team=team.map(x=>x.discipline===d?{...x,isDefault:false}:x); team.push(m); await put('projects',S.projId,{team,...stamp()},true); },
+  async teamDel(el){ const p=S.projects[S.projId]; await put('projects',S.projId,{team:p.team.filter((_,i)=>i!==+el.dataset.i)},true); },
+  async slateAdd(){ const codes=[...S.slateSel]; const n=await addToSlate(S.projId,codes); S.slateSel=new Set(); toast(`Added ${n} item${n===1?'':'s'} to the slate as Not Started`); },
+  slateClear(){ S.slateSel=new Set(); render(); },
+  async docAdd(){ const name=$('#dlName').value.trim(); if(!name){ toast('Name the document.'); return; } const id=uidGen(); const fields=['code','name','agency','category','kind','recordStatus','description','dTarget','dActual','currentStatus','priority','bicCategory','bicCompany','bicPerson','respCompany','respPerson','actionOwner','nextAction','docLink','folder','comments','issues'];
+    await put('records',id,{projectId:S.projId,catalogCode:'',code:nextCode(S.projId,'DOC'),name:smartCap(name),agency:$('#dlAg').value,category:$('#dlCat').value,kind:'Document',recordStatus:'Queued',currentStatus:'Not Started',fields,setup:{required:true},inspections:[],deps:[],history:[H('Created',{note:'Document line item'})],createdAt:new Date().toISOString(),...stamp()}); toast('Document added'); },
+  catGroup(){ S.catF.group=!S.catF.group; render(); },
+  typeNew(){ S.typeDraft=null; S.typeId='__new'; render(); }, typeBack(){ if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.typeId=null; render(); },
+  async itAdd(){ const name=$('#itName').value.trim(); if(!name){ toast('Name the inspection.'); return; } const t=S.catalog[S.typeId]; const x={name,seq:+$('#itSeq').value||((t.inspectionTypes||[]).length+1),by:$('#itBy').value,witnessed:$('#itW').checked}; await put('catalog',S.typeId,{inspectionTypes:[...(t.inspectionTypes||[]),x].sort((a,b)=>a.seq-b.seq)},true); },
+  async itDel(el){ const t=S.catalog[S.typeId]; await put('catalog',S.typeId,{inspectionTypes:t.inspectionTypes.filter((_,i)=>i!==+el.dataset.i)},true); },
+  async meSave(){ const d={...S.me,name:$('#meName').value.trim(),contactId:$('#meContact').value}; if(await put(`data/users/${uid}`,'profile',d)) toast('Saved'); },
+  async tplSave(){ const tpls=(S.cfg.templates||[]).map((t,i)=>({name:$('#tp_n_'+i).value,subject:$('#tp_s_'+i).value,body:$('#tp_b_'+i).value})); S.dirty=false; if(await cfgUpdate({templates:tpls})) toast('Templates saved'); },
+  async tplAdd(){ await cfgUpdate({templates:[...(S.cfg.templates||[]),{name:'New template',subject:'{{record_name}}',body:''}]}); },
+  async tplDel(el){ await cfgUpdate({templates:S.cfg.templates.filter((_,i)=>i!==+el.dataset.i)}); },
+  async vRename(el){ const L=S.vocab, i=+el.dataset.i; const from=S.cfg.lists[L][i], to=$('#vv_'+i).value.trim(); if(!to||to===from) return; if(S.cfg.lists[L].includes(to)){ toast('That value already exists.'); return; } const lists2={...S.cfg.lists,[L]:S.cfg.lists[L].map(v=>v===from?to:v)}; const patch={lists:lists2}; if(L==='Permit Category'&&S.cfg.scope?.[from]){ const sc={...S.cfg.scope,[to]:S.cfg.scope[from]}; delete sc[from]; patch.scope=sc; } if((S.cfg.retired?.[L]||[]).includes(from)) patch.retired={...S.cfg.retired,[L]:S.cfg.retired[L].map(v=>v===from?to:v)}; await db.doc('config/main').set({...S.cfg,...patch}); await renameCascade(L,from,to); toast(`Renamed to ${to}`); },
+  async vRetire(el){ const L=S.vocab, v=S.cfg.lists[L][+el.dataset.i]; const r=S.cfg.retired?.[L]||[]; await db.doc('config/main').set({...S.cfg,retired:{...(S.cfg.retired||{}),[L]:r.includes(v)?r.filter(x=>x!==v):[...r,v]}}); },
+  async vAdd(){ const L=S.vocab, v=$('#vNew').value.trim(); if(!v) return; if(S.cfg.lists[L].includes(v)){ toast('That value already exists.'); return; } await cfgUpdate({lists:{...S.cfg.lists,[L]:[...S.cfg.lists[L],v]}}); toast('Added'); },
+  toggleRet(){ S.showRet=!S.showRet; render(); },
+  async lsSave(){ const st=S.cfg.statuses.map((s,i)=>[$('#ls_'+i).value.trim()||s[0],$('#lg_'+i).value,...(s[2]?[true]:[])]); S.dirty=false; await db.doc('config/main').set({...S.cfg,statuses:st}); for(let i=0;i<st.length;i++){ const from=S.cfg.statuses[i]?.[0]; if(from&&from!==st[i][0]) for(const [id,r] of Object.entries(S.records)) if(r.currentStatus===from) await put('records',id,{currentStatus:st[i][0]},true); } toast('Lifecycle saved'); },
+  async lsAdd(){ const n=$('#lsNew').value.trim(); if(!n) return; await db.doc('config/main').set({...S.cfg,statuses:[...S.cfg.statuses,[n,$('#lgNew').value]]}); },
+  async lsRetire(el){ const i=+el.dataset.i; await db.doc('config/main').set({...S.cfg,statuses:S.cfg.statuses.map((s,j)=>j===i?(s[2]?[s[0],s[1]]:[s[0],s[1],true]):s)}); },
+};
+
+// ---------- events ----------
+const M=$('#main');
+M.addEventListener('click',async e=>{
+  const t=e.target;
+  const a=t.closest('[data-act]'); if(a&&a.tagName!=='INPUT'){ e.preventDefault(); const f=ACT[a.dataset.act]; if(f){ if(!canWrite && !['clearF','clearBicF','groupAg','colReset','exportGrid','exportReport','recBack','recDiscard','emClose','projBack','slateClear','catGroup','typeBack','toggleRet','emailOpen','emDel','emAdd','emCopy'].includes(a.dataset.act)){ toast('You can view this tracker but not change it.'); return; } a.disabled=true; try{ await f(a); } finally{ a.disabled=false; } } return; }
+  const nv=t.closest('[data-nav]'); if(nv){ e.preventDefault(); nav(nv.dataset.nav); return; }
+  const go=t.closest('[data-go]'); if(go){ e.preventDefault(); goRecords(JSON.parse(go.dataset.go)); return; }
+  const op=t.closest('[data-open]'); if(op){ e.preventDefault(); openRec(op.dataset.open); return; }
+  const sl=t.closest('[data-sel]'); if(sl){ S.sel=sl.dataset.sel; render(); return; }
+  const so=t.closest('[data-sort]'); if(so){ const c=so.dataset.sort; S.sort=S.sort.col===c?{col:c,dir:-S.sort.dir}:{col:c,dir:1}; render(); return; }
+  const pj=t.closest('[data-proj]'); if(pj){ S.projId=pj.dataset.proj; S.slateSel=new Set(); render(); window.scrollTo(0,0); return; }
+  const ty=t.closest('[data-type]'); if(ty){ S.typeId=ty.dataset.type; render(); window.scrollTo(0,0); return; }
+  const rw=t.closest('.list-row[data-row]'); if(rw){ if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.openRow=S.openRow===rw.dataset.row?null:rw.dataset.row; render(); return; }
+  const rt=t.closest('[data-rtab]'); if(rt){ S.recTab=rt.dataset.rtab; render(); return; }
+  const rp=t.closest('[data-rep]'); if(rp){ S.report=rp.dataset.rep; S.rp.group=''; render(); return; }
+  const st=t.closest('[data-stab]'); if(st){ S.setTab=st.dataset.stab; render(); return; }
+  const vc=t.closest('[data-vocab]'); if(vc){ S.vocab=vc.dataset.vocab; render(); return; }
+});
+M.addEventListener('change',async e=>{
+  const t=e.target, d=t.dataset;
+  if(d.ms){ const arr=S.F[d.ms]; const i=arr.indexOf(t.value); if(t.checked&&i<0) arr.push(t.value); if(!t.checked&&i>=0) arr.splice(i,1); S.sel=null; render(); const det=document.querySelector(`[data-ms="${d.ms}"]`)?.closest('details'); if(det) det.open=true; return; }
+  if(d.fsel){ S.F[d.fsel]=t.value; render(); return; }
+  if(d.col){ if(t.checked&&!S.cols.includes(d.col)) S.cols.push(d.col); if(!t.checked) S.cols=S.cols.filter(c=>c!==d.col); try{localStorage.setItem('pd.cols',JSON.stringify(S.cols));}catch(err){} render(); const det=document.querySelector('[data-col]')?.closest('details'); if(det) det.open=true; return; }
+  if(d.act==='toggleRet'){ S.showRet=t.checked; render(); return; }
+  if(d.dash){ S.dash={...(S.dash||{}),[d.dash]:t.value}; render(); return; }
+  if(d.sf){ S.slateF[d.sf]=t.value; if(d.sf==='agency') S.slateF.category=''; render(); return; }
+  if(d.slate){ t.checked?S.slateSel.add(d.slate):S.slateSel.delete(d.slate); render(); return; }
+  if(d.cf){ S.catF[d.cf]=t.type==='checkbox'?t.checked:t.value; render(); return; }
+  if(d.rp){ S.rp[d.rp]=t.value; render(); return; }
+  if(d.dirinact){ S.dirInactive=t.checked; render(); return; }
+  if(d.alert){ const cur=S.me.alertTypes||DEADLINES.map(x=>x[0]); const next=t.checked?[...new Set([...cur,d.alert])]:cur.filter(x=>x!==d.alert); await put(`data/users/${uid}`,'profile',{...S.me,alertTypes:next}); return; }
+  if(d.slstat){ const r=S.records[d.slstat]; if(r.currentStatus!==t.value) await recUpdate(d.slstat,{currentStatus:t.value},[H('Status changed',{field:'currentStatus',from:r.currentStatus,to:t.value})]); return; }
+  if(d.insp!==undefined){ const r=S.records[S.recId]; const ins=r.inspections.map((x,i)=>i===+d.insp?{...x,result:t.value}:x); await recUpdate(S.recId,{inspections:ins},[H('Inspection result',{note:ins[+d.insp].type+': '+t.value})]); return; }
+  if(d.setup==='override'){ document.querySelectorAll('[data-setup]:not([data-setup=override])').forEach(x=>x.disabled=!t.checked); S.dirty=true; return; }
+  if(t.id==='dropWho'&&t.value!==''){ const r=S.records[S.recId]; const m=(S.projects[r.projectId]?.team||[])[+t.value]; const w=$('#dropWhich').value; const set=(k,v)=>{const el=document.querySelector(`[data-f=${k}]`); if(el) el.value=v||'';}; if(w==='resp'){ set('respCompany',m.companyId); set('respPerson',m.contactId);} else if(w==='bic'){ set('bicCompany',m.companyId); set('bicPerson',m.contactId);} else set('actionOwner',m.contactId); S.dirty=true; toast('Dropped in. Save to keep it.'); t.value=''; return; }
+  if(d.f==='agency'){ const cat=document.querySelector('[data-f=category]'); if(cat){ const cur=cat.value; cat.innerHTML=opts(lists('Permit Category').filter(c=>catScopeOK(c,t.value)),catScopeOK(cur,t.value)?cur:''); } }
+  if(d.f==='bicPerson'||d.f==='respPerson'){ const ck=d.f==='bicPerson'?'bicCompany':'respCompany'; const co=document.querySelector(`[data-f=${ck}]`); const c=S.contacts[t.value]; if(co&&c&&!co.value) co.value=c.companyId; }
+  if(d.t==='agency'){ const cat=$('#ty_cat'); if(cat){ const cur=cat.value; cat.innerHTML=opts(lists('Permit Category').filter(c=>catScopeOK(c,t.value)),catScopeOK(cur,t.value)?cur:''); } }
+  if(d.stage){ const on=t.checked; STAGE_FIELDS[d.stage].forEach(f=>{const c=document.querySelector(`[data-tf=${f}]`); if(c) c.checked=on;}); if(d.stage==='expires'&&!on){ STAGE_FIELDS.renewal.forEach(f=>{const c=document.querySelector(`[data-tf=${f}]`); if(c) c.checked=false;}); const rn=document.querySelector('[data-stage=renewal]'); if(rn){ rn.checked=false; rn.disabled=true; } } if(d.stage==='expires'&&on){ const rn=document.querySelector('[data-stage=renewal]'); if(rn) rn.disabled=false; } S.dirty=true; return; }
+  if(d.tf){ const pairs={bicPerson:'bicCompany',respPerson:'respCompany'}; if(t.checked&&pairs[d.tf]) document.querySelector(`[data-tf=${pairs[d.tf]}]`).checked=true; const inv=Object.entries(pairs).find(([,c])=>c===d.tf); if(!t.checked&&inv) document.querySelector(`[data-tf=${inv[0]}]`).checked=false; S.dirty=true; return; }
+  if(t.id==='emTpl'){ const r={...S.records[S.recId]}; const tp=S.cfg.templates[+t.value]; S.email.tpl=t.value; if(tp){ S.email.subject=mergeTpl(tp.subject,r); S.email.body=mergeTpl(tp.body,r); } render(); return; }
+  if(t.closest('form[data-form]')) S.dirty=true;
+});
+M.addEventListener('input',e=>{
+  const t=e.target, d=t.dataset;
+  if(d.dirq){ S.dirQ=t.value; render(); return; }
+  if(d.cf==='q'){ S.catF.q=t.value; render(); return; }
+  if(d.sf==='q'){ S.slateF.q=t.value; render(); return; }
+  if(t.id==='emSubj'||t.id==='emBody'){ S.email[t.id==='emSubj'?'subject':'body']=t.value; const e2=S.email; $('#emAll').value=`To: ${e2.to.join(', ')}\nSubject: ${e2.subject}\n\n${e2.body}`; const b=document.querySelector('[data-act=emCopy]'); if(b) b.disabled=!(e2.subject&&e2.to.length); return; }
+  if(d.tpl!==undefined||d.vv!==undefined||d.ls!==undefined){ S.dirty=true; return; }
+  if(t.closest('form[data-form]')) S.dirty=true;
+});
+M.addEventListener('focusout',e=>{ const t=e.target; if(t.dataset&&t.dataset.cap&&!t.dataset.capped&&t.value){ const v=smartCap(t.value); if(v!==t.value){ t.value=v; t.style.transition='background .4s'; t.style.background='var(--accent-soft)'; setTimeout(()=>t.style.background='',450); } t.dataset.capped='1'; } });
+M.addEventListener('submit',async e=>{
+  e.preventDefault(); const f=e.target; const k=f.dataset.form; if(!canWrite){ toast('You can view this tracker but not change it.'); return; }
+  const btn=f.querySelector('[type=submit]'); if(btn) btn.disabled=true;
+  try{
+  if(k==='rec') return await saveRecord(f);
+  if(k==='proj'||k==='projEdit'){ const d={}; f.querySelectorAll('[data-p]').forEach(el=>d[el.dataset.p]=el.value.trim()); if(!d.name){ toast('Name the project.'); return; }
+    S.dirty=false; if(k==='proj'){ const id=uidGen(); if(await put('projects',id,{...d,status:'Active',team:[],createdAt:new Date().toISOString(),...stamp()})){ S.newProject=false; S.projId=id; render(); toast('Project created. Add its team and slate.'); } } else { if(await put('projects',S.projId,{...d,...stamp()},true)) toast('Project saved'); } return; }
+  if(k==='type'){ const isNew=S.typeId==='__new'; const t0=isNew?{}:S.catalog[S.typeId]; const d={}; f.querySelectorAll('[data-t]').forEach(el=>{ let v=el.value.trim(); if(el.type==='number') v=v===''?null:+v; d[el.dataset.t]=v; });
+    if(!d.name){ toast('Name the type.'); return; } if(!d.agency){ toast('Pick an agency.'); return; }
+    const fields=FIELDS.filter(x=>x[4]||f.querySelector(`[data-tf=${x[0]}]`)?.checked).map(x=>x[0]);
+    d.fields=fields; d.disciplines=[...f.querySelectorAll('[data-tdisc]:checked')].map(x=>x.dataset.tdisc); d.projectTypes=[...f.querySelectorAll('[data-tpt]:checked')].map(x=>x.dataset.tpt);
+    d.testing=!!f.querySelector('[data-stage=testing]')?.checked;
+    const rev=$('#ty_reviewed').checked; d.review=rev?'reviewed':(t0.review==='reviewed'?'auto':(t0.review||'unreviewed')); d.active=$('#ty_active').checked;
+    let code=isNew?(d.code||''):S.typeId; if(isNew){ if(!code){ let mx=0; Object.keys(S.catalog).forEach(c=>{const m=c.match(/^CAT-(\d+)$/); if(m) mx=Math.max(mx,+m[1]);}); code='CAT-'+String(mx+1).padStart(3,'0'); } if(S.catalog[code]){ toast('That catalog code is already used.'); return; } if(!/^[A-Za-z0-9_\-.]+$/.test(code)){ toast('Codes use letters, digits and dashes.'); return; } }
+    d.code=code; d.kind=t0.kind||'Permit'; d.inspectionTypes=t0.inspectionTypes||[]; S.dirty=false;
+    if(await put('catalog',code,{...t0,...d})){ toast(rev?'Saved and marked reviewed':'Saved'); S.typeId=code; render(); } return; }
+  if(k==='co'||k==='ct'){ const id=f.dataset.id; const coll=k==='co'?'companies':'contacts'; const d={}; f.querySelectorAll('[data-c]').forEach(el=>d[el.dataset.c]=el.type==='checkbox'?el.checked:el.value.trim()); if(!d.name){ toast('Enter a name.'); return; } if(k==='ct'&&!d.companyId){ toast('Every contact must belong to a company.'); return; }
+    S.dirty=false; if(id==='__new'){ const nid=uidGen(); if(await put(coll,nid,{...d,code:nextSeq(coll,k==='co'?'C':'K'),active:true,createdAt:new Date().toISOString()})){ toast(k==='co'?'Company added':'Contact added'); f.reset(); S.openRow=nid; } } else { if(await put(coll,id,d,true)) toast('Saved'); } return; }
+  } finally { if(btn) btn.disabled=false; }
+});
+document.addEventListener('click',e=>{ const nv=e.target.closest('#nav [data-nav]'); if(nv){ e.preventDefault(); nav(nv.dataset.nav); } });
+document.addEventListener('change',async e=>{ if(e.target.id!=='pdRestore') return; const f=e.target.files[0]; if(!f) return; if(!confirm('Replace everything in the tracker with "'+f.name+'"?')){ e.target.value=''; return; } try{ await window.PD_STORE.importAll(JSON.parse(await f.text())); toast('Restored from backup'); }catch(err){ toast('Could not restore: '+err.message); } e.target.value=''; });
+boot();
+</script>
+
+</body></html>
