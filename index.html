@@ -503,6 +503,9 @@ html[data-kit] .scopes{border-radius:var(--radius-lg);box-shadow:var(--shadow-ca
 .ctbl table{width:100%} .ctbl td{vertical-align:top;font-size:13.5px} .ctbl tr.ctrow{cursor:pointer} .ctbl tr.ctrow:hover td{background:var(--sunk)} .ctbl tr.open td{background:var(--ink-soft)}
 .ctbl .ct-name{font-weight:600;color:var(--fg)} .ctbl .ct-sub{color:var(--muted);font-size:12px} .ctbl a{color:var(--ink);text-decoration:none} .ctbl a:hover{text-decoration:underline}
 .ctbl tr.ctedit td{background:var(--surface);padding:6px 16px 14px} .ctbl tr.ctedit form{border-top:1px solid var(--line)}
+.jobchip{cursor:pointer;border:1px dashed var(--line-strong);background:transparent;color:var(--faint);text-decoration:line-through;font:inherit;font-family:var(--f-mono);font-size:12px}
+.jobchip.on{border-style:solid;background:var(--surface);color:var(--fg);text-decoration:none}.jobchip small{color:var(--faint);margin-left:4px;text-decoration:none}
+.jobchip:hover{border-color:var(--accent)}
 .btn.danger{color:var(--bad);border-color:var(--bad)} .btn.danger:hover{background:var(--bad-soft)}
 .ppl{display:flex;flex-direction:column;gap:2px;margin-top:4px;font-size:12.5px;color:var(--muted)} .ppl b{color:var(--fg);font-weight:500}
 @media (max-width:800px){.dirwrap{grid-template-columns:1fr}.scopes{position:static;max-height:220px}}.slate-item .show{font-size:12px;color:var(--muted);gap:4px}
@@ -928,6 +931,18 @@ function filtered(F=S.F){
 function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:'',...patch}; S.sel=null; nav('records'); }
 
 
+// Job-number chips on the Project setup card: hide or show every filing under one DOB job.
+async function toggleJob(pid,job){
+  const p=S.projects[pid]; if(!p) return; const hid=new Set(p.hiddenJobs||[]);
+  const rs=recs().filter(r=>r.projectId===pid&&jobBase(r.jobNo||r.officialId||r.name)===job);
+  const show=hid.has(job)||!rs.some(r=>r.recordStatus!=='Archived');
+  show?hid.delete(job):hid.add(job);
+  await put('projects',pid,{hiddenJobs:[...hid],...stamp()},true);
+  for(const r of rs){ const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
+    if(r.recordStatus!==to) await recUpdate(r.id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:(show?'Shown':'Hidden')+' with job '+job})]); }
+  CMP=null; render(); toast(`${job}: ${rs.length} filing${rs.length===1?'':'s'} ${show?'shown':'hidden'}.`);
+}
+document.addEventListener('click',e=>{ const c=e.target.closest('[data-jobtog]'); if(!c) return; e.preventDefault(); e.stopPropagation(); if(!canWrite){ toast('You can view this tracker but not change it.'); return; } toggleJob(c.dataset.pid,c.dataset.jobtog); },true);
 // contact selection checkboxes
 document.addEventListener('change',e=>{ const t=e.target;
   if(t.dataset?.ctsel){ t.checked?S.ctSel.add(t.dataset.ctsel):S.ctSel.delete(t.dataset.ctsel); S.ctDelAsk=null; render(); }
@@ -1244,7 +1259,7 @@ async function syncNycRecords(pid,nyc){
     const nid=uidGen();
     const what=f.work?cap1(f.work):(f.type||'DOB filing');
     const rec={projectId:pid,catalogCode:'',code:nextCode(pid,'DOB'),name:`${what} — ${num}`,agency:'DOB',category:'Construction Filing',kind:'Permit',
-      recordStatus:(st==='Cancelled'||(st==='Signed Off'&&(f.status||f.filed||'')<new Date(Date.now()-365*864e5).toISOString().slice(0,10)))?'Archived':'Active',currentStatus:st,description:[f.type,f.applicant&&('Applicant: '+f.applicant),f.cost&&+f.cost?('Est. cost $'+(+f.cost).toLocaleString()):''].filter(Boolean).join(' · '),
+      recordStatus:((p?.hiddenJobs||[]).includes(jobBase(num))||st==='Cancelled'||(st==='Signed Off'&&(f.status||f.filed||'')<new Date(Date.now()-365*864e5).toISOString().slice(0,10)))?'Archived':'Active',currentStatus:st,description:[f.type,f.applicant&&('Applicant: '+f.applicant),f.cost&&+f.cost?('Est. cost $'+(+f.cost).toLocaleString()):''].filter(Boolean).join(' · '),
       officialId:num,jobNo:jobBase(num),bin:nyc.bin||p?.bin||'',dInitialFiling:f.filed||'',dSubmission:f.filed||'',dIssue:pm?.issued||'',dExpiration:pm?.expires||'',
       dobStatus:f.st,dobStatusDate:f.status||'',source:'nyc',fields:NYC_FIELDS,setup:setupFrom(NYC_FIELDS),override:false,bicCategory:{'Agency Review':'Agency Reviewer','Submitted':'Agency Reviewer','Approved':'Expediter','Preparing Submission':'Expediter','Comments Issued':''}[st]??'No Current Action Required',
       inspections:[],deps:[],history:[H('Created',{note:'From NYC Open Data (DOB NOW): '+f.st})],createdAt:new Date().toISOString(),createdBy:uid||'',...stamp()};
@@ -1256,13 +1271,16 @@ async function syncNycRecords(pid,nyc){
 function jobBase(n){ return String(n||'').toUpperCase().match(/[A-Z]\d{8}/)?.[0]||''; }
 function recByJob(pid){ const m={}; recs().filter(r=>r.projectId===pid).forEach(r=>[r.jobNo,r.officialId,r.applicationNo,r.relatedJob,r.name].forEach(v=>{ const s=String(v||'').toUpperCase(); const full=s.match(/[A-Z]\d{8}-[A-Z]\d{1,3}/g)||[]; full.forEach(x=>m[x]=m[x]||r.id); const b=jobBase(s); if(b) m[b]=m[b]||r.id; })); return m; }
 function projSetupCard(pid,p,live){
-  const n=p.nyc; const b=n?.building; const jobs=[...new Set(live.map(r=>jobBase(r.jobNo||r.officialId||r.name)).filter(Boolean))];
+  const n=p.nyc; const b=n?.building; const hid=new Set(p.hiddenJobs||[]);
+  const all=recs().filter(r=>r.projectId===pid); const per={};
+  all.forEach(r=>{ const j=jobBase(r.jobNo||r.officialId||r.name); if(!j) return; (per[j]=per[j]||{n:0,on:0}).n++; if(r.recordStatus!=='Archived') per[j].on++; });
+  const jobs=Object.keys(per).sort((a,b)=>(hid.has(a)-hid.has(b))||(per[b].on-per[a].on)||b.localeCompare(a));
   const row=(k,v)=>v?`<div class="kv2"><span>${k}</span><b>${v}</b></div>`:'';
   return `<section class="dc"><header><h3>Project setup</h3></header>
   <div class="kvs">${row('Address',esc(p.address||b?.address||''))}${row('BIN',p.bin?`<span class="mono">${esc(p.bin)}</span>`:'<span class="muted">not set</span>')}${row('Block / lot',(p.block||p.lot)?`<span class="mono">${esc([p.borough,p.block&&'Block '+p.block,p.lot&&'Lot '+p.lot].filter(Boolean).join(' · '))}</span>`:'<span class="muted">not set</span>')}
   ${b?row('Building',esc([b.floors&&b.floors+' floors',b.yearBuilt&&'built '+b.yearBuilt,b.zoning].filter(Boolean).join(' · '))):''}
   ${n?row('DOB NOW',`${n.filings.length} filings · ${n.permits.length} permits`):''}${n?row('Violations',`<span class="${(n.ecb.open+n.dobOpen)?'t-bad':''}">${n.ecb.open} open ECB · ${n.dobOpen} open DOB</span>`):''}</div>
-  ${jobs.length?`<div class="chips">${jobs.slice(0,8).map(j=>`<span class="chip mono">${j}</span>`).join('')}</div>`:''}
+  ${jobs.length?`<div class="flab" style="margin-top:10px">Job numbers <span style="text-transform:none;letter-spacing:0;font-weight:400">· click to show or hide all its filings</span></div><div class="chips">${jobs.map(j=>{const on=!hid.has(j)&&per[j].on>0;return `<button type="button" class="chip mono jobchip${on?' on':''}" data-jobtog="${j}" data-pid="${pid}" title="${on?'Showing':'Hidden'}: ${per[j].n} filing${per[j].n===1?'':'s'}. Click to ${on?'hide':'show'}.">${on?'✓ ':''}${j} <small>${per[j].on}/${per[j].n}</small></button>`;}).join('')}</div>`:''}
   <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm pri" data-act="nycPull" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':n?'Refresh NYC data':'Pull NYC data'}</button>${n?`<small class="muted">pulled ${fmtDT(n.pulledAt)}</small>`:''}</div></section>`;
 }
 function nycSection(pid,p,dis){
