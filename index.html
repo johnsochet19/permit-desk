@@ -503,6 +503,14 @@ html[data-kit] .scopes{border-radius:var(--radius-lg);box-shadow:var(--shadow-ca
 .ctbl table{width:100%} .ctbl td{vertical-align:top;font-size:13.5px} .ctbl tr.ctrow{cursor:pointer} .ctbl tr.ctrow:hover td{background:var(--sunk)} .ctbl tr.open td{background:var(--ink-soft)}
 .ctbl .ct-name{font-weight:600;color:var(--fg)} .ctbl .ct-sub{color:var(--muted);font-size:12px} .ctbl a{color:var(--ink);text-decoration:none} .ctbl a:hover{text-decoration:underline}
 .ctbl tr.ctedit td{background:var(--surface);padding:6px 16px 14px} .ctbl tr.ctedit form{border-top:1px solid var(--line)}
+.jp-back{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50}
+.jp{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:51;width:min(620px,calc(100vw - 24px));max-height:80vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-lg,8px);box-shadow:0 20px 60px rgba(0,0,0,.25);padding:14px 16px}
+.jp header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.jp-list{overflow:auto;border:1px solid var(--line);border-radius:var(--r)}
+.jprow{display:grid;grid-template-columns:22px 110px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:8px 10px;cursor:pointer;font:inherit;font-size:13px;color:var(--muted)}
+.jprow:last-child{border-bottom:0} .jprow:hover{background:var(--sunk)} .jprow.on{color:var(--fg)}
+.jprow .box{width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--on-accent,#fff)}
+.jprow.on .box{background:var(--accent);border-color:var(--accent)} .jp-desc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .jprow small{color:var(--faint)}
 .jobchip{cursor:pointer;border:1px dashed var(--line-strong);background:transparent;color:var(--faint);text-decoration:line-through;font:inherit;font-family:var(--f-mono);font-size:12px}
 .jobchip.on{border-style:solid;background:var(--surface);color:var(--fg);text-decoration:none}.jobchip small{color:var(--faint);margin-left:4px;text-decoration:none}
 .jobchip:hover{border-color:var(--accent)}
@@ -942,6 +950,9 @@ async function toggleJob(pid,job){
     if(r.recordStatus!==to) await recUpdate(r.id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:(show?'Shown':'Hidden')+' with job '+job})]); }
   CMP=null; render(); toast(`${job}: ${rs.length} filing${rs.length===1?'':'s'} ${show?'shown':'hidden'}.`);
 }
+document.addEventListener('click',e=>{ const o=e.target.closest('[data-jobpop]'); if(o){ e.preventDefault(); e.stopPropagation(); S.jobPop=o.dataset.jobpop; render(); return; }
+  if(e.target.closest('[data-jobpopclose]')){ e.preventDefault(); e.stopPropagation(); S.jobPop=null; render(); } },true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&S.jobPop){ S.jobPop=null; render(); } });
 document.addEventListener('click',e=>{ const c=e.target.closest('[data-jobtog]'); if(!c) return; e.preventDefault(); e.stopPropagation(); if(!canWrite){ toast('You can view this tracker but not change it.'); return; } toggleJob(c.dataset.pid,c.dataset.jobtog); },true);
 // contact selection checkboxes
 document.addEventListener('change',e=>{ const t=e.target;
@@ -1286,7 +1297,16 @@ function projSetupCard(pid,p,live){
   <div class="kvs">${row('Address',esc(p.address||b?.address||''))}${row('BIN',p.bin?`<span class="mono">${esc(p.bin)}</span>`:'<span class="muted">not set</span>')}${row('Block / lot',(p.block||p.lot)?`<span class="mono">${esc([p.borough,p.block&&'Block '+p.block,p.lot&&'Lot '+p.lot].filter(Boolean).join(' · '))}</span>`:'<span class="muted">not set</span>')}
   ${b?row('Building',esc([b.floors&&b.floors+' floors',b.yearBuilt&&'built '+b.yearBuilt,b.zoning].filter(Boolean).join(' · '))):''}
   ${n?row('DOB NOW',`${n.filings.length} filings · ${n.permits.length} permits`):''}${n?row('Violations',`<span class="${(n.ecb.open+n.dobOpen)?'t-bad':''}">${n.ecb.open} open ECB · ${n.dobOpen} open DOB</span>`):''}</div>
-  ${jobs.length?`<div class="flab" style="margin-top:10px">Job numbers <span style="text-transform:none;letter-spacing:0;font-weight:400">· click to show or hide all its filings</span></div><div class="chips">${jobs.map(j=>{const on=!hid.has(j)&&per[j].on>0;return `<button type="button" class="chip mono jobchip${on?' on':''}" data-jobtog="${j}" data-pid="${pid}" title="${on?'Showing':'Hidden'}: ${per[j].n} filing${per[j].n===1?'':'s'}. Click to ${on?'hide':'show'}.">${on?'✓ ':''}${j} <small>${per[j].on}/${per[j].n}</small></button>`;}).join('')}</div>`:''}
+  ${jobs.length?(()=>{ const isOn=j=>!hid.has(j)&&per[j].on>0; const shown=jobs.filter(isOn); const off=jobs.length-shown.length;
+    const label=j=>{ const r=all.find(x=>jobBase(x.jobNo||x.officialId||x.name)===j); return r?String(r.name||'').replace(/\s*[—-]\s*[A-Z]\d{8}.*$/,'').trim():''; };
+    return `<div class="flab" style="margin-top:10px">Job numbers shown</div>
+    <div class="chips">${shown.map(j=>`<span class="chip mono jobchip on" style="cursor:default" title="${esc(label(j))}">${j} <small>${per[j].on}/${per[j].n}</small></span>`).join('')||'<span class="muted" style="font-size:12px">None selected</span>'}
+    <button type="button" class="btn sm" data-jobpop="${pid}">${off?`See more job numbers (${off})`:'Choose job numbers'}</button></div>
+    ${S.jobPop===pid?`<div class="jp-back" data-jobpopclose="1"></div><div class="jp" role="dialog" aria-modal="true" aria-label="Job numbers">
+      <header><b>Job numbers · ${esc(p.name||'')}</b><button type="button" class="ibtn" data-jobpopclose="1" aria-label="Close">✕</button></header>
+      <p class="muted" style="margin:0 0 8px;font-size:12.5px">Tick the jobs you want on this project's dashboard, Records and alerts. Unticked jobs stay hidden, including new filings for them.</p>
+      <div class="jp-list">${jobs.map(j=>{const on=isOn(j);return `<button type="button" class="jprow${on?' on':''}" data-jobtog="${j}" data-pid="${pid}"><span class="box">${on?'✓':''}</span><span class="mono">${j}</span><span class="jp-desc">${esc(label(j))}</span><small>${per[j].n} filing${per[j].n===1?'':'s'}</small></button>`;}).join('')}</div>
+      <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="button" class="btn pri" data-jobpopclose="1">Done</button></div></div>`:''}`; })():''}
   <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm pri" data-act="nycPull" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':n?'Refresh NYC data':'Pull NYC data'}</button>${n?`<small class="muted">pulled ${fmtDT(n.pulledAt)}</small>`:''}</div></section>`;
 }
 function nycSection(pid,p,dis){
