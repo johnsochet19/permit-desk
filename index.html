@@ -938,7 +938,7 @@ async function boot(){
   if(uid){ db.doc(`data/users/${uid}/profile`).onSnapshot(s=>{ S.me=s.exists?s.data():{}; changed(); },()=>{}); }
 }
 let rTimer=null;
-function changed(){ CMP=null; clearTimeout(rTimer); rTimer=setTimeout(()=>{ if(S.dirty){ S.pending=true; renderBanner(); } else render(); },30); }
+function changed(){ CMP=null; clearTimeout(rTimer); rTimer=setTimeout(()=>{ if(S.dirty){ S.pending=true; renderBanner(); } else render(); if(!autoNycDone) setTimeout(autoNyc,1500); },30); }
 async function put(coll,id,data,merge){
   try{ const ref=db.doc(`${coll}/${id}`); if(merge) await ref.update(data); else await ref.set(data); return true; }
   catch(e){ if(e.code==='invalid_argument' && canWrite){ canWrite=false; toast('You can view this tracker but not change it.'); render(); } else if(e.code==='quota_exceeded') toast('The tracker is full. Archive or delete old items first.'); else toast('Could not save: '+(e.message||e.code)); return false; }
@@ -1131,14 +1131,21 @@ const NYC_DS='https://data.cityofnewyork.us/resource/';
 async function soda(ds,params){ const u=new URL(NYC_DS+ds+'.json'); Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v)); const r=await fetch(u); if(!r.ok) throw new Error(ds+' '+r.status); return r.json(); }
 const sq=v=>String(v).replace(/'/g,"''");
 const nz=v=>String(v??'').replace(/^0+(?=\d)/,'').trim();
-async function pullNyc(pid){
+async function pullNyc(pid,quiet){
   const p=S.projects[pid]; if(!p) return;
   let bin=(p.bin||'').trim(), boro=p.borough||'', block=nz(p.block), lot=nz(p.lot);
-  if(!bin && !(boro&&block&&lot)) { toast('Enter a BIN, or the borough with block and lot.'); return; }
-  S.nycBusy=pid; render(); toast('Pulling NYC data…');
+  if(!bin && !(boro&&block&&lot)) { if(!quiet) toast('Enter a BIN, or the borough with block and lot.'); return; }
+  if(S.nycBusy){ if(!quiet) toast('Already pulling NYC data. One moment.'); return; }
+  S.nycBusy=pid; render(); if(!quiet) toast('Pulling NYC data…');
   try{
     const where=bin?`bin='${sq(bin)}'`:`upper(borough)='${sq(boro.toUpperCase())}' AND block='${sq(block)}' AND lot='${sq(lot)}'`;
-    const fil=await soda('w9ak-ipjd',{'$where':where,'$order':'filing_date DESC','$limit':'300'});
+    let fil=await soda('w9ak-ipjd',{'$where':where,'$order':'filing_date DESC','$limit':'300'});
+    let binFixed='';
+    if(!fil.length && bin && boro && block && lot && BORO_CODE[boro]){
+      const bbl0=BORO_CODE[boro]+block.padStart(5,'0')+lot.padStart(4,'0');
+      const alt=await soda('w9ak-ipjd',{'$where':`bbl='${bbl0}'`,'$order':'filing_date DESC','$limit':'300'});
+      if(alt.length){ fil=alt; const nb=alt[0].bin||''; if(nb && nb!==bin){ binFixed=bin; bin=nb; } }
+    }
     if(fil[0]){ bin=bin||fil[0].bin||''; block=block||nz(fil[0].block); lot=lot||nz(fil[0].lot); boro=boro||(fil[0].borough? fil[0].borough.replace(/\b\w/g,c=>c.toUpperCase()).replace(/\B\w/g,c=>c.toLowerCase()):''); }
     const bc=BORO_CODE[boro]; const bbl=(fil[0]?.bbl)||(bc&&block&&lot?bc+block.padStart(5,'0')+lot.padStart(4,'0'):'');
     const [pl,per,ecbOpen,ecbAll,dobv]=await Promise.all([
@@ -1156,12 +1163,70 @@ async function pullNyc(pid){
       ecb:{open:ecbOpen.length,total:+(ecbAll[0]?.n||0),list:ecbOpen.slice(0,10).map(v=>({n:v.ecb_violation_number,type:v.violation_type||'',issued:v.issue_date||'',due:v.balance_due||'',desc:(v.violation_description||'').slice(0,140)}))},
       dobOpen:+(dobv[0]?.n||0)};
     const patch={nyc,...stamp()};
-    if(!p.bin&&bin) patch.bin=bin; if(!p.block&&block) patch.block=block; if(!p.lot&&lot) patch.lot=lot; if(!p.borough&&boro&&BORO_CODE[boro]) patch.borough=boro;
+    if((!p.bin||binFixed)&&bin) patch.bin=bin; if(!p.block&&block) patch.block=block; if(!p.lot&&lot) patch.lot=lot; if(!p.borough&&boro&&BORO_CODE[boro]) patch.borough=boro;
     if(!p.address&&nyc.building?.address) patch.address=nyc.building.address.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase());
     S.nycBusy=null;
-    if(await put('projects',pid,patch,true)) toast(`Pulled ${nyc.filings.length} filings, ${nyc.permits.length} permits${nyc.building?', building info':''}.`);
-    else render();
-  }catch(e){ S.nycBusy=null; render(); toast('NYC Open Data did not answer. Try again in a minute.'); console.error(e); }
+    if(await put('projects',pid,patch,true)){
+      const sy=await syncNycRecords(pid,nyc);
+      if(!quiet||sy.added||binFixed) toast(`${quiet?esc(p.name||'Project')+': ':''}Pulled ${nyc.filings.length} DOB NOW filings${binFixed?` (BIN corrected from ${binFixed} to ${bin})`:''}. Records: ${sy.added} added, ${sy.updated} updated.`);
+    } else render();
+  }catch(e){ S.nycBusy=null; render(); if(!quiet) toast('NYC Open Data did not answer. Try again in a minute.'); console.error(e); }
+}
+// Once per visit: re-pull NYC data for any project whose data is more than 20 hours old.
+let autoNycDone=false;
+async function autoNyc(){
+  if(autoNycDone || !canWrite || !S.ready.projects || !S.ready.records || !S.ready.config) return; autoNycDone=true;
+  const old=Object.entries(S.projects||{}).filter(([,p])=>p && p.status!=='Archived' && (p.bin||(p.borough&&p.block&&p.lot)) && (!p.nyc || Date.now()-Date.parse(p.nyc.pulledAt||0)>20*3600e3));
+  for(const [pid] of old){ try{ await pullNyc(pid,true); }catch(e){} }
+}
+// DOB NOW filing status -> tracker status
+function dobToStatus(st){ st=String(st||'');
+  if(/withdraw|revoked|denied/i.test(st)) return 'Cancelled';
+  if(/sign(ed)?-?\s?off|LOC Issued|CO Issued|Certificate of Operation|Inspection Complete|Completed/i.test(st)) return 'Signed Off';
+  if(/objection|disapprov|QA Failed|Intent to Revoke/i.test(st)) return 'Comments Issued';
+  if(/^permit|permit issued/i.test(st)) return 'Issued';
+  if(/approved/i.test(st)) return 'Approved';
+  if(/pre-?filing|incomplete/i.test(st)) return 'Preparing Submission';
+  if(/on ?hold/i.test(st)) return 'Agency Review';
+  if(/review|pending|assign|exam/i.test(st)) return 'Agency Review';
+  return 'Submitted'; }
+const NYC_FIELDS=['code','name','agency','category','kind','recordStatus','description','officialId','jobNo','bin','dInitialFiling','dSubmission','dApproval','dIssue','dExpiration','currentStatus','priority','bicCategory','bicCompany','bicPerson','respCompany','respPerson','actionOwner','nextAction','docLink','folder','comments','issues'];
+const cap1=s=>String(s||'').replace(/\b\w/g,c=>c.toUpperCase());
+// Turn every DOB NOW filing on the building into a record on the project (or update the record that already has that filing number),
+// so the dashboard, Records and alerts pick them up.
+async function syncNycRecords(pid,nyc){
+  const p=S.projects[pid]; let added=0, updated=0;
+  const byNum={}; recs().filter(r=>r.projectId===pid).forEach(r=>{ [r.officialId,r.applicationNo,r.name].forEach(v=>{ (String(v||'').toUpperCase().match(/[A-Z]\d{8}-[A-Z]\d{1,3}/g)||[]).forEach(x=>{ byNum[x]=byNum[x]||r.id; }); }); });
+  const permByJob={}; (nyc.permits||[]).forEach(x=>{ const k=String(x.job||'').toUpperCase(); if(k && (!permByJob[k] || (x.issued||'')>(permByJob[k].issued||''))) permByJob[k]=x; });
+  for(const f of nyc.filings||[]){
+    const num=String(f.n||'').toUpperCase(); if(!num) continue;
+    const st=dobToStatus(f.st), pm=permByJob[num];
+    const id=byNum[num];
+    if(id){
+      const r=S.records[id]; if(!r) continue;
+      const patch={}, hist=[];
+      if(r.dobStatus!==f.st){ patch.dobStatus=f.st; patch.dobStatusDate=f.status||'';
+        // Follow DOB when its status actually changed (or the record came from NYC data); a status your team set by hand is kept until DOB moves.
+        if((r.source==='nyc' || r.dobStatus) && r.currentStatus!==st){ patch.currentStatus=st; hist.push(H('Changed',{field:'currentStatus',from:r.currentStatus||'',to:st,note:'DOB NOW: '+f.st})); }
+        else hist.push(H('Note',{note:'DOB NOW status: '+f.st}));
+      }
+      if(!r.officialId){ patch.officialId=num; } if(!r.jobNo){ patch.jobNo=jobBase(num); } if(!r.bin && nyc.bin){ patch.bin=nyc.bin; }
+      if(!r.dInitialFiling && f.filed) patch.dInitialFiling=f.filed;
+      if(pm){ if(pm.issued && !r.dIssue) patch.dIssue=pm.issued; if(pm.expires && r.dExpiration!==pm.expires && (!r.dExpiration || pm.expires>r.dExpiration)) patch.dExpiration=pm.expires; }
+      if(Object.keys(patch).length){ await recUpdate(id,patch,hist); updated++; }
+      continue;
+    }
+    const nid=uidGen();
+    const what=f.work?cap1(f.work):(f.type||'DOB filing');
+    const rec={projectId:pid,catalogCode:'',code:nextCode(pid,'DOB'),name:`${what} — ${num}`,agency:'DOB',category:'Construction Filing',kind:'Permit',
+      recordStatus:(st==='Cancelled'||(st==='Signed Off'&&(f.status||f.filed||'')<new Date(Date.now()-365*864e5).toISOString().slice(0,10)))?'Archived':'Active',currentStatus:st,description:[f.type,f.applicant&&('Applicant: '+f.applicant),f.cost&&+f.cost?('Est. cost $'+(+f.cost).toLocaleString()):''].filter(Boolean).join(' · '),
+      officialId:num,jobNo:jobBase(num),bin:nyc.bin||p?.bin||'',dInitialFiling:f.filed||'',dSubmission:f.filed||'',dIssue:pm?.issued||'',dExpiration:pm?.expires||'',
+      dobStatus:f.st,dobStatusDate:f.status||'',source:'nyc',fields:NYC_FIELDS,setup:setupFrom(NYC_FIELDS),override:false,bicCategory:{'Agency Review':'Agency Reviewer','Submitted':'Agency Reviewer','Approved':'Expediter','Preparing Submission':'Expediter','Comments Issued':''}[st]??'No Current Action Required',
+      inspections:[],deps:[],history:[H('Created',{note:'From NYC Open Data (DOB NOW): '+f.st})],createdAt:new Date().toISOString(),createdBy:uid||'',...stamp()};
+    S.records[nid]=rec; CMP=null;
+    if(await put('records',nid,rec)) added++;
+  }
+  CMP=null; render(); return {added,updated};
 }
 function jobBase(n){ return String(n||'').toUpperCase().match(/[A-Z]\d{8}/)?.[0]||''; }
 function recByJob(pid){ const m={}; recs().filter(r=>r.projectId===pid).forEach(r=>[r.jobNo,r.officialId,r.applicationNo,r.relatedJob,r.name].forEach(v=>{ const s=String(v||'').toUpperCase(); const full=s.match(/[A-Z]\d{8}-[A-Z]\d{1,3}/g)||[]; full.forEach(x=>m[x]=m[x]||r.id); const b=jobBase(s); if(b) m[b]=m[b]||r.id; })); return m; }
