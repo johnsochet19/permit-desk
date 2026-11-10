@@ -508,6 +508,7 @@ html[data-kit] .scopes{border-radius:var(--radius-lg);box-shadow:var(--shadow-ca
 .jp header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .jp-list{overflow:auto;border:1px solid var(--line);border-radius:var(--r)}
 .jprow{display:grid;grid-template-columns:22px 110px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;padding:8px 10px;cursor:pointer;font:inherit;font-size:13px;color:var(--muted)}
+.jprow.ask{background:var(--bad-soft)} .jprow.locked{cursor:not-allowed} .jprow.locked .box{opacity:.7}
 .jprow:last-child{border-bottom:0} .jprow:hover{background:var(--sunk)} .jprow.on{color:var(--fg)}
 .jprow .box{width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:4px;display:grid;place-items:center;font-size:12px;color:var(--on-accent,#fff)}
 .jprow.on .box{background:var(--accent);border-color:var(--accent)} .jp-desc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .jprow small{color:var(--faint)}
@@ -944,21 +945,36 @@ const jobRecs=(pid,job)=>recs().filter(r=>r.projectId===pid&&jobBase(r.jobNo||r.
 const jobIsOn=(pid,job)=>!(S.projects[pid]?.hiddenJobs||[]).includes(job)&&jobRecs(pid,job).some(r=>r.recordStatus!=='Archived');
 // Show or hide many jobs at once (one save for the project, then each filing).
 async function setJobs(pid,jobs,show){
-  const p=S.projects[pid]; if(!p||!jobs.length) return 0; const hid=new Set(p.hiddenJobs||[]);
-  jobs.forEach(j=>show?hid.delete(j):hid.add(j));
-  await put('projects',pid,{hiddenJobs:[...hid],...stamp()},true);
+  const p=S.projects[pid]; if(!p||!jobs.length) return 0; const hid=new Set(p.hiddenJobs||[]); const adm=new Set(p.adminJobs||[]);
+  if(!show && !isAdmin()) jobs=jobs.filter(j=>!adm.has(j));   // members can't hide a job an admin turned on
+  if(!jobs.length) return 0;
+  jobs.forEach(j=>{ show?hid.delete(j):hid.add(j); if(isAdmin()) show?adm.add(j):adm.delete(j); });
+  await put('projects',pid,{hiddenJobs:[...hid],...(isAdmin()?{adminJobs:[...adm]}:{}),...stamp()},true);
   let n=0;
   for(const job of jobs) for(const r of jobRecs(pid,job)){ const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
     if(r.recordStatus!==to){ await recUpdate(r.id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:(show?'Shown':'Hidden')+' with job '+job})]); n++; } }
   CMP=null; render(); return n;
 }
-async function toggleJob(pid,job){ const show=!jobIsOn(pid,job); await setJobs(pid,[job],show); toast(`${job} ${show?'shown':'hidden'}.`); }
+const isAdmin=()=>!!canEditCfg;
+const jobLocked=(pid,job)=>!isAdmin()&&(S.projects[pid]?.adminJobs||[]).includes(job);
+// Unselecting asks twice: the first click arms it for 6 seconds, the second does it.
+function armAsk(key,msg){ S.jpAsk=key; render(); toast(msg); clearTimeout(S._jpAskT); S._jpAskT=setTimeout(()=>{ if(S.jpAsk===key){ S.jpAsk=null; render(); } },6000); }
+async function toggleJob(pid,job){
+  const show=!jobIsOn(pid,job);
+  if(!show){
+    if(jobLocked(pid,job)){ toast('An admin selected this job number. Only an admin can unselect it.'); return; }
+    if(S.jpAsk!=='one:'+job){ armAsk('one:'+job,`Click ${job} again to hide all its filings.`); return; }
+  }
+  S.jpAsk=null; await setJobs(pid,[job],show); toast(`${job} ${show?'shown':'hidden'}.`); }
 document.addEventListener('input',e=>{ if(!e.target.dataset?.jobq) return; S.jobQ=e.target.value; render(); },true);
 document.addEventListener('click',async e=>{ const b=e.target.closest('[data-jpall],[data-jpnone]'); if(!b) return; e.preventDefault(); e.stopPropagation();
   if(!canWrite){ toast('You can view this tracker but not change it.'); return; }
-  const pid=b.dataset.pid, show=!!b.dataset.jpall; const jobs=(S._jpVis||[]).filter(j=>jobIsOn(pid,j)!==show);
-  b.disabled=true; b.textContent=show?'Selecting…':'Unselecting…';
-  await setJobs(pid,jobs,show); toast(`${jobs.length} job number${jobs.length===1?'':'s'} ${show?'selected':'unselected'}.`); },true);
+  const pid=b.dataset.pid, show=!!b.dataset.jpall; let jobs=(S._jpVis||[]).filter(j=>jobIsOn(pid,j)!==show);
+  const locked=show?0:jobs.filter(j=>jobLocked(pid,j)).length; if(!show) jobs=jobs.filter(j=>!jobLocked(pid,j));
+  if(!jobs.length){ toast(locked?'Those job numbers were selected by an admin. Only an admin can unselect them.':'Nothing to change.'); return; }
+  if(!show && S.jpAsk!=='bulk'){ armAsk('bulk',`Click "Unselect" again to hide ${jobs.length} job number${jobs.length===1?'':'s'}${locked?` (${locked} admin-selected stay on)`:''}.`); return; }
+  S.jpAsk=null; b.disabled=true; b.textContent=show?'Selecting…':'Unselecting…';
+  await setJobs(pid,jobs,show); toast(`${jobs.length} job number${jobs.length===1?'':'s'} ${show?'selected':'unselected'}.${locked?` ${locked} admin-selected left on.`:''}`); },true);
 document.addEventListener('click',e=>{ const o=e.target.closest('[data-jobpop]'); if(o){ e.preventDefault(); e.stopPropagation(); S.jobPop=o.dataset.jobpop; S.jobQ=''; render(); setTimeout(()=>document.getElementById('jpQ')?.focus(),0); return; }
   if(e.target.closest('[data-jobpopclose]')){ e.preventDefault(); e.stopPropagation(); S.jobPop=null; render(); } },true);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&S.jobPop){ S.jobPop=null; render(); } });
@@ -970,6 +986,7 @@ document.addEventListener('change',e=>{ const t=e.target;
 // Show / hide a record on its project (hidden = archived, so it drops out of Records, the dashboard and alerts).
 document.addEventListener('change',async e=>{ const id=e.target.dataset?.show; if(!id) return; const r=S.records[id]; if(!r) return;
   const show=e.target.checked; const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
+  if(!show && jobLocked(r.projectId,jobBase(r.jobNo||r.officialId||r.name))){ e.target.checked=true; toast('An admin selected this job number. Only an admin can hide its filings.'); return; }
   if(r.recordStatus===to) return;
   await recUpdate(id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:show?'Shown on project':'Hidden on project'})]);
   toast(show?'Shown':'Hidden. Tick Show to bring it back.'); });
@@ -1309,7 +1326,7 @@ function projSetupCard(pid,p,live){
   ${jobs.length?(()=>{ const isOn=j=>!hid.has(j)&&per[j].on>0; const shown=jobs.filter(isOn); const off=jobs.length-shown.length;
     const label=j=>{ const r=all.find(x=>jobBase(x.jobNo||x.officialId||x.name)===j); return r?String(r.name||'').replace(/\s*[—-]\s*[A-Z]\d{8}.*$/,'').trim():''; };
     return `<div class="flab" style="margin-top:10px">Job numbers shown</div>
-    <div class="chips">${shown.map(j=>`<span class="chip mono jobchip on" style="cursor:default" title="${esc(label(j))}">${j} <small>${per[j].on}/${per[j].n}</small></span>`).join('')||'<span class="muted" style="font-size:12px">None selected</span>'}
+    <div class="chips">${shown.map(j=>`<span class="chip mono jobchip on" style="cursor:default" title="${esc(label(j))}${(p.adminJobs||[]).includes(j)?' · selected by an admin':''}">${(p.adminJobs||[]).includes(j)?'🔒 ':''}${j} <small>${per[j].on}/${per[j].n}</small></span>`).join('')||'<span class="muted" style="font-size:12px">None selected</span>'}
     <button type="button" class="btn sm" data-jobpop="${pid}">${off?`See more job numbers (${off})`:'Choose job numbers'}</button></div>
     ${S.jobPop===pid?`<div class="jp-back" data-jobpopclose="1"></div><div class="jp" role="dialog" aria-modal="true" aria-label="Job numbers">
       <header><b>Job numbers · ${esc(p.name||'')}</b><button type="button" class="ibtn" data-jobpopclose="1" aria-label="Close">✕</button></header>
@@ -1317,9 +1334,9 @@ function projSetupCard(pid,p,live){
       ${(()=>{ const q=(S.jobQ||'').toLowerCase().trim(); const vis=jobs.filter(j=>!q||(j+' '+label(j)).toLowerCase().includes(q)); S._jpVis=vis;
         const nOn=vis.filter(isOn).length;
         return `<div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:nowrap"><input type="search" id="jpQ" data-jobq="1" value="${esc(S.jobQ||'')}" placeholder="Search job # or description (e.g. Electrical)" style="flex:1;min-width:0">
-        <button type="button" class="btn sm" data-jpall="1" data-pid="${pid}"${nOn===vis.length?' disabled':''}>Select all${q?' shown':''}</button><button type="button" class="btn sm" data-jpnone="1" data-pid="${pid}"${nOn?'':' disabled'}>Unselect all${q?' shown':''}</button></div>
+        <button type="button" class="btn sm" data-jpall="1" data-pid="${pid}"${nOn===vis.length?' disabled':''}>Select all${q?' shown':''}</button><button type="button" class="btn sm${S.jpAsk==='bulk'?' danger':''}" data-jpnone="1" data-pid="${pid}"${nOn?'':' disabled'}>${S.jpAsk==='bulk'?'Click again to unselect':'Unselect all'+(q?' shown':'')}</button></div>
         <div class="muted" style="font-size:12px;margin:0 0 6px">${vis.length} of ${jobs.length} job numbers${q?' match':''} · ${nOn} selected</div>`; })()}
-      <div class="jp-list">${jobs.filter(j=>!S._jpVis||S._jpVis.includes(j)).map(j=>{const on=isOn(j);return `<button type="button" class="jprow${on?' on':''}" data-jobtog="${j}" data-pid="${pid}"><span class="box">${on?'✓':''}</span><span class="mono">${j}</span><span class="jp-desc">${esc(label(j))}</span><small>${per[j].n} filing${per[j].n===1?'':'s'}</small></button>`;}).join('')||'<p class="empty" style="padding:14px">No job numbers match.</p>'}</div>
+      <div class="jp-list">${jobs.filter(j=>!S._jpVis||S._jpVis.includes(j)).map(j=>{const on=isOn(j);return `<button type="button" class="jprow${on?' on':''}${S.jpAsk==='one:'+j?' ask':''}${on&&jobLocked(pid,j)?' locked':''}" data-jobtog="${j}" data-pid="${pid}"${on&&jobLocked(pid,j)?' title="Selected by an admin. Only an admin can unselect it."':''}><span class="box">${on?'✓':''}</span><span class="mono">${j}</span><span class="jp-desc">${S.jpAsk==='one:'+j?'<b class="t-bad">Click again to hide this job number</b>':esc(label(j))}</span><small>${on&&(p.adminJobs||[]).includes(j)?'🔒 admin · ':''}${per[j].n} filing${per[j].n===1?'':'s'}</small></button>`;}).join('')||'<p class="empty" style="padding:14px">No job numbers match.</p>'}</div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="button" class="btn pri" data-jobpopclose="1">Done</button></div></div>`:''}`; })():''}
   <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm pri" data-act="nycPull" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':n?'Refresh NYC data':'Pull NYC data'}</button>${n?`<small class="muted">pulled ${fmtDT(n.pulledAt)}</small>`:''}</div></section>`;
 }
