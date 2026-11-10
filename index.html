@@ -940,17 +940,26 @@ function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[
 
 
 // Job-number chips on the Project setup card: hide or show every filing under one DOB job.
-async function toggleJob(pid,job){
-  const p=S.projects[pid]; if(!p) return; const hid=new Set(p.hiddenJobs||[]);
-  const rs=recs().filter(r=>r.projectId===pid&&jobBase(r.jobNo||r.officialId||r.name)===job);
-  const show=hid.has(job)||!rs.some(r=>r.recordStatus!=='Archived');
-  show?hid.delete(job):hid.add(job);
+const jobRecs=(pid,job)=>recs().filter(r=>r.projectId===pid&&jobBase(r.jobNo||r.officialId||r.name)===job);
+const jobIsOn=(pid,job)=>!(S.projects[pid]?.hiddenJobs||[]).includes(job)&&jobRecs(pid,job).some(r=>r.recordStatus!=='Archived');
+// Show or hide many jobs at once (one save for the project, then each filing).
+async function setJobs(pid,jobs,show){
+  const p=S.projects[pid]; if(!p||!jobs.length) return 0; const hid=new Set(p.hiddenJobs||[]);
+  jobs.forEach(j=>show?hid.delete(j):hid.add(j));
   await put('projects',pid,{hiddenJobs:[...hid],...stamp()},true);
-  for(const r of rs){ const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
-    if(r.recordStatus!==to) await recUpdate(r.id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:(show?'Shown':'Hidden')+' with job '+job})]); }
-  CMP=null; render(); toast(`${job}: ${rs.length} filing${rs.length===1?'':'s'} ${show?'shown':'hidden'}.`);
+  let n=0;
+  for(const job of jobs) for(const r of jobRecs(pid,job)){ const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
+    if(r.recordStatus!==to){ await recUpdate(r.id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:(show?'Shown':'Hidden')+' with job '+job})]); n++; } }
+  CMP=null; render(); return n;
 }
-document.addEventListener('click',e=>{ const o=e.target.closest('[data-jobpop]'); if(o){ e.preventDefault(); e.stopPropagation(); S.jobPop=o.dataset.jobpop; render(); return; }
+async function toggleJob(pid,job){ const show=!jobIsOn(pid,job); await setJobs(pid,[job],show); toast(`${job} ${show?'shown':'hidden'}.`); }
+document.addEventListener('input',e=>{ if(!e.target.dataset?.jobq) return; S.jobQ=e.target.value; render(); },true);
+document.addEventListener('click',async e=>{ const b=e.target.closest('[data-jpall],[data-jpnone]'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  if(!canWrite){ toast('You can view this tracker but not change it.'); return; }
+  const pid=b.dataset.pid, show=!!b.dataset.jpall; const jobs=(S._jpVis||[]).filter(j=>jobIsOn(pid,j)!==show);
+  b.disabled=true; b.textContent=show?'Selecting…':'Unselecting…';
+  await setJobs(pid,jobs,show); toast(`${jobs.length} job number${jobs.length===1?'':'s'} ${show?'selected':'unselected'}.`); },true);
+document.addEventListener('click',e=>{ const o=e.target.closest('[data-jobpop]'); if(o){ e.preventDefault(); e.stopPropagation(); S.jobPop=o.dataset.jobpop; S.jobQ=''; render(); setTimeout(()=>document.getElementById('jpQ')?.focus(),0); return; }
   if(e.target.closest('[data-jobpopclose]')){ e.preventDefault(); e.stopPropagation(); S.jobPop=null; render(); } },true);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&S.jobPop){ S.jobPop=null; render(); } });
 document.addEventListener('click',e=>{ const c=e.target.closest('[data-jobtog]'); if(!c) return; e.preventDefault(); e.stopPropagation(); if(!canWrite){ toast('You can view this tracker but not change it.'); return; } toggleJob(c.dataset.pid,c.dataset.jobtog); },true);
@@ -1305,7 +1314,12 @@ function projSetupCard(pid,p,live){
     ${S.jobPop===pid?`<div class="jp-back" data-jobpopclose="1"></div><div class="jp" role="dialog" aria-modal="true" aria-label="Job numbers">
       <header><b>Job numbers · ${esc(p.name||'')}</b><button type="button" class="ibtn" data-jobpopclose="1" aria-label="Close">✕</button></header>
       <p class="muted" style="margin:0 0 8px;font-size:12.5px">Tick the jobs you want on this project's dashboard, Records and alerts. Unticked jobs stay hidden, including new filings for them.</p>
-      <div class="jp-list">${jobs.map(j=>{const on=isOn(j);return `<button type="button" class="jprow${on?' on':''}" data-jobtog="${j}" data-pid="${pid}"><span class="box">${on?'✓':''}</span><span class="mono">${j}</span><span class="jp-desc">${esc(label(j))}</span><small>${per[j].n} filing${per[j].n===1?'':'s'}</small></button>`;}).join('')}</div>
+      ${(()=>{ const q=(S.jobQ||'').toLowerCase().trim(); const vis=jobs.filter(j=>!q||(j+' '+label(j)).toLowerCase().includes(q)); S._jpVis=vis;
+        const nOn=vis.filter(isOn).length;
+        return `<div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:nowrap"><input type="search" id="jpQ" data-jobq="1" value="${esc(S.jobQ||'')}" placeholder="Search job # or description (e.g. Electrical)" style="flex:1;min-width:0">
+        <button type="button" class="btn sm" data-jpall="1" data-pid="${pid}"${nOn===vis.length?' disabled':''}>Select all${q?' shown':''}</button><button type="button" class="btn sm" data-jpnone="1" data-pid="${pid}"${nOn?'':' disabled'}>Unselect all${q?' shown':''}</button></div>
+        <div class="muted" style="font-size:12px;margin:0 0 6px">${vis.length} of ${jobs.length} job numbers${q?' match':''} · ${nOn} selected</div>`; })()}
+      <div class="jp-list">${jobs.filter(j=>!S._jpVis||S._jpVis.includes(j)).map(j=>{const on=isOn(j);return `<button type="button" class="jprow${on?' on':''}" data-jobtog="${j}" data-pid="${pid}"><span class="box">${on?'✓':''}</span><span class="mono">${j}</span><span class="jp-desc">${esc(label(j))}</span><small>${per[j].n} filing${per[j].n===1?'':'s'}</small></button>`;}).join('')||'<p class="empty" style="padding:14px">No job numbers match.</p>'}</div>
       <div class="row" style="justify-content:flex-end;margin-top:10px"><button type="button" class="btn pri" data-jobpopclose="1">Done</button></div></div>`:''}`; })():''}
   <div class="row" style="gap:8px;margin-top:10px"><button class="btn sm pri" data-act="nycPull" data-id="${pid}"${S.nycBusy===pid?' disabled':''}>${S.nycBusy===pid?'Pulling…':n?'Refresh NYC data':'Pull NYC data'}</button>${n?`<small class="muted">pulled ${fmtDT(n.pulledAt)}</small>`:''}</div></section>`;
 }
