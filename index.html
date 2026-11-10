@@ -1,9 +1,10 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Permit Desk</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<script>(function(){var d=document.documentElement,k,m;try{k=localStorage.getItem('pd.kit');m=localStorage.getItem('pd.mode');}catch(e){}
-d.setAttribute('data-kit',k==='classic'?'classic':'modern');
-d.setAttribute('data-mode',m==='dark'||m==='light'?m:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));})();</script>
+<script>(function(){var d=document.documentElement,k,m;try{k=localStorage.getItem('pd.kit2');m=localStorage.getItem('pd.mode');}catch(e){}
+if(k==='modern'||k==='classic')d.setAttribute('data-kit',k);
+m=(m==='dark'||m==='light')?m:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+d.setAttribute('data-mode',m);d.setAttribute('data-theme',m);})();</script>
 <link rel="icon" href="data:,">
 <script src="supabase.js"></script>
 <script>window.PD_MODE="supabase";window.PD_SB={url:"https://kxscczhqvkmrwmhnpjuj.supabase.co",key:"sb_publishable_rhR5n-nq6xNw1JVLP1SBxQ_MuexWAPJ"};</script>
@@ -586,8 +587,8 @@ html[data-kit] body::before{background:var(--sidebar)}
 .seg{display:inline-flex;background:var(--seg-bg);border-radius:var(--radius-md);padding:3px;gap:2px}
 .seg button{border:0;background:none;font:inherit;font-size:12px;padding:4px 10px;border-radius:calc(var(--radius-md) - 2px);color:var(--muted);cursor:pointer}
 .seg button.on{background:var(--seg-active);color:var(--fg);font-weight:500;box-shadow:var(--shadow-card)}
-html[data-kit] main{padding:20px 20px 60px;max-width:none;margin:0;width:100%}
-html[data-kit] .pop{top:calc(var(--topbar-h) + 6px);right:14px;border-color:var(--line);border-radius:var(--radius-lg);box-shadow:0 10px 30px rgba(16,24,40,.12)}
+
+html[data-kit] .pop{border-color:var(--line);border-radius:var(--radius-lg);box-shadow:0 10px 30px rgba(16,24,40,.12)}
 html[data-kit] .pop h4{font-size:11px;font-weight:var(--label-fw);text-transform:var(--label-tt);letter-spacing:var(--label-ls);color:var(--muted)}
 .scrim{display:none}
 
@@ -659,7 +660,7 @@ html[data-kit] .side{top:calc(var(--topbar-h) + 16px)}
   .app.open .sb{transform:none}
   .app.open .scrim{display:block;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.25)}
   .topbar .date,.topbar .seg,.topbar .live{display:none}
-  html[data-kit] main{padding:14px 12px 60px}
+
 }
 html[data-kit] .sb nav{display:block;flex:1;min-height:0;overflow:auto;order:0;flex-basis:auto;padding:8px 7px}
 html[data-kit] .sb nav a{padding:6px 8px;font-weight:400;color:var(--fg)}
@@ -726,7 +727,7 @@ html[data-kit=classic] .ht span{background:#1FA586} html[data-kit=classic] .hb:h
 .kgrid>div{border:1px solid var(--line);border-radius:var(--radius-md,8px);padding:10px 12px;background:var(--surface)}
 .kgrid small{display:block;font-size:11px;color:var(--muted)} .kgrid b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 @media (max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.drow.r3{grid-template-columns:1fr 1fr}.drow.r3>.dc:first-child{grid-column:1/-1}.drow.r2{grid-template-columns:1fr}}
-@media (max-width:700px){.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:14px}.kpi b{font-size:24px}.drow.r3{grid-template-columns:1fr}.dhead select{display:none}}
+@media (max-width:700px){.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:14px}.kpi b{font-size:24px}.drow.r3{grid-template-columns:1fr}.dhead select{min-width:0;flex:1}}
 
 /* darker tile/card borders */
 html[data-kit="modern"][data-mode="light"]{--card-line:#C5CAD6}
@@ -736,30 +737,25 @@ html[data-kit="classic"][data-mode="dark"]{--card-line:#454B54}
 html[data-kit] .kpi,html[data-kit] .dc,html[data-kit] .tile,html[data-kit] .card,html[data-kit] .sec,html[data-kit] .tbl-wrap,html[data-kit] .picker,html[data-kit] .kgrid>div{border-color:var(--card-line)}
 html[data-kit] .kpi:hover,html[data-kit] .tile:hover{border-color:var(--faint)}
 html[data-kit] .sec>header{border-bottom-color:var(--card-line)}
+
+/* header bits that work in every style */
+.look{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.look select{padding:3px 6px;font-size:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+.ibtn{border:0;background:none;color:var(--muted);padding:5px;border-radius:var(--r);cursor:pointer;display:grid;place-items:center}
+.ibtn:hover{background:var(--sunk);color:var(--fg)}
+html[data-kit] .top{background:var(--surface);border-bottom-color:var(--line);box-shadow:var(--shadow-card)}
+html[data-kit] .brand{font-family:var(--font);font-size:16px;letter-spacing:-.01em}
+html[data-kit] .brand i{border-radius:var(--radius-sm);clip-path:none;width:16px;height:16px}
+html[data-kit] nav a{border-radius:var(--radius-sm);font-size:13px}
+html[data-kit] nav a[aria-current]{background:var(--nav-active-bg);color:var(--nav-active-text)}
+html[data-kit] .bell{border-radius:var(--radius-sm);font-size:12.5px}
+html[data-kit] .bell b{background:var(--accent);color:var(--on-accent);font-family:var(--font)}
+@media (max-width:760px){.look span{display:none}}
 </style>
 
-<div class="app" id="app">
-<aside class="sb" id="sb" aria-label="Sidebar">
-  <a class="brand2" href="#dashboard" data-nav="dashboard"><span class="logo"><svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></span><span><b>Permit Desk</b><small>Bushburg</small></span></a>
-  <nav id="nav" aria-label="Main"></nav>
-  <div class="foot" id="sbFoot"><i></i><span id="sbSrc"></span></div>
-</aside>
-<div class="scrim" id="scrim"></div>
-<div class="maincol">
-<header class="topbar">
-  <button class="ibtn" id="sbToggle" type="button" aria-label="Toggle sidebar"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>
-  <div class="pick" id="tbPick"></div>
-  <span class="date" id="tbDate"></span>
-  <span class="sp"></span>
-  <button class="gbtn" id="bell" type="button" aria-label="Alerts"><svg class="ico" viewBox="0 0 24 24" style="pointer-events:none"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span style="pointer-events:none">Alerts</span><b id="bellN" hidden></b></button>
-  <span id="whoName" class="date"></span>
-  <div class="seg" id="kitSeg" role="group" aria-label="Style"><button type="button" data-kit="modern">Modern</button><button type="button" data-kit="classic">Classic</button></div>
-  <button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button>
-</header>
+<header class="top"><div class="brand"><i aria-hidden="true"></i>Permit Desk</div><nav id="nav" aria-label="Main"></nav><div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span><label class="look"><span>Style</span><select id="kitSel" aria-label="Style"><option value="original">Original</option><option value="modern">Modern</option><option value="classic">Classic</option></select></label><button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button></div></header>
 <div id="pop" class="pop" hidden></div>
 <main id="main"><p class="empty">Loading your permit desk…</p></main>
-</div>
-</div>
 <div id="toast" class="toast" hidden></div>
 <script>
 // ---------- constants ----------
@@ -919,23 +915,12 @@ function filtered(F=S.F){
 function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:'',...patch}; S.sel=null; nav('records'); }
 
 
-// ---------- shell (sidebar, top bar, theme) ----------
+// ---------- style switch (Original / Modern / Classic, light / dark) ----------
 document.addEventListener('click',e=>{
-  const t=e.target; const app=$('#app');
-  const sp=t.closest('[data-sbproj]'); if(sp){ e.preventDefault(); app.classList.remove('open'); nav('projects',{projId:sp.dataset.sbproj}); return; }
-  if(t.closest('[data-sbnew]')){ e.preventDefault(); app.classList.remove('open'); nav('projects',{newProject:true}); return; }
-  if(t.closest('.brand2')){ e.preventDefault(); app.classList.remove('open'); nav('dashboard'); return; }
-  if(t.closest('#nav [data-nav]')) app.classList.remove('open');
-  if(t.closest('#sbToggle')){ if(matchMedia('(max-width:900px)').matches) app.classList.toggle('open'); else { app.classList.toggle('collapsed'); try{localStorage.setItem('pd.sb',app.classList.contains('collapsed')?'0':'1');}catch(_){} } return; }
-  if(t.closest('#scrim')){ app.classList.remove('open'); return; }
-  const kb=t.closest('#kitSeg button'); if(kb){ document.documentElement.dataset.kit=kb.dataset.kit; try{localStorage.setItem('pd.kit',kb.dataset.kit);}catch(_){} renderTop(); return; }
-  if(t.closest('#modeBtn')){ const d=document.documentElement; d.dataset.mode=d.dataset.mode==='dark'?'light':'dark'; try{localStorage.setItem('pd.mode',d.dataset.mode);}catch(_){} renderTop(); return; }
+  if(e.target.closest('#modeBtn')){ const d=document.documentElement; const m=d.dataset.mode==='dark'?'light':'dark'; d.dataset.mode=m; d.dataset.theme=m; try{localStorage.setItem('pd.mode',m);}catch(_){} renderTop(); }
 });
-document.addEventListener('change',e=>{ if(e.target.id!=='tbProj') return; const v=e.target.value;
-  if(S.view==='dashboard'){ S.dash={...(S.dash||{}),project:v}; render(); }
-  else if(S.view==='projects') nav('projects',v?{projId:v}:{});
-  else goRecords(v?{project:[v]}:{}); });
-try{ if(localStorage.getItem('pd.sb')==='0') $('#app').classList.add('collapsed'); }catch(_){}
+document.addEventListener('change',e=>{ if(e.target.id!=='kitSel') return; const v=e.target.value, d=document.documentElement;
+  if(v==='original') d.removeAttribute('data-kit'); else d.dataset.kit=v; try{localStorage.setItem('pd.kit2',v);}catch(_){} renderTop(); });
 
 // ---------- db ----------
 async function boot(){
@@ -978,28 +963,10 @@ function confirmLeave(){ if(S.leaveAsk){ S.leaveAsk=false; return true; } S.leav
 const ICO={dashboard:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',records:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',projects:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>',reports:'<path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/>',catalog:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',companies:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',contacts:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',admin:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>',dot:'<circle cx="12" cy="12" r="3"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',chev:'<path d="m6 9 6 6 6-6"/>'};
 const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICO[k]||ICO.dot}</svg>`;
 const VLABEL=Object.fromEntries(VIEWS);
-function renderNav(){
-  const it=k=>`<a class="it" href="#${k}" data-nav="${k}"${S.view===k&&!(k==='projects'&&S.projId)?' aria-current="page"':''}>${ico(k)}<span>${VLABEL[k]}</span></a>`;
-  const projs=Object.entries(S.projects||{}).filter(([,p])=>p&&p.status!=='Archived').sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
-  const cnt={}; for(const r of Object.values(S.records||{})){ if(r&&r.projectId) cnt[r.projectId]=(cnt[r.projectId]||0)+1; }
-  $('#nav').innerHTML=`<div class="lab">Views</div>${['dashboard','records','projects','reports'].map(it).join('')}
-  <div class="lab">Projects<button type="button" data-sbnew title="New project" aria-label="New project">${ico('plus')}</button></div>
-  ${projs.length?projs.map(([id,p])=>`<a class="it" href="#projects" data-sbproj="${id}"${S.view==='projects'&&S.projId===id?' aria-current="page"':''}>${ico('dot')}<span>${esc(p.name||'Untitled')}</span><span class="n">${cnt[id]||0}</span></a>`).join(''):`<div class="hint">No projects yet</div>`}
-  <div class="lab">Library</div>${['catalog','companies','contacts'].map(it).join('')}
-  <div class="lab">Desk</div>${['admin','help'].map(it).join('')}`;
-  renderTop();
-}
+function renderNav(){ $('#nav').innerHTML=VIEWS.map(([k,l])=>`<a href="#${k}" data-nav="${k}"${S.view===k?' aria-current="page"':''}>${l}</a>`).join(''); renderTop(); }
 function renderTop(){
-  const pk=$('#tbPick'); if(!pk) return;
-  if(S.view==='projects'||S.view==='records'||S.view==='dashboard'){
-    const projs=Object.entries(S.projects||{}).filter(([,p])=>p&&p.status!=='Archived').sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
-    const cur=S.view==='dashboard'?((S.dash||{}).project||''):S.view==='projects'?(S.projId||''):((S.F&&S.F.project&&S.F.project.length===1)?S.F.project[0]:'');
-    pk.innerHTML=`<select id="tbProj" aria-label="Project"><option value="">${S.view==='records'?'All projects · Records':'All projects'}</option>${projs.map(([id,p])=>`<option value="${id}"${id===cur?' selected':''}>${esc(p.name||'Untitled')}</option>`).join('')}</select><span class="chev">${ico('chev')}</span>`;
-  } else pk.innerHTML=`<span style="padding:4px">${VLABEL[S.view]||'Permit Desk'}</span>`;
-  $('#tbDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  const d=document.documentElement; $('#modeBtn').innerHTML=ico(d.dataset.mode==='dark'?'sun':'moon');
-  document.querySelectorAll('#kitSeg button').forEach(b=>b.classList.toggle('on',b.dataset.kit===d.dataset.kit));
-  const src=$('#sbSrc'); if(src){ const m=window.PD_STORE?.mode||'local'; src.textContent=m==='supabase'?'Live · shared with your team':m==='local'?'Saved in this browser':'Live'; }
+  const d=document.documentElement; const ks=$('#kitSel'); if(ks) ks.value=d.dataset.kit||'original';
+  const mb=$('#modeBtn'); if(mb){ mb.innerHTML=ico(d.dataset.mode==='dark'?'sun':'moon'); mb.title=d.dataset.mode==='dark'?'Switch to light':'Switch to dark'; }
 }
 window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v) && v!==S.view) nav(v); });
 { const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v)) S.view=v; }
