@@ -1168,7 +1168,7 @@ function recByJob(pid){ const m={}; recs().filter(r=>r.projectId===pid).forEach(
 function projSetupCard(pid,p,live){
   const n=p.nyc; const b=n?.building; const jobs=[...new Set(live.map(r=>jobBase(r.jobNo||r.officialId||r.name)).filter(Boolean))];
   const row=(k,v)=>v?`<div class="kv2"><span>${k}</span><b>${v}</b></div>`:'';
-  return `<section class="dc"><header><h3>Project setup</h3><button class="btn sm" data-dashedit="${pid}">Edit</button></header>
+  return `<section class="dc"><header><h3>Project setup</h3></header>
   <div class="kvs">${row('Address',esc(p.address||b?.address||''))}${row('BIN',p.bin?`<span class="mono">${esc(p.bin)}</span>`:'<span class="muted">not set</span>')}${row('Block / lot',(p.block||p.lot)?`<span class="mono">${esc([p.borough,p.block&&'Block '+p.block,p.lot&&'Lot '+p.lot].filter(Boolean).join(' · '))}</span>`:'<span class="muted">not set</span>')}
   ${b?row('Building',esc([b.floors&&b.floors+' floors',b.yearBuilt&&'built '+b.yearBuilt,b.zoning].filter(Boolean).join(' · '))):''}
   ${n?row('DOB NOW',`${n.filings.length} filings · ${n.permits.length} permits`):''}${n?row('Violations',`<span class="${(n.ecb.open+n.dobOpen)?'t-bad':''}">${n.ecb.open} open ECB · ${n.dobOpen} open DOB</span>`):''}</div>
