@@ -99,6 +99,20 @@ tr.over td:first-child{box-shadow:inset 3px 0 var(--bad)} tr.soon td:first-child
 td.num,th.num{text-align:right}
 .empty{padding:28px;text-align:center;color:var(--muted)}
 .layout3{display:grid;grid-template-columns:220px minmax(0,1fr) 320px;gap:14px;align-items:start}
+.layout3.rs{grid-template-columns:var(--railw,220px) 10px minmax(0,1fr) 10px var(--sidew,320px);gap:0}
+.layout3.rs>.rail{padding-right:6px}.layout3.rs>.side{margin-left:4px}
+.vsplit{align-self:stretch;cursor:col-resize;position:relative;min-height:200px;touch-action:none}
+.vsplit::after{content:"";position:absolute;top:0;bottom:0;left:4px;width:2px;border-radius:2px;background:var(--line)}
+.vsplit:hover::after,.vsplit.on::after{background:var(--accent)}
+.tbl-wrap.rsz{resize:vertical;overflow:auto;min-height:160px}
+table.fixed{table-layout:fixed;width:max-content;min-width:100%}
+table.fixed th,table.fixed td{overflow:hidden;overflow-wrap:anywhere}
+th.rh{position:relative}
+.colrs{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:2;touch-action:none}
+.colrs::after{content:"";position:absolute;top:20%;bottom:20%;left:4px;width:1px;background:var(--line-strong)}
+.colrs:hover::after,.colrs.on::after{background:var(--accent);width:2px;top:0;bottom:0}
+body.dragging,body.dragging *{cursor:col-resize!important;user-select:none!important}
+@media (max-width:1100px){.layout3.rs{grid-template-columns:var(--railw,200px) 10px minmax(0,1fr)}.layout3.rs>.vsplit[data-split=side]{display:none}.layout3.rs .side{grid-column:1/-1;margin-left:0}}
 @media (max-width:1100px){.layout3{grid-template-columns:200px minmax(0,1fr)}.layout3 .side{grid-column:1/-1}}
 @media (max-width:720px){.layout3{grid-template-columns:minmax(0,1fr)}}
 .rail{display:flex;flex-direction:column;gap:10px}
@@ -567,6 +581,9 @@ let db=null,user=null,uid=null,canWrite=true,canEditCfg=false,downloads=null;
 const COLS_DEFAULT=['name','agency','category','currentStatus','bic','nextAction','priority','dTarget','updated'];
 try{const c=JSON.parse(localStorage.getItem('pd.cols2')||'null'); if(Array.isArray(c)) S.cols=c;}catch(e){}
 if(!S.cols) S.cols=COLS_DEFAULT.slice();
+const COLW_DEFAULT={name:260,nextAction:240,description:260,comments:260,issues:240,project:170,code:100,agency:110,category:150,currentStatus:160,bic:170,priority:100,updated:130};
+S.colW={}; S.lay={}; try{S.colW=JSON.parse(localStorage.getItem('pd.colw')||'{}')||{}; S.lay=JSON.parse(localStorage.getItem('pd.lay')||'{}')||{};}catch(e){}
+const colWidth=c=>S.colW[c]||COLW_DEFAULT[c]||(String(c).startsWith('d')?125:140);
 
 // lookups
 const lists = n=>(S.cfg?.lists?.[n]||[]).filter(v=>!(S.cfg.retired?.[n]||[]).includes(v));
@@ -766,26 +783,29 @@ function vRecords(){
   const F=S.F; const rows=sortedRows(filtered()); const {map}=computed();
   const qn=recs().filter(r=>(r.recordStatus||'Queued')==='Queued').length;
   const cols=S.cols.filter(c=>COLDEFS[c]);
-  const head=`<tr><th style="width:28px"></th>${cols.map(c=>`<th class="sort" data-sort="${c}">${COLDEFS[c][0]}${S.sort.col===c?(S.sort.dir>0?' ↑':' ↓'):''}</th>`).join('')}</tr>`;
+  const head=`<tr><th style="width:28px"></th>${cols.map(c=>`<th class="sort rh" data-sort="${c}">${COLDEFS[c][0]}${S.sort.col===c?(S.sort.dir>0?' ↑':' ↓'):''}<span class="colrs" data-colrs="${c}" title="Drag to resize · double-click to reset"></span></th>`).join('')}</tr>`;
+  const colgroup=`<colgroup><col style="width:28px">${cols.map(c=>`<col data-colw="${c}" style="width:${colWidth(c)}px">`).join('')}</colgroup>`;
   const line=r=>{const dl=map[r.id].dl;const cls=dl.some(d=>d[0]==='overdue')?'over':dl.some(d=>d[0]!=='stale')?'soon':'';return `<tr class="click ${cls}${S.sel===r.id?' sel':''}" data-sel="${r.id}"><td>${map[r.id].checks.length?'<span class="dot" title="Open data check"></span>':''}</td>${cols.map(c=>`<td>${COLDEFS[c][1](r)}</td>`).join('')}</tr>`;};
   let body='';
   if(S.groupAgency){ const g={}; rows.forEach(r=>(g[r.agency]=g[r.agency]||[]).push(r)); body=Object.entries(g).map(([a,rs])=>`<tr><td colspan="${cols.length+1}" style="background:var(--sunk);font-weight:600">${esc(a)} · ${rs.length}</td></tr>`+rs.map(line).join('')).join(''); }
   else body=rows.map(line).join('');
   const sel=S.sel&&S.records[S.sel]?{...S.records[S.sel],id:S.sel}:null;
   const projects=Object.entries(S.projects).map(([id,p])=>[id,p.name]);
-  return `<div class="layout3">
+  return `<div class="layout3 rs" id="recLayout" style="${S.lay.rail?`--railw:${S.lay.rail}px;`:''}${S.lay.side?`--sidew:${S.lay.side}px;`:''}">
    <aside class="rail"><div class="row" style="justify-content:space-between"><h3>Filters</h3><button class="btn link" data-act="clearF">Clear</button></div>
     ${msFilter('project','Project',projects)}${msFilter('agency','Agency',lists('Agency').map(v=>[v,v]))}${msFilter('category','Category',lists('Permit Category').map(v=>[v,v]))}${msFilter('status','Current status',statuses().map(v=>[v,v]))}${msFilter('bic','Ball-in-court',lists('Ball-in-Court Category').map(v=>[v,v]))}${msFilter('priority','Priority',lists('Priority').map(v=>[v,v]))}${msFilter('show','Show',[['Active','Active'],['Queued','Queued'],['Archived','Archived']])}
     <label class="f">Data check<select id="fCheck" data-fsel="check">${opts([['any','Has an open check'],...CHECKS],F.check,'Any (no filter)')}</select></label>
     <label class="f">Deadline<select id="fDl" data-fsel="deadline">${opts(DEADLINES,F.deadline,'Any')}</select></label>
     ${F.bicCompany||F.bicPerson?`<p class="note info">Ball-in-court: ${esc(coName(F.bicCompany)||ctName(F.bicPerson))} <button class="btn link" data-act="clearBicF">remove</button></p>`:''}
    </aside>
+   <div class="vsplit" data-split="rail" title="Drag to resize · double-click to reset"></div>
    <section style="min-width:0"><div class="row" style="justify-content:space-between;margin-bottom:8px"><div><h1 style="margin:0">Records</h1><span class="lede">${rows.length} records · ${cols.length} columns</span></div></div>
     <div class="row" style="margin-bottom:10px"><button class="btn" data-act="groupAg">${S.groupAgency?'Ungroup':'Group by agency'}</button>
      <details class="ms" style="min-width:150px"><summary>Columns (${cols.length})</summary><div class="opts" style="max-height:360px">${COLGROUPS.map(([g,ks])=>`<div class="flab" style="margin-top:6px">${g}</div>`+ks.map(k=>`<label class="chk"><input type="checkbox" data-col="${k}"${S.cols.includes(k)?' checked':''}> ${COLDEFS[k][0]}</label>`).join('')).join('')}<button class="btn sm" data-act="colReset" style="margin-top:6px">Reset</button></div></details>
      <button class="btn" data-act="exportGrid">Export to CSV (Excel)</button><button class="btn pri" data-nav="projects">Add a record</button></div>
-    ${rows.length?`<div class="tbl-wrap" style="max-height:72vh"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`:`<div class="card empty">${F.show.length===1&&F.show[0]==='Active'&&qn?`Nothing active. ${qn} records are queued. <button class="btn link" data-go='${esc(JSON.stringify({show:['Queued']}))}'>Pick what you're working on</button>`:'No records match these filters.'}</div>`}
+    ${rows.length?`<div class="tbl-wrap rsz" id="recTblWrap" style="${S.lay.tblH?`height:${S.lay.tblH}px`:'max-height:72vh'}" title=""><table class="fixed">${colgroup}<thead>${head}</thead><tbody>${body}</tbody></table></div>`:`<div class="card empty">${F.show.length===1&&F.show[0]==='Active'&&qn?`Nothing active. ${qn} records are queued. <button class="btn link" data-go='${esc(JSON.stringify({show:['Queued']}))}'>Pick what you're working on</button>`:'No records match these filters.'}</div>`}
    </section>
+   <div class="vsplit" data-split="side" title="Drag to resize · double-click to reset"></div>
    <aside class="side card">${sel?recSummary(sel):`<p class="empty">Pick a row to see its status, who has it and what happens next.</p>`}</aside></div>`;
 }
 function recSummary(r){
@@ -1127,7 +1147,7 @@ const ACT={
   pdLogout(){ window.PD_STORE.logout(); },
   clearF(){ goRecords({}); }, clearBicF(){ delete S.F.bicCompany; delete S.F.bicPerson; render(); },
   groupAg(){ S.groupAgency=!S.groupAgency; render(); },
-  colReset(){ S.cols=COLS_DEFAULT.slice(); try{localStorage.setItem('pd.cols2',JSON.stringify(S.cols));}catch(e){} render(); },
+  colReset(){ S.colW={}; try{localStorage.removeItem('pd.colw');}catch(e){} S.cols=COLS_DEFAULT.slice(); try{localStorage.setItem('pd.cols2',JSON.stringify(S.cols));}catch(e){} render(); },
   exportGrid(){ const rows=sortedRows(filtered()); const cols=S.cols.filter(c=>COLDEFS[c]); saveCsv('records-'+today()+'.csv',cols.map(c=>COLDEFS[c][0]),rows.map(r=>cols.map(c=>plain(String(COLDEFS[c][1](r)))))); },
   exportReport(){ const d=reportData(); saveCsv('report-'+S.report+'-'+today()+'.csv',d.h,d.rows); },
   async activate(el){ const id=el.dataset.id; const r=S.records[id]; await recUpdate(id,{recordStatus:'Active'},[H('Status changed',{field:'recordStatus',from:r.recordStatus,to:'Active'})]); toast('Moved to active'); },
@@ -1247,6 +1267,42 @@ M.addEventListener('submit',async e=>{
 });
 document.addEventListener('click',e=>{ const nv=e.target.closest('#nav [data-nav]'); if(nv){ e.preventDefault(); nav(nv.dataset.nav); } });
 document.addEventListener('change',async e=>{ if(e.target.id!=='pdRestore') return; const f=e.target.files[0]; if(!f) return; if(!confirm('Replace everything in the tracker with "'+f.name+'"?')){ e.target.value=''; return; } try{ await window.PD_STORE.importAll(JSON.parse(await f.text())); toast('Restored from backup'); }catch(err){ toast('Could not restore: '+err.message); } e.target.value=''; });
+
+/* Resizing: column edges, panel dividers, table height. Sizes are kept per browser. */
+(function(){
+  const saveW=()=>{ try{localStorage.setItem('pd.colw',JSON.stringify(S.colW));}catch(e){} };
+  const saveL=()=>{ try{localStorage.setItem('pd.lay',JSON.stringify(S.lay));}catch(e){} };
+  let drag=null;
+  document.addEventListener('pointerdown',e=>{
+    const tw=e.target.id==='recTblWrap'?e.target:null; if(tw){ const r=tw.getBoundingClientRect(); if(e.clientY>r.bottom-20&&e.clientX>r.right-20){ tw.style.maxHeight='none'; if(!tw.style.height) tw.style.height=Math.round(r.height)+'px'; } return; }
+    const h=e.target.closest('.colrs'), v=e.target.closest('.vsplit'); if(!h&&!v) return;
+    e.preventDefault(); e.stopPropagation();
+    if(h){ const c=h.dataset.colrs; const col=document.querySelector(`col[data-colw="${c}"]`); drag={kind:'col',c,col,el:h,x:e.clientX,w:col?col.getBoundingClientRect().width||colWidth(c):colWidth(c)}; }
+    else { const which=v.dataset.split; const lay=document.getElementById('recLayout'); const panel=which==='rail'?lay.querySelector('.rail'):lay.querySelector('.side'); drag={kind:'split',which,lay,el:v,x:e.clientX,w:panel.getBoundingClientRect().width}; }
+    drag.el.classList.add('on'); document.body.classList.add('dragging');
+    try{ drag.el.setPointerCapture(e.pointerId); }catch(x){}
+  },true);
+  document.addEventListener('pointermove',e=>{
+    if(!drag) return; const dx=e.clientX-drag.x;
+    if(drag.kind==='col'){ const w=Math.max(60,Math.min(900,Math.round(drag.w+dx))); drag.nw=w; if(drag.col) drag.col.style.width=w+'px'; }
+    else { const w=drag.which==='rail'?Math.max(150,Math.min(480,Math.round(drag.w+dx))):Math.max(220,Math.min(820,Math.round(drag.w-dx))); drag.nw=w; drag.lay.style.setProperty(drag.which==='rail'?'--railw':'--sidew',w+'px'); }
+  });
+  const end=()=>{ if(!drag) return; drag.el.classList.remove('on'); document.body.classList.remove('dragging');
+    if(drag.nw){ if(drag.kind==='col'){ S.colW[drag.c]=drag.nw; saveW(); } else { S.lay[drag.which]=drag.nw; saveL(); } }
+    drag=null; };
+  document.addEventListener('pointerup',end); document.addEventListener('pointercancel',end);
+  // A click that ends a drag must not sort the column.
+  document.addEventListener('click',e=>{ if(e.target.closest('.colrs')){ e.preventDefault(); e.stopPropagation(); } },true);
+  document.addEventListener('dblclick',e=>{
+    const h=e.target.closest('.colrs'), v=e.target.closest('.vsplit');
+    if(h){ delete S.colW[h.dataset.colrs]; saveW(); render(); }
+    else if(v){ delete S.lay[v.dataset.split]; saveL(); render(); }
+  },true);
+  // Remember the table height after the bottom edge is dragged.
+  let rt=null;
+  document.addEventListener('pointerup',()=>{ const w=document.getElementById('recTblWrap'); if(!w||!w.style.height) return; clearTimeout(rt); rt=setTimeout(()=>{ const h=Math.round(w.getBoundingClientRect().height); if(h&&h!==S.lay.tblH){ S.lay.tblH=h; saveL(); } },50); });
+  document.addEventListener('dblclick',e=>{ const w=e.target.closest('#recTblWrap'); if(!w) return; const r=w.getBoundingClientRect(); if(e.clientY>r.bottom-18&&e.clientX>r.right-18){ delete S.lay.tblH; saveL(); render(); } },true);
+})();
 boot();
 </script>
 
