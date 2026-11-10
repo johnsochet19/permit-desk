@@ -374,7 +374,7 @@ a{color:var(--ink)}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));flex-wrap:wrap}
-.brand{font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.brand{text-decoration:none;color:inherit;cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:18px;letter-spacing:.02em;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .brand i{display:inline-block;width:14px;height:14px;background:var(--accent);clip-path:polygon(0 100%,50% 0,100% 100%)}
 nav{display:flex;gap:2px;flex-wrap:wrap;flex:1;min-width:0}
 nav a{text-decoration:none;color:var(--muted);padding:6px 9px;border-radius:var(--r);font-weight:500}
@@ -491,8 +491,9 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
 .toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:var(--r);z-index:30;font-size:13px}
 .bar{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;display:flex}
 .bar span{display:block;height:100%}
-.slate-item{display:grid;grid-template-columns:90px minmax(0,1fr) 200px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
-@media (max-width:700px){.slate-item{grid-template-columns:80px minmax(0,1fr)}}
+.slate-item{display:grid;grid-template-columns:62px 90px minmax(0,1fr) 200px auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+@media (max-width:700px){.slate-item{grid-template-columns:62px 80px minmax(0,1fr)}}
+.slate-item.hid>*:not(.show){opacity:.45}.slate-item .show{font-size:12px;color:var(--muted);gap:4px}
 .picker{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:var(--r)}
 .picker .grp{padding:6px 10px;background:var(--sunk);font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--muted);position:sticky;top:0}
 .picker label{display:grid;grid-template-columns:20px 70px minmax(0,1fr) auto;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);cursor:pointer;align-items:start}
@@ -753,7 +754,7 @@ html[data-kit] .bell b{background:var(--accent);color:var(--on-accent);font-fami
 @media (max-width:760px){.look span{display:none}}
 </style>
 
-<header class="top"><div class="brand"><i aria-hidden="true"></i>Permit Desk</div><nav id="nav" aria-label="Main"></nav><div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span><label class="look"><span>Style</span><select id="kitSel" aria-label="Style"><option value="original">Original</option><option value="modern">Modern</option><option value="classic">Classic</option></select></label><button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button></div></header>
+<header class="top"><a class="brand" id="brandHome" href="#dashboard" title="All-projects dashboard"><i aria-hidden="true"></i>Permit Desk</a><nav id="nav" aria-label="Main"></nav><div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span><label class="look"><span>Style</span><select id="kitSel" aria-label="Style"><option value="original">Original</option><option value="modern">Modern</option><option value="classic">Classic</option></select></label><button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button></div></header>
 <div id="pop" class="pop" hidden></div>
 <main id="main"><p class="empty">Loading your permit desk…</p></main>
 <div id="toast" class="toast" hidden></div>
@@ -915,7 +916,15 @@ function filtered(F=S.F){
 function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:'',...patch}; S.sel=null; nav('records'); }
 
 
+// Show / hide a record on its project (hidden = archived, so it drops out of Records, the dashboard and alerts).
+document.addEventListener('change',async e=>{ const id=e.target.dataset?.show; if(!id) return; const r=S.records[id]; if(!r) return;
+  const show=e.target.checked; const to=show?(r.currentStatus==='Not Started'?'Queued':'Active'):'Archived';
+  if(r.recordStatus===to) return;
+  await recUpdate(id,{recordStatus:to,hiddenOnProject:!show},[H('Status changed',{field:'recordStatus',from:r.recordStatus||'',to,note:show?'Shown on project':'Hidden on project'})]);
+  toast(show?'Shown':'Hidden. Tick Show to bring it back.'); });
 // ---------- style switch (Original / Modern / Classic, light / dark) ----------
+// Clicking the Permit Desk name goes home: the dashboard for all projects, filters cleared.
+document.addEventListener('click',e=>{ if(!e.target.closest('#brandHome')) return; e.preventDefault(); S.dash={project:'',agency:''}; if(S.view==='dashboard') { render(); window.scrollTo(0,0); } else nav('dashboard'); });
 document.addEventListener('click',e=>{
   if(e.target.closest('#modeBtn')){ const d=document.documentElement; const m=d.dataset.mode==='dark'?'light':'dark'; d.dataset.mode=m; d.dataset.theme=m; try{localStorage.setItem('pd.mode',m);}catch(_){} renderTop(); }
 });
@@ -1242,7 +1251,7 @@ function projSetupCard(pid,p,live){
 }
 function nycSection(pid,p,dis){
   const n=p.nyc; const m=recByJob(pid);
-  const lnk=(num)=>{ const id=m[String(num).toUpperCase()]||m[jobBase(num)]; return id?`<a href="#records" data-open="${id}" class="pill a">On slate</a>`:''; };
+  const lnk=(num)=>{ const id=m[String(num).toUpperCase()]||m[jobBase(num)]; const r=id&&S.records[id]; return id?`<span style="white-space:nowrap"><label class="chk" title="Show this filing in Records and the dashboard"><input type="checkbox" data-show="${id}"${r&&r.recordStatus!=='Archived'?' checked':''}${dis?' disabled':''}> Show</label> <a href="#records" data-open="${id}" class="pill a">Open</a></span>`:''; };
   const b=n?.building;
   return `<section class="sec" id="nycSec"><header><h3>Building &amp; DOB NOW data</h3><small style="color:var(--muted)">Enter the BIN, or the borough with block and lot, then pull. Data comes from NYC Open Data (DOB NOW filings and permits, ECB and DOB violations, PLUTO).</small></header>
   <div class="bd stack">
@@ -1437,7 +1446,8 @@ function vProject(){
    <div class="picker">${Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,ts])=>`<div class="grp">${esc(k)} · ${ts.length}</div>`+ts.sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name)).map(t=>`<label><input type="checkbox" data-slate="${esc(t.code)}"${S.slateSel.has(t.code)?' checked':''}><span class="code">${esc(t.code)}</span><span>${esc(t.name)}<small>${esc(t.description||t.category)}</small></span><span class="row" style="gap:4px">${onSlate[t.code]?`<span class="pill a">On slate${onSlate[t.code]>1?' ('+onSlate[t.code]+')':''}</span>`:''}<span class="pill ${t.review==='reviewed'?'good':'acc'}">${t.review==='reviewed'?'Reviewed':'Auto'}</span></span></label>`).join('')).join('')||'<p class="empty">No types match.</p>'}</div>
    <div class="row"><button class="btn pri" data-act="slateAdd"${S.slateSel.size?'':' disabled'}>Add ${S.slateSel.size||''} to the slate</button>${S.slateSel.size?`<button class="btn" data-act="slateClear">Clear selection</button>`:''}</div></div></section>`}
   <section class="sec"><header><h3>The slate</h3><small style="color:var(--muted)">${rs.length} items · ${rs.filter(r=>r.currentStatus==='Not Started').length} not started · ${rs.filter(r=>r.recordStatus==='Active').length} active. Starting an item moves it out of Not Started.</small></header><div class="bd">
-   ${rs.length?rs.map(r=>`<div class="slate-item"><span class="code">${esc(r.code)}</span><span><a href="#records" data-open="${r.id}">${esc(r.name)}</a><br><small style="color:var(--muted)">${esc(r.agency)}${r.kind==='Document'?' · Document':''}</small></span>${r.currentStatus==='Not Started'||dis?`<span class="pill ${r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus)}</span>`:`<select id="ss_${r.id}" data-slstat="${r.id}">${opts(stOpts,r.currentStatus,null)}</select>`}<span>${r.currentStatus==='Not Started'&&!dis?`<button class="btn sm acc" data-act="start" data-id="${r.id}">Start</button>`:''}</span></div>`).join(''):'<p class="empty">Nothing on the slate yet.</p>'}</div></section>
+   ${rs.length?`<p class="note info" style="margin:0 0 8px">Untick <b>Show</b> to hide an item from this project's Records, dashboard and alerts. Tick it again to bring it back.</p>`:''}
+   ${rs.length?[...rs].sort((a,b)=>(a.recordStatus==='Archived')-(b.recordStatus==='Archived')).map(r=>`<div class="slate-item${r.recordStatus==='Archived'?' hid':''}"><label class="chk show" title="Show this item"><input type="checkbox" data-show="${r.id}"${r.recordStatus!=='Archived'?' checked':''}${dis?' disabled':''}><span>Show</span></label><span class="code">${esc(r.code)}</span><span><a href="#records" data-open="${r.id}">${esc(r.name)}</a><br><small style="color:var(--muted)">${esc(r.agency)}${r.kind==='Document'?' · Document':''}</small></span>${r.currentStatus==='Not Started'||dis?`<span class="pill ${r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus)}</span>`:`<select id="ss_${r.id}" data-slstat="${r.id}">${opts(stOpts,r.currentStatus,null)}</select>`}<span>${r.currentStatus==='Not Started'&&!dis?`<button class="btn sm acc" data-act="start" data-id="${r.id}">Start</button>`:''}</span></div>`).join(''):'<p class="empty">Nothing on the slate yet.</p>'}</div></section>
   <section class="sec"><header><h3>Building department requirements</h3></header><div class="bd row" style="justify-content:space-between"><span><span class="pill">DOB</span> All TRs signed off <span class="pill">Computed</span></span><span class="pill ${tr.ok===true?'good':tr.ok===false?'warn':''}">${tr.label}</span></div><div class="bd" style="padding-top:0"><small style="color:var(--muted)">DOB won't close a job until its special inspections are complete. This reads the TR items on the slate every time the page loads; it turns satisfied when every TR has a Final received.</small></div></section>
   ${dis?'':`<section class="sec"><header><h3>Add a document line item</h3><small style="color:var(--muted)">A survey, an asbestos report, a stamped set: anything the job must produce gets its own line and can be a prerequisite for a permit.</small></header><div class="bd fields"><label class="f">Name<input id="dlName" type="text"></label><label class="f">Agency (optional)<select id="dlAg">${opts(lists('Agency'),'')}</select></label><label class="f">Category<select id="dlCat">${opts(lists('Permit Category'),'')}</select></label><div style="align-self:end"><button class="btn" data-act="docAdd">Add document</button></div></div></section>`}
   <details class="sec"><summary style="padding:10px 14px;cursor:pointer"><b>Project details</b></summary><form id="projEdit" data-form="projEdit" class="bd fields"><label class="f">Project name<input id="pe_name" type="text" data-p="name" value="${esc(p.name)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Address<input id="pe_addr" type="text" data-p="address" value="${esc(p.address)}" data-cap="1"${dis?' disabled':''}></label><label class="f">Borough<select id="pe_bor" data-p="borough"${dis?' disabled':''}>${opts(lists('Borough'),p.borough)}</select></label><label class="f">BIN<input id="pe_bin" type="text" inputmode="numeric" data-p="bin" value="${esc(p.bin||'')}"${dis?' disabled':''}></label><label class="f">Block<input id="pe_block" type="text" inputmode="numeric" data-p="block" value="${esc(p.block||'')}"${dis?' disabled':''}></label><label class="f">Lot<input id="pe_lot" type="text" inputmode="numeric" data-p="lot" value="${esc(p.lot||'')}"${dis?' disabled':''}></label><label class="f">Project type<select id="pe_type" data-p="type"${dis?' disabled':''}>${opts(lists('Project Type'),p.type)}</select></label><label class="f">Status<select id="pe_st" data-p="status"${dis?' disabled':''}>${opts(['Active','Archived'],p.status||'Active',null)}</select></label>${personFields(p)}<label class="f wide">Notes<textarea id="pe_notes" data-p="notes"${dis?' disabled':''}>${esc(p.notes)}</textarea></label>${dis?'':'<div><button class="btn pri" type="submit">Save project</button></div>'}</form></details>
