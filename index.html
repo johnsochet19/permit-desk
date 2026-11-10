@@ -725,6 +725,15 @@ html[data-kit=classic] .ht span{background:#1FA586} html[data-kit=classic] .hb:h
 .kgrid small{display:block;font-size:11px;color:var(--muted)} .kgrid b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
 @media (max-width:1150px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.drow.r3{grid-template-columns:1fr 1fr}.drow.r3>.dc:first-child{grid-column:1/-1}.drow.r2{grid-template-columns:1fr}}
 @media (max-width:700px){.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:14px}.kpi b{font-size:24px}.drow.r3{grid-template-columns:1fr}.dhead select{display:none}}
+
+/* darker tile/card borders */
+html[data-kit="modern"][data-mode="light"]{--card-line:#C5CAD6}
+html[data-kit="modern"][data-mode="dark"]{--card-line:#3A4259}
+html[data-kit="classic"][data-mode="light"]{--card-line:#BFC5CD}
+html[data-kit="classic"][data-mode="dark"]{--card-line:#454B54}
+html[data-kit] .kpi,html[data-kit] .dc,html[data-kit] .tile,html[data-kit] .card,html[data-kit] .sec,html[data-kit] .tbl-wrap,html[data-kit] .picker,html[data-kit] .kgrid>div{border-color:var(--card-line)}
+html[data-kit] .kpi:hover,html[data-kit] .tile:hover{border-color:var(--faint)}
+html[data-kit] .sec>header{border-bottom-color:var(--card-line)}
 </style>
 
 <div class="app" id="app">
