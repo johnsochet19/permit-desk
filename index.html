@@ -564,8 +564,8 @@ const S = {cfg:null,catalog:{},projects:{},records:{},companies:{},contacts:{},r
   catF:{agency:'',category:'',template:'',q:'',retired:false}, slateSel:new Set(), slateF:{agency:'',category:'',q:''},
   dirQ:'', dirInactive:false, openRow:null, email:null, noDb:false, offline:false};
 let db=null,user=null,uid=null,canWrite=true,canEditCfg=false,downloads=null;
-const COLS_DEFAULT=['code','name','agency','category','currentStatus','bic','nextAction','priority','dTarget','updated'];
-try{const c=JSON.parse(localStorage.getItem('pd.cols')||'null'); if(Array.isArray(c)) S.cols=c;}catch(e){}
+const COLS_DEFAULT=['name','agency','category','currentStatus','bic','nextAction','priority','dTarget','updated'];
+try{const c=JSON.parse(localStorage.getItem('pd.cols2')||'null'); if(Array.isArray(c)) S.cols=c;}catch(e){}
 if(!S.cols) S.cols=COLS_DEFAULT.slice();
 
 // lookups
@@ -1127,7 +1127,7 @@ const ACT={
   pdLogout(){ window.PD_STORE.logout(); },
   clearF(){ goRecords({}); }, clearBicF(){ delete S.F.bicCompany; delete S.F.bicPerson; render(); },
   groupAg(){ S.groupAgency=!S.groupAgency; render(); },
-  colReset(){ S.cols=COLS_DEFAULT.slice(); try{localStorage.setItem('pd.cols',JSON.stringify(S.cols));}catch(e){} render(); },
+  colReset(){ S.cols=COLS_DEFAULT.slice(); try{localStorage.setItem('pd.cols2',JSON.stringify(S.cols));}catch(e){} render(); },
   exportGrid(){ const rows=sortedRows(filtered()); const cols=S.cols.filter(c=>COLDEFS[c]); saveCsv('records-'+today()+'.csv',cols.map(c=>COLDEFS[c][0]),rows.map(r=>cols.map(c=>plain(String(COLDEFS[c][1](r)))))); },
   exportReport(){ const d=reportData(); saveCsv('report-'+S.report+'-'+today()+'.csv',d.h,d.rows); },
   async activate(el){ const id=el.dataset.id; const r=S.records[id]; await recUpdate(id,{recordStatus:'Active'},[H('Status changed',{field:'recordStatus',from:r.recordStatus,to:'Active'})]); toast('Moved to active'); },
@@ -1194,7 +1194,7 @@ M.addEventListener('change',async e=>{
   const t=e.target, d=t.dataset;
   if(d.ms){ const arr=S.F[d.ms]; const i=arr.indexOf(t.value); if(t.checked&&i<0) arr.push(t.value); if(!t.checked&&i>=0) arr.splice(i,1); S.sel=null; render(); const det=document.querySelector(`[data-ms="${d.ms}"]`)?.closest('details'); if(det) det.open=true; return; }
   if(d.fsel){ S.F[d.fsel]=t.value; render(); return; }
-  if(d.col){ if(t.checked&&!S.cols.includes(d.col)) S.cols.push(d.col); if(!t.checked) S.cols=S.cols.filter(c=>c!==d.col); try{localStorage.setItem('pd.cols',JSON.stringify(S.cols));}catch(err){} render(); const det=document.querySelector('[data-col]')?.closest('details'); if(det) det.open=true; return; }
+  if(d.col){ if(t.checked&&!S.cols.includes(d.col)) S.cols.push(d.col); if(!t.checked) S.cols=S.cols.filter(c=>c!==d.col); try{localStorage.setItem('pd.cols2',JSON.stringify(S.cols));}catch(err){} render(); const det=document.querySelector('[data-col]')?.closest('details'); if(det) det.open=true; return; }
   if(d.act==='toggleRet'){ S.showRet=t.checked; render(); return; }
   if(d.dash){ S.dash={...(S.dash||{}),[d.dash]:t.value}; render(); return; }
   if(d.sf){ S.slateF[d.sf]=t.value; if(d.sf==='agency') S.slateF.category=''; render(); return; }
