@@ -1,8 +1,346 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Permit Desk</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<script>(function(){var d=document.documentElement,k,m;try{k=localStorage.getItem('pd.kit');m=localStorage.getItem('pd.mode');}catch(e){}
+d.setAttribute('data-kit',k==='classic'?'classic':'modern');
+d.setAttribute('data-mode',m==='dark'||m==='light'?m:(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));})();</script>
+<link rel="icon" href="data:,">
+<script src="supabase.js"></script>
+<script>window.PD_MODE="supabase";window.PD_SB={url:"https://kxscczhqvkmrwmhnpjuj.supabase.co",key:"sb_publishable_rhR5n-nq6xNw1JVLP1SBxQ_MuexWAPJ"};</script>
+<script>/* Permit Desk storage layer: runs the app without Claude.
+   MODE "local"  -> everything is saved in this browser (localStorage).
+   MODE "remote" -> everything is saved online through /api/data (password protected). */
+(function(){
+  const MODE = window.PD_MODE || 'local';
+  const LS_KEY = 'permitdesk-data-v1';
+  const docs = new Map();            // path -> data
+  const docL = new Map();            // path -> Set(listener)
+  const colL = new Map();            // collection -> Set(listener)
+  let version = 0, ready = null;
+
+  const clone = v => v==null ? v : JSON.parse(JSON.stringify(v));
+  const isTop = (path, coll) => { const p = path.split('/'); return p.length===2 && p[0]===coll; };
+  function snapDoc(path){ const d = docs.get(path); return { id: path.split('/').pop(), exists: d!==undefined, data: ()=>clone(d), metadata:{fromCache:false} }; }
+  function snapCol(coll){ const out=[]; docs.forEach((d,p)=>{ if(isTop(p,coll)) out.push({id:p.split('/')[1], data:()=>clone(d)}); }); return {docs:out, size:out.length, empty:!out.length, metadata:{fromCache:false}}; }
+  function emit(paths){
+    const colls = new Set();
+    paths.forEach(p=>{ (docL.get(p)||[]).forEach(cb=>{ try{cb(snapDoc(p));}catch(e){console.error(e);} }); const s=p.split('/'); if(s.length===2) colls.add(s[0]); });
+    colls.forEach(c=>(colL.get(c)||[]).forEach(cb=>{ try{cb(snapCol(c));}catch(e){console.error(e);} }));
+  }
+  function emitAll(){ emit([...new Set([...docs.keys(), ...docL.keys()])]); colL.forEach((s,c)=>s.forEach(cb=>cb(snapCol(c)))); }
+  function applyOps(ops){
+    ops.forEach(o=>{
+      if(o.op==='delete') docs.delete(o.path);
+      else if(o.op==='update'){ if(!docs.has(o.path)) throw Object.assign(new Error('Not found'),{code:'not-found'}); docs.set(o.path, {...docs.get(o.path), ...clone(o.data)}); }
+      else docs.set(o.path, clone(o.data));
+    });
+  }
+  function seedDocs(){ const el=document.getElementById('pd-seed'); return el ? JSON.parse(el.textContent) : {}; }
+
+  /* ---------- local backend ---------- */
+  function localSave(){
+    const obj={}; docs.forEach((d,p)=>obj[p]=d);
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({version, docs:obj})); }
+    catch(e){ alert('This browser could not save your changes (storage full or blocked). Use Backup to download a copy.'); throw e; }
+  }
+  async function localLoad(){
+    let raw=null; try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
+    const st = raw ? JSON.parse(raw) : {version:1, docs:seedDocs()};
+    version = st.version||1; Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d));
+    if(!raw) localSave();
+    window.addEventListener('storage', e=>{ if(e.key===LS_KEY && e.newValue){ const st=JSON.parse(e.newValue); docs.clear(); Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d)); version=st.version; emitAll(); } });
+  }
+
+  /* ---------- remote backend ---------- */
+  const auth = () => { try{ return JSON.parse(localStorage.getItem('permitdesk-login')||'null'); }catch(e){ return null; } };
+  async function api(method, body){
+    if(MODE==='github') return ghApi(method, body);
+    if(MODE==='supabase') return sbApi(method, body);
+    const a = auth();
+    const r = await fetch('/api/data'+(method==='GET'?'?v='+version:''), {method, cache:'no-store', headers:{'content-type':'application/json','x-pd-pass':a?.pass||''}, body: body?JSON.stringify(body):undefined});
+    if(r.status===401){ localStorage.removeItem('permitdesk-login'); location.reload(); throw new Error('Wrong password'); }
+    if(!r.ok) throw new Error((await r.text())||('Server error '+r.status));
+    return r.json();
+  }
+
+  /* ---------- GitHub backend: data.json in a private repo; every save is a commit ---------- */
+  const GH = Object.assign({owner:'johnsochet19', repo:'permit-desk-data', path:'data.json', branch:'main', api:'https://api.github.com'}, window.PD_GH||{});
+  const ghBase = () => `${GH.api}/repos/${GH.owner}/${GH.repo}`;
+  async function gh(url, opts={}, token){
+    const r = await fetch(url.startsWith('http')?url:ghBase()+url, {...opts, cache:'no-store', headers:{'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+(token||auth()?.pass||''), ...(opts.headers||{})}});
+    if(r.status===401 && !token){ localStorage.removeItem('permitdesk-login'); alert('Your GitHub access key stopped working (expired or revoked). Sign in again with a new one.'); location.reload(); throw new Error('Bad key'); }
+    return r;
+  }
+  const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g,'')), c=>c.charCodeAt(0)));
+  function b64enc(str){ const bytes=new TextEncoder().encode(str); let bin=''; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
+  function serialize(obj){ const keys=Object.keys(obj).sort(); return '{"app":"Permit Desk","docs":{\n'+keys.map(k=>JSON.stringify(k)+':'+JSON.stringify(obj[k])).join(',\n')+'\n}}\n'; }
+  async function ghRead(){
+    const r = await gh(`/contents/${GH.path}?ref=${GH.branch}`);
+    if(r.status===404) return {sha:null, docs:{}};
+    if(!r.ok) throw new Error('GitHub said '+r.status+' reading the data');
+    const m = await r.json(); let b64 = m.content;
+    if(!b64 || !b64.trim()){ const r2 = await gh(`/git/blobs/${m.sha}`); if(!r2.ok) throw new Error('GitHub said '+r2.status+' reading the data'); b64=(await r2.json()).content; }
+    return {sha:m.sha, docs:JSON.parse(b64dec(b64)).docs||{}};
+  }
+  function describe(ops, docs){
+    const o=ops[0]; if(!o) return 'Update'; const d={...(docs&&docs[o.path]||{}), ...(o.data||{})};
+    const proj = d.projectId && docs ? docs['projects/'+d.projectId]?.name : ''; const what = (d.code&&d.name ? `${d.code} ${d.name}` : (d.name || o.path)) + (proj?` (${proj})`:'');
+    return (o.op==='delete'?'Delete ':'Update ')+what+(ops.length>1?` (+${ops.length-1} more)`:'');
+  }
+  async function ghApi(method, body){
+    if(method==='GET'){ const st=await ghRead(); return {version:st.sha||0, docs:st.docs}; }
+    for(let attempt=0; attempt<5; attempt++){
+      const st = await ghRead(); const d = st.docs;
+      if(body.replace) Object.keys(d).forEach(k=>delete d[k]), Object.assign(d, body.replace);
+      else for(const o of body.ops||[]){ if(o.op==='delete') delete d[o.path]; else if(o.op==='update') d[o.path]={...(d[o.path]||{}),...o.data}; else d[o.path]=o.data; }
+      const msg = `${auth()?.name||'Someone'}: ${body.replace?'Restore from backup':describe(body.ops||[], d)}`;
+      const r = await gh(`/contents/${GH.path}`, {method:'PUT', headers:{'content-type':'application/json'}, body:JSON.stringify({message:msg, content:b64enc(serialize(d)), branch:GH.branch, ...(st.sha?{sha:st.sha}:{})})});
+      if(r.status===409 || r.status===422){ await new Promise(res=>setTimeout(res, 400*(attempt+1))); continue; }
+      if(!r.ok) throw new Error('GitHub said '+r.status+' saving: '+((await r.json().catch(()=>({}))).message||''));
+      return {version:(await r.json()).content.sha};
+    }
+    throw new Error('Someone else kept saving at the same moment; try again');
+  }
+
+  /* ---------- Supabase backend: email accounts, invites, live updates ---------- */
+  const SB = Object.assign({url:'', key:''}, window.PD_SB||{});
+  let sbReady=false, sb=null, sbUser=null, sbRole=null, sbMembers=[], sbInvites=[], sbChannel=null;
+  const esc2 = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  async function sbFn(name, body){
+    const { data:{ session } } = await sb.auth.getSession();
+    const r = await fetch(`${SB.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:SB.key, ...(session?{authorization:'Bearer '+session.access_token}:{})}, body:JSON.stringify(body)});
+    const j = await r.json().catch(()=>({error:'Unexpected reply ('+r.status+')'}));
+    if(!r.ok || j.error) throw new Error(j.error || ('Error '+r.status));
+    return j;
+  }
+  async function sbAll(){
+    const out={}; for(let from=0;;from+=1000){
+      const { data, error } = await sb.from('docs').select('path,data').order('path').range(from, from+999);
+      if(error) throw error; data.forEach(r=>out[r.path]=r.data); if(data.length<1000) break; }
+    return out;
+  }
+  async function sbRefreshPeople(){
+    const m = await sb.from('members').select('user_id,email,name,role,created_at').order('created_at');
+    if(!m.error) sbMembers = m.data;
+    const me = sbMembers.find(x=>x.user_id===sbUser?.id); sbRole = me?.role || null;
+    if(sbRole==='admin'){ const i = await sb.from('invites').select('code,email,role,created_at,expires_at,used_at').is('used_at',null).order('created_at',{ascending:false}); if(!i.error) sbInvites = i.data.filter(x=>new Date(x.expires_at)>new Date()); }
+  }
+  async function sbApi(method, body){
+    if(method==='GET') return {version:Date.now(), docs:await sbAll()};
+    if(body.replace){ const { error } = await sb.rpc('docs_replace', {p_docs: body.replace}); if(error) throw new Error(error.message); return {version:Date.now()}; }
+    for(const o of body.ops||[]){
+      let r;
+      if(o.op==='delete') r = await sb.from('docs').delete().eq('path', o.path);
+      else if(o.op==='update') r = await sb.rpc('doc_merge', {p_path:o.path, p_patch:o.data});
+      else r = await sb.from('docs').upsert({path:o.path, data:o.data});
+      if(r.error) throw new Error(r.error.message);
+    }
+    return {version:Date.now()};
+  }
+  function sbSubscribe(){
+    sbChannel = sb.channel('permit-desk')
+      .on('postgres_changes', {event:'*', schema:'public', table:'docs'}, p=>{
+        if(p.eventType==='DELETE'){ if(!p.old?.path) return; docs.delete(p.old.path); emit([p.old.path]); }
+        else { docs.set(p.new.path, p.new.data); emit([p.new.path]); }
+      })
+      .on('postgres_changes', {event:'*', schema:'public', table:'members'}, async ()=>{ await sbRefreshPeople(); window.render?.(); })
+      .subscribe();
+    // Safety net if the live connection drops: full refresh when the tab comes back.
+    document.addEventListener('visibilitychange', async ()=>{ if(document.hidden) return; try{ replaceAll(await sbAll()); emitAll(); }catch(e){} });
+  }
+  function card(inner){ return `<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg,#F4F5F9);color:var(--fg,#111827);font:14px var(--font,Inter,system-ui,sans-serif);overflow:auto;padding:16px"><div class="pdcard" style="background:var(--surface,#fff);border:1px solid var(--line,#E6E8EF);border-radius:var(--radius-lg,12px);box-shadow:var(--shadow-card);padding:28px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">${inner}</div></div>`; }
+  const fld = (label, name, type='text', extra='') => `<label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted,#4B5563)">${label}<input name="${name}" type="${type}" ${extra} style="font:inherit;padding:8px 10px;border:1px solid var(--line,#E6E8EF);background:var(--surface,#fff);color:var(--fg,#111827);border-radius:var(--radius-sm,6px)"></label>`;
+  const btnS = 'font:inherit;padding:9px;border:0;border-radius:6px;background:var(--accent,#3F51E0);color:var(--on-accent,#fff);font-weight:500;cursor:pointer';
+  function sbGate(){
+    return new Promise(resolve=>{
+      const box=document.createElement('div'); document.body.appendChild(box);
+      const join = new URLSearchParams(location.search).get('join');
+      const finish = ()=>{ box.remove(); resolve(); };
+      async function afterSignIn(){
+        const { data:{ user } } = await sb.auth.getUser(); sbUser=user;
+        if(!user){ await sb.auth.signOut({scope:'local'}); showLogin('Your sign-in has expired or this account was removed. Sign in again.'); return; }
+        await sbRefreshPeople();
+        if(!sbRole){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0">You're signed in as <b>${esc2(user?.email)}</b>, but this account hasn't been added to the tracker. Ask an admin to invite you.</p><button data-x="out" style="${btnS}">Sign out</button>`); box.querySelector('[data-x=out]').onclick=async()=>{ await sb.auth.signOut(); location.reload(); }; return; }
+        finish();
+      }
+      function showLogin(msg=''){
+        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2>${fld('Email','e','email','autocomplete="username" required')}${fld('Password','p','password','autocomplete="current-password" required')}<button data-x="in" style="${btnS}">Sign in</button><small class="err" style="color:#b3362c">${esc2(msg)}</small><small style="color:#5d665f">Forgot your password? Ask your admin to set a temporary one. New here? Use the invite link you were sent.</small>`);
+        const go = async()=>{ const e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err'); err.textContent='Signing in…';
+          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent = /invalid/i.test(error.message)?'That email and password don\'t match.':error.message; return; } await afterSignIn(); };
+        box.querySelector('[data-x=in]').onclick=go; box.querySelectorAll('input').forEach(i=>i.onkeydown=ev=>{ if(ev.key==='Enter') go(); });
+      }
+      async function showJoin(){
+        box.innerHTML = card('<p style="margin:0">Checking your invite…</p>');
+        let inv; try{ inv = await sbFn('accept-invite', {action:'check', code:join}); }catch(e){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0;color:#b3362c">${esc2(e.message)}</p><a href="${location.pathname}" style="color:#1f3b57">Go to sign in</a>`); return; }
+        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Join Permit Desk</h2><p style="margin:0;color:#5d665f">You've been invited${inv.role==='admin'?' as an admin':''}. Create your account to get in.</p>${fld('Your name','n','text','autocomplete="name" required')}${fld('Email','e','email',`autocomplete="username" required ${inv.email?`value="${esc2(inv.email)}" readonly`:''}`)}${fld('Choose a password (8+ characters)','p','password','autocomplete="new-password" required minlength="8"')}<button data-x="join" style="${btnS}">Create account</button><small class="err" style="color:#b3362c"></small>`);
+        box.querySelector('[data-x=join]').onclick = async()=>{ const n=box.querySelector('[name=n]').value.trim(), e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err');
+          if(!n){ err.textContent='Enter your name.'; return; } err.textContent='Creating your account…';
+          try{ await sbFn('accept-invite', {code:join, email:e, password:p, name:n}); }catch(x){ err.textContent=x.message; return; }
+          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent=error.message; return; }
+          // remember the name for emails/history and drop the code from the address bar
+          history.replaceState(null,'',location.pathname+location.hash);
+          await afterSignIn(); };
+      }
+      (async()=>{
+        if(join) return showJoin();
+        const { data:{ session } } = await sb.auth.getSession();
+        if(session) return afterSignIn(); showLogin();
+      })();
+    });
+  }
+  async function sbStart(){
+    if(!window.supabase?.createClient) throw new Error('Could not load the sign-in library. Check your connection and reload.');
+    sb = window.supabase.createClient(SB.url, SB.key, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
+    sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT' && sbReady) location.reload(); });
+    await sbGate();
+    replaceAll(await sbAll());
+    sbSubscribe(); sbReady=true;
+  }
+
+  /* ---------- Users screen (Settings → Users) ---------- */
+  function siteLink(code){ return location.origin + location.pathname + '?join=' + code; }
+  function usersView(){
+    const admin = sbRole==='admin';
+    const meId = sbUser?.id;
+    const rows = sbMembers.map(m=>`<tr><td><b>${esc2(m.name||'—')}</b>${m.user_id===meId?' <span class="pill">You</span>':''}<br><small style="color:var(--muted)">${esc2(m.email)}</small></td><td>${admin&&m.user_id!==meId?`<select data-pdu-role="${m.user_id}" style="width:auto"><option value="member"${m.role==='member'?' selected':''}>Member</option><option value="admin"${m.role==='admin'?' selected':''}>Admin</option></select>`:(m.role==='admin'?'Admin':'Member')}</td><td><small style="color:var(--muted)">${new Date(m.created_at).toLocaleDateString()}</small></td><td style="white-space:nowrap">${admin&&m.user_id!==meId?`<button class="btn sm" data-pdu="pw" data-id="${m.user_id}">Set temporary password</button> <button class="btn sm" data-pdu="rm" data-id="${m.user_id}">Remove</button>`:''}</td></tr>`).join('');
+    const inv = sbInvites.map(i=>`<tr><td>${esc2(i.email||'Anyone with the link')}</td><td>${i.role==='admin'?'Admin':'Member'}</td><td><small style="color:var(--muted)">expires ${new Date(i.expires_at).toLocaleDateString()}</small></td><td style="white-space:nowrap"><button class="btn sm" data-pdu="copy" data-code="${i.code}">Copy link</button> <a class="btn sm" target="_blank" rel="noopener" href="${gmailFor(i.code,i.email||'')}">Open in Gmail</a> <button class="btn sm" data-pdu="mail" data-code="${i.code}" data-email="${esc2(i.email||'')}">Email it</button> <button class="btn sm" data-pdu="unv" data-code="${i.code}">Cancel</button></td></tr>`).join('');
+    return `${admin?`<section class="sec"><header><h3>Invite someone</h3></header><div class="bd stack"><div class="fields"><label class="f">Their email<input type="email" id="pduEmail" placeholder="name@company.com"></label><label class="f">Role<select id="pduRole"><option value="member">Member: works on every project</option><option value="admin">Admin: also manages people and settings</option></select></label><div style="align-self:end"><button class="btn pri" data-pdu="invite">Create invite</button></div></div><small style="color:var(--muted)">You'll get a sign-up link to send them. They open it, choose a password and they're in. Links work once and expire after 14 days.</small><div id="pduNew"></div></div></section>`:''}
+    <section class="sec"><header><h3>People · ${sbMembers.length}</h3></header><div class="bd"><table><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>
+    ${admin&&sbInvites.length?`<section class="sec"><header><h3>Invites waiting · ${sbInvites.length}</h3></header><div class="bd"><table><tbody>${inv}</tbody></table></div></section>`:''}
+    <section class="sec"><header><h3>Your password</h3></header><div class="bd fields"><label class="f">New password (8+ characters)<input type="password" id="pduMyPw" autocomplete="new-password"></label><div style="align-self:end"><button class="btn" data-pdu="mypw">Change my password</button></div></div></section>
+    <div id="pduPanel"></div>`;
+  }
+  function mailFor(code, email){
+    const link = siteLink(code);
+    const subject = 'You\'re invited to Permit Desk';
+    const body = `Hi,\n\nI've added you to Permit Desk, our permit and filing tracker.\n\nOpen this link to create your account (it works once and expires in 14 days):\n${link}\n\nAfter that, sign in any time at ${location.origin+location.pathname}\n\nThanks`;
+    return `mailto:${encodeURIComponent(email||'')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+  function gmailFor(code, email){
+    const u = new URL(mailFor(code, email));
+    return `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email||'')}&su=${encodeURIComponent(u.searchParams.get('subject')||'')}&body=${encodeURIComponent(u.searchParams.get('body')||'')}`;
+  }
+  const say = (m)=> (window.toast ? window.toast(m) : console.log(m));
+  async function copy(text){ try{ await navigator.clipboard.writeText(text); say('Link copied'); }catch(e){ window.prompt('Copy this link:', text); } }
+  document.addEventListener('click', async e=>{
+    const b = e.target.closest('[data-pdu]'); if(!b || MODE!=='supabase') return; e.preventDefault();
+    const a = b.dataset.pdu; const panel = document.getElementById('pduPanel');
+    try{
+      if(a==='invite'){
+        const email = (document.getElementById('pduEmail').value||'').trim().toLowerCase() || null;
+        if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ say('That email doesn\'t look right.'); return; }
+        const role = document.getElementById('pduRole').value;
+        const { data, error } = await sb.from('invites').insert({email, role, invited_by: sbUser.id}).select('code').single();
+        if(error) throw error;
+        await sbRefreshPeople(); window.render?.();
+        const link = siteLink(data.code);
+        const box = document.getElementById('pduNew');
+        if(box) box.innerHTML = `<div class="card stack"><b>Invite ready${email?` for ${esc2(email)}`:''}</b><input type="text" readonly value="${esc2(link)}" onclick="this.select()"><div class="row"><a class="btn pri" target="_blank" rel="noopener" href="${gmailFor(data.code,email)}">Open in Gmail</a><a class="btn" href="${mailFor(data.code,email)}">Email it from my mail app</a><button class="btn" data-pdu="copy" data-code="${data.code}">Copy link</button></div></div>`;
+      }
+      if(a==='copy') await copy(siteLink(b.dataset.code));
+      if(a==='mail') location.href = mailFor(b.dataset.code, b.dataset.email);
+      if(a==='unv'){ const { error } = await sb.from('invites').delete().eq('code', b.dataset.code); if(error) throw error; await sbRefreshPeople(); window.render?.(); say('Invite cancelled'); }
+      if(a==='pw'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id); const temp = Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')+'-'+(100+crypto.getRandomValues(new Uint16Array(1))[0]%900);
+        await sbFn('admin-users', {action:'set-password', user_id:b.dataset.id, password:temp});
+        if(panel) panel.innerHTML = `<div class="card stack"><b>Temporary password for ${esc2(m?.name||m?.email)}</b><input type="text" readonly value="${esc2(temp)}" onclick="this.select()"><small style="color:var(--muted)">Send it to them. They can change it under Settings → Users → Your password.</small></div>`; }
+      if(a==='rm'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id);
+        if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.textContent='Click again to remove'; setTimeout(()=>{ b.dataset.sure=''; b.textContent='Remove'; },4000); return; }
+        await sbFn('admin-users', {action:'remove', user_id:b.dataset.id}); await sbRefreshPeople(); window.render?.(); say(`Removed ${m?.name||m?.email}`); }
+      if(a==='mypw'){ const p=document.getElementById('pduMyPw').value; if(p.length<8){ say('Use at least 8 characters.'); return; } const { error } = await sb.auth.updateUser({password:p}); if(error) throw error; document.getElementById('pduMyPw').value=''; say('Password changed'); }
+    }catch(x){ say('Could not do that: '+(x.message||x)); }
+  }, true);
+  document.addEventListener('change', async e=>{
+    const sel = e.target.closest('[data-pdu-role]'); if(!sel || MODE!=='supabase') return;
+    const { error } = await sb.from('members').update({role: sel.value}).eq('user_id', sel.dataset.pduRole);
+    if(error){ say('Could not change the role: '+error.message); }
+    else say('Role updated');
+    await sbRefreshPeople(); window.render?.();
+  }, true);
+
+  function replaceAll(obj){ docs.clear(); Object.entries(obj).forEach(([p,d])=>docs.set(p,d)); }
+  async function remoteLoad(){
+    if(MODE==='supabase') return sbStart();
+    const res = await api('GET'); version=res.version; replaceAll(res.docs);
+    setInterval(async()=>{ if(document.hidden) return; try{ const res=await api('GET'); if(res.docs && res.version!==version){ version=res.version; replaceAll(res.docs); emitAll(); } }catch(e){} }, MODE==='github'?20000:15000);
+  }
+  let queue = Promise.resolve();
+  function write(ops){
+    applyOps(ops); emit(ops.map(o=>o.path));
+    if(MODE==='local'){ version++; localSave(); return Promise.resolve(); }
+    const p = queue.then(()=>api('POST',{ops})).then(res=>{ version=res.version; });
+    queue = p.catch(()=>{});
+    return p.catch(e=>{ alert('Your last change was not saved online: '+e.message+'\nReloading to show what is saved.'); location.reload(); throw e; });
+  }
+
+  /* ---------- Firestore-like surface used by the app ---------- */
+  const db = {
+    doc(path){ return {
+      onSnapshot(cb, err){ ready.then(()=>cb(snapDoc(path)), err); if(!docL.has(path)) docL.set(path,new Set()); docL.get(path).add(cb); return ()=>docL.get(path).delete(cb); },
+      async get(){ await ready; return snapDoc(path); },
+      async set(data){ await ready; return write([{op:'set',path,data}]); },
+      async update(data){ await ready; return write([{op:'update',path,data}]); },
+      async delete(){ await ready; return write([{op:'delete',path}]); }
+    }; },
+    collection(c){ return {
+      onSnapshot(cb, err){ ready.then(()=>cb(snapCol(c)), err); if(!colL.has(c)) colL.set(c,new Set()); colL.get(c).add(cb); return ()=>colL.get(c).delete(cb); }
+    }; }
+  };
+  const me = () => MODE==='local' ? {id:'me', name:'You'} : MODE==='supabase' ? {id:sbUser?.id||'user', name:(sbMembers.find(x=>x.user_id===sbUser?.id)?.name)||sbUser?.email||'User'} : (auth()||{id:'user',name:'User'});
+  const user = {
+    async id(){ await ready; return me().id; }, async can(){ return true; }, async canEdit(){ await ready; return MODE==='supabase' ? sbRole==='admin' : true; },
+    async profiles(ids){ const o={}; ids.forEach(i=>{ const p=docs.get(`data/users/${i}/profile`); const mm = sbMembers.find(x=>x.user_id===i); o[i]={name:p?.name || mm?.name || (i===me().id?me().name:i.replace(/^u-/,'').replace(/-/g,' '))}; }); return o; }
+  };
+  const downloads = { async save({filename,data}){ const b=new Blob([data],{type:/\.csv$/i.test(filename)?'text/csv':'application/octet-stream'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); return {status:'saved'}; } };
+
+  window.PD_STORE = {
+    mode: MODE,
+    exportAll(){ const obj={}; docs.forEach((d,p)=>obj[p]=d); return {app:'Permit Desk', exportedAt:new Date().toISOString(), docs:obj}; },
+    async importAll(obj){ if(!obj||!obj.docs) throw new Error('Not a Permit Desk backup file');
+      if(MODE==='local'){ replaceAll(obj.docs); version++; localSave(); emitAll(); return; }
+      const res = await api('POST',{replace:obj.docs}); version=res.version; replaceAll(obj.docs); emitAll(); },
+    logout(){ if(MODE==='supabase'){ sb.auth.signOut(); return; } localStorage.removeItem('permitdesk-login'); location.reload(); },
+    usersView, get role(){ return sbRole; }
+  };
+
+  function loginGate(){
+    return new Promise(resolve=>{
+      if(auth()) return resolve();
+      const isGh = MODE==='github';
+      const box=document.createElement('div');
+      box.innerHTML=`<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3f4f2;font:15px -apple-system,Segoe UI,Arial,sans-serif">
+        <form style="background:#fff;border:1px solid #d5d9d2;border-radius:8px;padding:24px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">
+          <h2 style="margin:0;font-size:20px">Permit Desk</h2>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">Your name<input name="n" required autocomplete="name" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">${isGh?'GitHub access key':'Password'}<input name="p" type="password" required autocomplete="off" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
+          ${isGh?`<small style="color:#5d665f;line-height:1.4">A fine-grained GitHub token with read and write access to <b>${GH.owner}/${GH.repo}</b> (Contents). It stays in this browser and is only sent to GitHub.</small>`:''}
+          <button style="font:inherit;padding:9px;border:0;border-radius:6px;background:#1f3b57;color:#fff;cursor:pointer">Sign in</button>
+          <small class="err" style="color:#b3362c"></small></form></div>`;
+      document.body.appendChild(box);
+      box.querySelector('form').onsubmit=async e=>{ e.preventDefault(); const f=e.target; const name=f.n.value.trim(), pass=f.p.value.trim(); const err=f.querySelector('.err'); err.textContent='Checking…';
+        try{
+          if(isGh){
+            const r=await gh('', {}, pass);
+            if(r.status===401){ err.textContent='GitHub did not accept that key.'; return; }
+            if(r.status===404){ err.textContent=`GitHub didn't accept that key for ${GH.owner}/${GH.repo}. Check you copied the whole key and gave it access to that repository.`; return; }
+            const j=await r.json(); if(j.permissions && !j.permissions.push){ err.textContent='That key can read but not save. Give it Contents: Read and write.'; return; }
+          } else {
+            const r=await fetch('/api/data?check=1',{headers:{'x-pd-pass':pass},cache:'no-store'});
+            if(r.status===401){ err.textContent='That password is not right.'; return; }
+          }
+        }catch(x){ err.textContent='Could not reach '+(isGh?'GitHub':'the server')+'. Check your connection.'; return; }
+        localStorage.setItem('permitdesk-login', JSON.stringify({name, pass, id:'u-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}));
+        box.remove(); resolve(); };
+    });
+  }
+
+  ready = (async()=>{ if(MODE==='supabase') await sbStart(); else if(MODE==='remote'||MODE==='github'){ await loginGate(); await remoteLoad(); } else await localLoad(); })();
+  ready.catch(e=>{ document.body.insertAdjacentHTML('afterbegin', `<p style="padding:16px;color:#b3362c">Could not load your data: ${String(e.message||e)}</p>`); });
+  window.claude = { use: async name => name==='db'?db : name==='user'?user : name==='downloads'?downloads : null };
+})();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: a fixed top bar over a working area; lists use a filter rail + grid + detail panel, like a plan room. */
 :root{
@@ -172,348 +510,186 @@ details.ms .opts{max-height:240px;overflow:auto;padding:6px 8px;border-top:1px s
 .help p,.help li{max-width:72ch}
 @media (max-width:760px){nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto}nav a{white-space:nowrap}.top{gap:8px 14px}.who{margin-left:auto}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== Permit Desk · Datum style kit (Modern / Classic × light / dark) ===== */
+html[data-kit]{--font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--f-display:var(--font);--f-body:var(--font);--f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:12px;--r:var(--radius-sm);--sidebar-w:222px;--topbar-h:46px;
+  --shadow-card:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
+  --label-tt:none;--label-fw:500;--label-ls:0}
+html[data-kit="modern"][data-mode="light"]{color-scheme:light;
+  --bg:#F4F5F9;--surface:#FFFFFF;--sidebar:#FFFFFF;--sunk:#F3F4F8;--line:#E6E8EF;--line-strong:#D3D7E2;
+  --fg:#111827;--muted:#4B5563;--faint:#6B7280;--disabled:#B8BDC7;
+  --ink:#3F51E0;--ink-soft:#EBEDFC;--accent:#3F51E0;--accent-hover:#3445CC;--accent-soft:#EBEDFC;--on-accent:#FFFFFF;
+  --nav-active-bg:#EBEDFC;--nav-active-text:#2F3BA8;--seg-bg:#EEF0F4;--seg-active:#FFFFFF;
+  --good:#15803D;--good-soft:#DCFCE7;--warn:#B45309;--warn-soft:#FEF3C7;--bad:#B91C1C;--bad-soft:#FEE2E2}
+html[data-kit="modern"][data-mode="dark"]{color-scheme:dark;
+  --bg:#0E111B;--surface:#151A27;--sidebar:#121623;--sunk:#1A2031;--line:#242A3A;--line-strong:#333B50;
+  --fg:#E8EAF2;--muted:#A9B0C2;--faint:#7C849A;--disabled:#4A5164;
+  --ink:#8E9BFF;--ink-soft:#212845;--accent:#5160F0;--accent-hover:#6370F3;--accent-soft:#212845;--on-accent:#FFFFFF;
+  --nav-active-bg:#212845;--nav-active-text:#C7CCFF;--seg-bg:#1A1F2E;--seg-active:#262D42;
+  --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#33270F;--bad:#F87171;--bad-soft:#3B1A1A;
+  --shadow-card:0 1px 2px rgba(0,0,0,.3)}
+html[data-kit="classic"]{--radius-sm:3px;--radius-md:4px;--radius-lg:6px;--label-tt:uppercase;--label-fw:700;--label-ls:.06em}
+html[data-kit="classic"][data-mode="light"]{color-scheme:light;
+  --bg:#F2F3F5;--surface:#FFFFFF;--sidebar:#FFFFFF;--sunk:#F1F3F5;--line:#DDE0E5;--line-strong:#C8CDD4;
+  --fg:#1F2329;--muted:#4A5059;--faint:#6B727D;--disabled:#B5BAC2;
+  --ink:#157A63;--ink-soft:#DDF3EC;--accent:#F2B42F;--accent-hover:#E0A21F;--accent-soft:#FDF1D6;--on-accent:#1F2329;
+  --nav-active-bg:#1FA586;--nav-active-text:#FFFFFF;--seg-bg:#EDEFF2;--seg-active:#FFFFFF;
+  --good:#15803D;--good-soft:#DCFCE7;--warn:#9A5B00;--warn-soft:#FDF1D6;--bad:#B91C1C;--bad-soft:#FEE2E2}
+html[data-kit="classic"][data-mode="dark"]{color-scheme:dark;
+  --bg:#121417;--surface:#1A1D22;--sidebar:#16191D;--sunk:#1F2328;--line:#2A2E35;--line-strong:#3A3F47;
+  --fg:#E6E8EB;--muted:#A8AEB7;--faint:#858C96;--disabled:#4C525B;
+  --ink:#3CC9A6;--ink-soft:#17322B;--accent:#F2B42F;--accent-hover:#F5C04F;--accent-soft:#3A2F14;--on-accent:#1A1D22;
+  --nav-active-bg:#1FA586;--nav-active-text:#FFFFFF;--seg-bg:#1F2328;--seg-active:#2A2E35;
+  --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#33270F;--bad:#F87171;--bad-soft:#3B1A1A;
+  --shadow-card:0 1px 2px rgba(0,0,0,.3)}
+
+html[data-kit] body{font-family:var(--font);font-size:13px;line-height:1.5;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;transition:background .15s,color .15s}
+html[data-kit] body::before{background:var(--sidebar)}
+.ico{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---- App shell ---- */
+.app{display:grid;grid-template-columns:var(--sidebar-w) minmax(0,1fr);min-height:100vh}
+.app.collapsed{grid-template-columns:0 minmax(0,1fr)}
+.app.collapsed .sb{visibility:hidden}
+.sb{position:sticky;top:0;height:100vh;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;padding-left:env(safe-area-inset-left,0px)}
+.sb .scroll{flex:1;overflow:auto;padding:8px 7px}
+.sb .brand2{display:flex;align-items:center;gap:10px;padding:6px 6px 10px;cursor:pointer;text-decoration:none;color:inherit}
+.sb .logo{width:28px;height:28px;border-radius:var(--radius-md);background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:none}
+.sb .brand2 b{display:block;font-size:13px;font-weight:600}
+.sb .brand2 small{display:block;font-size:11px;color:var(--faint)}
+.sb .lab{display:flex;justify-content:space-between;align-items:center;padding:12px 6px 6px;font-size:11px;font-weight:var(--label-fw);color:var(--muted);text-transform:var(--label-tt);letter-spacing:var(--label-ls)}
+.sb .lab button{border:0;background:none;color:var(--faint);padding:2px;border-radius:var(--radius-sm);cursor:pointer;display:grid;place-items:center}
+.sb .lab button:hover{background:var(--sunk);color:var(--fg)}
+.sb .it{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;text-align:left;font:inherit;font-size:13px;padding:6px 8px;border-radius:var(--radius-sm);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap;overflow:hidden}
+.sb .it span{overflow:hidden;text-overflow:ellipsis}
+.sb .it .n{margin-left:auto;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.sb .it:hover{background:var(--sunk)}
+.sb .it[aria-current]{background:var(--nav-active-bg);color:var(--nav-active-text);font-weight:500}
+.sb .it[aria-current] .n{color:inherit;opacity:.8}
+.sb .hint{padding:2px 8px 4px;color:var(--faint);font-size:12px}
+.sb .foot{border-top:1px solid var(--line);padding:10px 13px calc(10px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sb .foot i{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block;flex:none}
+.maincol{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:6;height:var(--topbar-h);display:flex;align-items:center;gap:12px;padding:0 14px;padding-top:env(safe-area-inset-top,0px);box-sizing:content-box;background:var(--bg);border-bottom:1px solid var(--line)}
+.ibtn{border:0;background:none;color:var(--muted);padding:5px;border-radius:var(--radius-sm);cursor:pointer;display:grid;place-items:center}
+.ibtn:hover{background:var(--sunk);color:var(--fg)}
+.topbar .pick{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--fg)}
+.topbar .pick select{appearance:none;-webkit-appearance:none;border:0;background:transparent;font:inherit;font-weight:600;font-size:14px;color:inherit;padding:4px 22px 4px 4px;border-radius:var(--radius-sm);cursor:pointer;max-width:42vw;width:auto}
+.topbar .pick select:hover{background:var(--sunk)}
+.topbar .pick .chev{position:absolute;right:4px;pointer-events:none;color:var(--muted)}
+.topbar .date{color:var(--faint);white-space:nowrap}
+.topbar .sp{flex:1}
+.gbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:12px;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;position:relative}
+.gbtn:hover{color:var(--fg);border-color:var(--line-strong)}
+.gbtn b{pointer-events:none;background:var(--accent);color:var(--on-accent);border-radius:9px;font-size:10.5px;padding:0 5px;font-weight:600;line-height:16px}
+.seg{display:inline-flex;background:var(--seg-bg);border-radius:var(--radius-md);padding:3px;gap:2px}
+.seg button{border:0;background:none;font:inherit;font-size:12px;padding:4px 10px;border-radius:calc(var(--radius-md) - 2px);color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--seg-active);color:var(--fg);font-weight:500;box-shadow:var(--shadow-card)}
+html[data-kit] main{padding:20px 20px 60px;max-width:none;margin:0;width:100%}
+html[data-kit] .pop{top:calc(var(--topbar-h) + 6px);right:14px;border-color:var(--line);border-radius:var(--radius-lg);box-shadow:0 10px 30px rgba(16,24,40,.12)}
+html[data-kit] .pop h4{font-size:11px;font-weight:var(--label-fw);text-transform:var(--label-tt);letter-spacing:var(--label-ls);color:var(--muted)}
+.scrim{display:none}
+
+/* ---- Type ---- */
+html[data-kit] h1{font-family:var(--font);font-size:18px;line-height:24px;font-weight:600;letter-spacing:-.01em;margin:0 0 2px}
+html[data-kit] h2{font-family:var(--font);font-size:14px;line-height:20px;font-weight:600}
+html[data-kit] h3,html[data-kit] .flab,html[data-kit] .tile small,html[data-kit] .picker .grp{font-size:11px;font-weight:var(--label-fw);text-transform:var(--label-tt);letter-spacing:var(--label-ls);color:var(--muted)}
+html[data-kit] .lede{color:var(--muted);font-size:13px;margin:0 0 16px}
+html[data-kit] .mono,html[data-kit] .code{font-family:var(--f-mono);font-size:12px}
+html[data-kit] small{font-size:12px}
+
+/* ---- Surfaces ---- */
+html[data-kit] .card,html[data-kit] .sec,html[data-kit] .tbl-wrap,html[data-kit] .picker{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow-card)}
+html[data-kit] .card{padding:16px}
+html[data-kit] .sec>header{padding:12px 16px;border-bottom:1px solid var(--line)}
+html[data-kit] .sec>.bd{padding:16px}
+html[data-kit] .stack{gap:16px}
+html[data-kit] .empty{color:var(--muted);padding:32px 20px}
+
+/* ---- Buttons & inputs ---- */
+html[data-kit] .btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:var(--radius-sm);padding:6px 12px;font-size:12.5px;font-weight:500}
+html[data-kit] .btn:hover{background:var(--sunk);border-color:var(--line-strong)}
+html[data-kit] .btn.pri,html[data-kit] .btn.acc{background:var(--accent);border-color:var(--accent);color:var(--on-accent);border-radius:var(--radius-md);padding:7px 14px}
+html[data-kit] .btn.pri:hover,html[data-kit] .btn.acc:hover{background:var(--accent-hover);border-color:var(--accent-hover);filter:none}
+html[data-kit] .btn.sm{padding:3px 9px;font-size:12px}
+html[data-kit] .btn.link{border:0;background:none;color:var(--ink);padding:2px 4px;text-decoration:none;font-weight:500}
+html[data-kit] .btn.link:hover{text-decoration:underline;background:none}
+html[data-kit] .btn:disabled{color:var(--disabled);opacity:1}
+html[data-kit] input[type=text],html[data-kit] input[type=email],html[data-kit] input[type=tel],html[data-kit] input[type=number],html[data-kit] input[type=date],html[data-kit] input[type=url],html[data-kit] input[type=search],html[data-kit] input[type=password],html[data-kit] select,html[data-kit] textarea{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:var(--radius-sm);padding:6px 8px;font-size:13px}
+html[data-kit] input:focus,html[data-kit] select:focus,html[data-kit] textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+html[data-kit] :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+html[data-kit] label.f{font-size:12px;color:var(--muted)}
+html[data-kit] details.ms{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+html[data-kit] details.ms[open]{box-shadow:var(--shadow-card)}
+html[data-kit] details.ms summary::after{content:"";width:6px;height:6px;border-right:1.6px solid var(--faint);border-bottom:1.6px solid var(--faint);transform:rotate(45deg) translateY(-2px);margin:0 2px}
+
+/* ---- Tables ---- */
+html[data-kit] th{font-size:11px;font-weight:var(--label-fw);text-transform:var(--label-tt);letter-spacing:var(--label-ls);color:var(--muted);background:var(--surface);border-bottom:1px solid var(--line);padding:9px 12px}
+html[data-kit] td{padding:9px 12px;border-bottom:1px solid var(--line)}
+html[data-kit] tbody tr:last-child td{border-bottom:0}
+html[data-kit] tr.click:hover td{background:var(--sunk)}
+html[data-kit] tr.sel td{background:var(--nav-active-bg);color:var(--nav-active-text)}
+html[data-kit] tr.sel td .pill{background:var(--surface)}
+
+/* ---- Pills, tiles, tabs, notes ---- */
+html[data-kit] .pill{border-radius:999px;font-size:11.5px;padding:1px 8px;background:var(--seg-bg);color:var(--muted)}
+html[data-kit][data-kit="classic"] .pill{border-radius:var(--radius-sm)}
+html[data-kit] .pill.a{background:var(--ink-soft);color:var(--ink)}
+html[data-kit] .pill.acc{background:var(--accent-soft);color:var(--fg)}
+html[data-kit] .tiles{gap:12px}
+html[data-kit] .tile{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow-card);padding:12px 14px;border-top:1px solid var(--line);position:relative;overflow:hidden}
+html[data-kit] .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+html[data-kit] .tile.warn::before{background:var(--warn)} html[data-kit] .tile.bad::before{background:var(--bad)} html[data-kit] .tile.acc::before{background:var(--ink)}
+html[data-kit] .tile:hover{border-color:var(--line-strong)}
+html[data-kit] .tile b{font-family:var(--font);font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.25}
+html[data-kit] .tabs{display:inline-flex;background:var(--seg-bg);border-radius:var(--radius-md);padding:3px;gap:2px;border:0;margin-bottom:14px}
+html[data-kit] .tabs button{border:0;border-radius:calc(var(--radius-md) - 2px);padding:4px 12px;font-size:12px;color:var(--muted);margin:0}
+html[data-kit] .tabs button[aria-selected=true]{background:var(--seg-active);color:var(--fg);box-shadow:var(--shadow-card);border:0}
+html[data-kit] .note{border-radius:var(--radius-md)}
+html[data-kit] .toast{background:var(--fg);color:var(--bg);border-radius:var(--radius-md);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+html[data-kit] .vsplit::after{background:var(--line)}
+html[data-kit] .vsplit:hover::after,html[data-kit] .vsplit.on::after,html[data-kit] .colrs:hover::after,html[data-kit] .colrs.on::after{background:var(--accent)}
+html[data-kit] .side{top:calc(var(--topbar-h) + 16px)}
+
+/* ---- Narrow screens: sidebar slides over ---- */
+@media (max-width:900px){
+  .app,.app.collapsed{grid-template-columns:minmax(0,1fr)}
+  .sb{position:fixed;left:0;top:0;bottom:0;width:min(280px,84vw);z-index:40;transform:translateX(-102%);transition:transform .18s ease;box-shadow:0 10px 40px rgba(0,0,0,.2);visibility:visible}
+  .app.open .sb{transform:none}
+  .app.open .scrim{display:block;position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.25)}
+  .topbar .date,.topbar .seg,.topbar .live{display:none}
+  html[data-kit] main{padding:14px 12px 60px}
+}
+html[data-kit] .sb nav{display:block;flex:1;min-height:0;overflow:auto;order:0;flex-basis:auto;padding:8px 7px}
+html[data-kit] .sb nav a{padding:6px 8px;font-weight:400;color:var(--fg)}
+html[data-kit] .sb nav a[aria-current]{background:var(--nav-active-bg);color:var(--nav-active-text);font-weight:500}
+
 </style>
 
-<header class="top">
-  <div class="brand"><i aria-hidden="true"></i>Permit Desk</div>
+<div class="app" id="app">
+<aside class="sb" id="sb" aria-label="Sidebar">
+  <a class="brand2" href="#dashboard" data-nav="dashboard"><span class="logo"><svg class="ico" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></span><span><b>Permit Desk</b><small>Bushburg</small></span></a>
   <nav id="nav" aria-label="Main"></nav>
-  <div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span></div>
+  <div class="foot" id="sbFoot"><i></i><span id="sbSrc"></span></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+<div class="maincol">
+<header class="topbar">
+  <button class="ibtn" id="sbToggle" type="button" aria-label="Toggle sidebar"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></button>
+  <div class="pick" id="tbPick"></div>
+  <span class="date" id="tbDate"></span>
+  <span class="sp"></span>
+  <button class="gbtn" id="bell" type="button" aria-label="Alerts"><svg class="ico" viewBox="0 0 24 24" style="pointer-events:none"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span style="pointer-events:none">Alerts</span><b id="bellN" hidden></b></button>
+  <span id="whoName" class="date"></span>
+  <div class="seg" id="kitSeg" role="group" aria-label="Style"><button type="button" data-kit="modern">Modern</button><button type="button" data-kit="classic">Classic</button></div>
+  <button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button>
 </header>
 <div id="pop" class="pop" hidden></div>
 <main id="main"><p class="empty">Loading your permit desk…</p></main>
+</div>
+</div>
 <div id="toast" class="toast" hidden></div>
-<link rel="icon" href="data:,">
-<script src="supabase.js"></script>
-<script>window.PD_MODE="supabase";window.PD_SB={url:"https://kxscczhqvkmrwmhnpjuj.supabase.co",key:"sb_publishable_rhR5n-nq6xNw1JVLP1SBxQ_MuexWAPJ"};</script>
-<script>
-/* Permit Desk storage layer: runs the app without Claude.
-   MODE "local"  -> everything is saved in this browser (localStorage).
-   MODE "remote" -> everything is saved online through /api/data (password protected). */
-(function(){
-  const MODE = window.PD_MODE || 'local';
-  const LS_KEY = 'permitdesk-data-v1';
-  const docs = new Map();            // path -> data
-  const docL = new Map();            // path -> Set(listener)
-  const colL = new Map();            // collection -> Set(listener)
-  let version = 0, ready = null;
-
-  const clone = v => v==null ? v : JSON.parse(JSON.stringify(v));
-  const isTop = (path, coll) => { const p = path.split('/'); return p.length===2 && p[0]===coll; };
-  function snapDoc(path){ const d = docs.get(path); return { id: path.split('/').pop(), exists: d!==undefined, data: ()=>clone(d), metadata:{fromCache:false} }; }
-  function snapCol(coll){ const out=[]; docs.forEach((d,p)=>{ if(isTop(p,coll)) out.push({id:p.split('/')[1], data:()=>clone(d)}); }); return {docs:out, size:out.length, empty:!out.length, metadata:{fromCache:false}}; }
-  function emit(paths){
-    const colls = new Set();
-    paths.forEach(p=>{ (docL.get(p)||[]).forEach(cb=>{ try{cb(snapDoc(p));}catch(e){console.error(e);} }); const s=p.split('/'); if(s.length===2) colls.add(s[0]); });
-    colls.forEach(c=>(colL.get(c)||[]).forEach(cb=>{ try{cb(snapCol(c));}catch(e){console.error(e);} }));
-  }
-  function emitAll(){ emit([...new Set([...docs.keys(), ...docL.keys()])]); colL.forEach((s,c)=>s.forEach(cb=>cb(snapCol(c)))); }
-  function applyOps(ops){
-    ops.forEach(o=>{
-      if(o.op==='delete') docs.delete(o.path);
-      else if(o.op==='update'){ if(!docs.has(o.path)) throw Object.assign(new Error('Not found'),{code:'not-found'}); docs.set(o.path, {...docs.get(o.path), ...clone(o.data)}); }
-      else docs.set(o.path, clone(o.data));
-    });
-  }
-  function seedDocs(){ const el=document.getElementById('pd-seed'); return el ? JSON.parse(el.textContent) : {}; }
-
-  /* ---------- local backend ---------- */
-  function localSave(){
-    const obj={}; docs.forEach((d,p)=>obj[p]=d);
-    try{ localStorage.setItem(LS_KEY, JSON.stringify({version, docs:obj})); }
-    catch(e){ alert('This browser could not save your changes (storage full or blocked). Use Backup to download a copy.'); throw e; }
-  }
-  async function localLoad(){
-    let raw=null; try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
-    const st = raw ? JSON.parse(raw) : {version:1, docs:seedDocs()};
-    version = st.version||1; Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d));
-    if(!raw) localSave();
-    window.addEventListener('storage', e=>{ if(e.key===LS_KEY && e.newValue){ const st=JSON.parse(e.newValue); docs.clear(); Object.entries(st.docs).forEach(([p,d])=>docs.set(p,d)); version=st.version; emitAll(); } });
-  }
-
-  /* ---------- remote backend ---------- */
-  const auth = () => { try{ return JSON.parse(localStorage.getItem('permitdesk-login')||'null'); }catch(e){ return null; } };
-  async function api(method, body){
-    if(MODE==='github') return ghApi(method, body);
-    if(MODE==='supabase') return sbApi(method, body);
-    const a = auth();
-    const r = await fetch('/api/data'+(method==='GET'?'?v='+version:''), {method, cache:'no-store', headers:{'content-type':'application/json','x-pd-pass':a?.pass||''}, body: body?JSON.stringify(body):undefined});
-    if(r.status===401){ localStorage.removeItem('permitdesk-login'); location.reload(); throw new Error('Wrong password'); }
-    if(!r.ok) throw new Error((await r.text())||('Server error '+r.status));
-    return r.json();
-  }
-
-  /* ---------- GitHub backend: data.json in a private repo; every save is a commit ---------- */
-  const GH = Object.assign({owner:'johnsochet19', repo:'permit-desk-data', path:'data.json', branch:'main', api:'https://api.github.com'}, window.PD_GH||{});
-  const ghBase = () => `${GH.api}/repos/${GH.owner}/${GH.repo}`;
-  async function gh(url, opts={}, token){
-    const r = await fetch(url.startsWith('http')?url:ghBase()+url, {...opts, cache:'no-store', headers:{'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Authorization':'Bearer '+(token||auth()?.pass||''), ...(opts.headers||{})}});
-    if(r.status===401 && !token){ localStorage.removeItem('permitdesk-login'); alert('Your GitHub access key stopped working (expired or revoked). Sign in again with a new one.'); location.reload(); throw new Error('Bad key'); }
-    return r;
-  }
-  const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g,'')), c=>c.charCodeAt(0)));
-  function b64enc(str){ const bytes=new TextEncoder().encode(str); let bin=''; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
-  function serialize(obj){ const keys=Object.keys(obj).sort(); return '{"app":"Permit Desk","docs":{\n'+keys.map(k=>JSON.stringify(k)+':'+JSON.stringify(obj[k])).join(',\n')+'\n}}\n'; }
-  async function ghRead(){
-    const r = await gh(`/contents/${GH.path}?ref=${GH.branch}`);
-    if(r.status===404) return {sha:null, docs:{}};
-    if(!r.ok) throw new Error('GitHub said '+r.status+' reading the data');
-    const m = await r.json(); let b64 = m.content;
-    if(!b64 || !b64.trim()){ const r2 = await gh(`/git/blobs/${m.sha}`); if(!r2.ok) throw new Error('GitHub said '+r2.status+' reading the data'); b64=(await r2.json()).content; }
-    return {sha:m.sha, docs:JSON.parse(b64dec(b64)).docs||{}};
-  }
-  function describe(ops, docs){
-    const o=ops[0]; if(!o) return 'Update'; const d={...(docs&&docs[o.path]||{}), ...(o.data||{})};
-    const proj = d.projectId && docs ? docs['projects/'+d.projectId]?.name : ''; const what = (d.code&&d.name ? `${d.code} ${d.name}` : (d.name || o.path)) + (proj?` (${proj})`:'');
-    return (o.op==='delete'?'Delete ':'Update ')+what+(ops.length>1?` (+${ops.length-1} more)`:'');
-  }
-  async function ghApi(method, body){
-    if(method==='GET'){ const st=await ghRead(); return {version:st.sha||0, docs:st.docs}; }
-    for(let attempt=0; attempt<5; attempt++){
-      const st = await ghRead(); const d = st.docs;
-      if(body.replace) Object.keys(d).forEach(k=>delete d[k]), Object.assign(d, body.replace);
-      else for(const o of body.ops||[]){ if(o.op==='delete') delete d[o.path]; else if(o.op==='update') d[o.path]={...(d[o.path]||{}),...o.data}; else d[o.path]=o.data; }
-      const msg = `${auth()?.name||'Someone'}: ${body.replace?'Restore from backup':describe(body.ops||[], d)}`;
-      const r = await gh(`/contents/${GH.path}`, {method:'PUT', headers:{'content-type':'application/json'}, body:JSON.stringify({message:msg, content:b64enc(serialize(d)), branch:GH.branch, ...(st.sha?{sha:st.sha}:{})})});
-      if(r.status===409 || r.status===422){ await new Promise(res=>setTimeout(res, 400*(attempt+1))); continue; }
-      if(!r.ok) throw new Error('GitHub said '+r.status+' saving: '+((await r.json().catch(()=>({}))).message||''));
-      return {version:(await r.json()).content.sha};
-    }
-    throw new Error('Someone else kept saving at the same moment; try again');
-  }
-
-  /* ---------- Supabase backend: email accounts, invites, live updates ---------- */
-  const SB = Object.assign({url:'', key:''}, window.PD_SB||{});
-  let sbReady=false, sb=null, sbUser=null, sbRole=null, sbMembers=[], sbInvites=[], sbChannel=null;
-  const esc2 = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  async function sbFn(name, body){
-    const { data:{ session } } = await sb.auth.getSession();
-    const r = await fetch(`${SB.url}/functions/v1/${name}`, {method:'POST', headers:{'content-type':'application/json', apikey:SB.key, ...(session?{authorization:'Bearer '+session.access_token}:{})}, body:JSON.stringify(body)});
-    const j = await r.json().catch(()=>({error:'Unexpected reply ('+r.status+')'}));
-    if(!r.ok || j.error) throw new Error(j.error || ('Error '+r.status));
-    return j;
-  }
-  async function sbAll(){
-    const out={}; for(let from=0;;from+=1000){
-      const { data, error } = await sb.from('docs').select('path,data').order('path').range(from, from+999);
-      if(error) throw error; data.forEach(r=>out[r.path]=r.data); if(data.length<1000) break; }
-    return out;
-  }
-  async function sbRefreshPeople(){
-    const m = await sb.from('members').select('user_id,email,name,role,created_at').order('created_at');
-    if(!m.error) sbMembers = m.data;
-    const me = sbMembers.find(x=>x.user_id===sbUser?.id); sbRole = me?.role || null;
-    if(sbRole==='admin'){ const i = await sb.from('invites').select('code,email,role,created_at,expires_at,used_at').is('used_at',null).order('created_at',{ascending:false}); if(!i.error) sbInvites = i.data.filter(x=>new Date(x.expires_at)>new Date()); }
-  }
-  async function sbApi(method, body){
-    if(method==='GET') return {version:Date.now(), docs:await sbAll()};
-    if(body.replace){ const { error } = await sb.rpc('docs_replace', {p_docs: body.replace}); if(error) throw new Error(error.message); return {version:Date.now()}; }
-    for(const o of body.ops||[]){
-      let r;
-      if(o.op==='delete') r = await sb.from('docs').delete().eq('path', o.path);
-      else if(o.op==='update') r = await sb.rpc('doc_merge', {p_path:o.path, p_patch:o.data});
-      else r = await sb.from('docs').upsert({path:o.path, data:o.data});
-      if(r.error) throw new Error(r.error.message);
-    }
-    return {version:Date.now()};
-  }
-  function sbSubscribe(){
-    sbChannel = sb.channel('permit-desk')
-      .on('postgres_changes', {event:'*', schema:'public', table:'docs'}, p=>{
-        if(p.eventType==='DELETE'){ if(!p.old?.path) return; docs.delete(p.old.path); emit([p.old.path]); }
-        else { docs.set(p.new.path, p.new.data); emit([p.new.path]); }
-      })
-      .on('postgres_changes', {event:'*', schema:'public', table:'members'}, async ()=>{ await sbRefreshPeople(); window.render?.(); })
-      .subscribe();
-    // Safety net if the live connection drops: full refresh when the tab comes back.
-    document.addEventListener('visibilitychange', async ()=>{ if(document.hidden) return; try{ replaceAll(await sbAll()); emitAll(); }catch(e){} });
-  }
-  function card(inner){ return `<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3f4f2;font:15px -apple-system,Segoe UI,Arial,sans-serif;overflow:auto;padding:16px"><div class="pdcard" style="background:#fff;border:1px solid #d5d9d2;border-radius:8px;padding:24px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">${inner}</div></div>`; }
-  const fld = (label, name, type='text', extra='') => `<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">${label}<input name="${name}" type="${type}" ${extra} style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>`;
-  const btnS = 'font:inherit;padding:9px;border:0;border-radius:6px;background:#1f3b57;color:#fff;cursor:pointer';
-  function sbGate(){
-    return new Promise(resolve=>{
-      const box=document.createElement('div'); document.body.appendChild(box);
-      const join = new URLSearchParams(location.search).get('join');
-      const finish = ()=>{ box.remove(); resolve(); };
-      async function afterSignIn(){
-        const { data:{ user } } = await sb.auth.getUser(); sbUser=user;
-        if(!user){ await sb.auth.signOut({scope:'local'}); showLogin('Your sign-in has expired or this account was removed. Sign in again.'); return; }
-        await sbRefreshPeople();
-        if(!sbRole){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0">You're signed in as <b>${esc2(user?.email)}</b>, but this account hasn't been added to the tracker. Ask an admin to invite you.</p><button data-x="out" style="${btnS}">Sign out</button>`); box.querySelector('[data-x=out]').onclick=async()=>{ await sb.auth.signOut(); location.reload(); }; return; }
-        finish();
-      }
-      function showLogin(msg=''){
-        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2>${fld('Email','e','email','autocomplete="username" required')}${fld('Password','p','password','autocomplete="current-password" required')}<button data-x="in" style="${btnS}">Sign in</button><small class="err" style="color:#b3362c">${esc2(msg)}</small><small style="color:#5d665f">Forgot your password? Ask your admin to set a temporary one. New here? Use the invite link you were sent.</small>`);
-        const go = async()=>{ const e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err'); err.textContent='Signing in…';
-          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent = /invalid/i.test(error.message)?'That email and password don\'t match.':error.message; return; } await afterSignIn(); };
-        box.querySelector('[data-x=in]').onclick=go; box.querySelectorAll('input').forEach(i=>i.onkeydown=ev=>{ if(ev.key==='Enter') go(); });
-      }
-      async function showJoin(){
-        box.innerHTML = card('<p style="margin:0">Checking your invite…</p>');
-        let inv; try{ inv = await sbFn('accept-invite', {action:'check', code:join}); }catch(e){ box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Permit Desk</h2><p style="margin:0;color:#b3362c">${esc2(e.message)}</p><a href="${location.pathname}" style="color:#1f3b57">Go to sign in</a>`); return; }
-        box.innerHTML = card(`<h2 style="margin:0;font-size:20px">Join Permit Desk</h2><p style="margin:0;color:#5d665f">You've been invited${inv.role==='admin'?' as an admin':''}. Create your account to get in.</p>${fld('Your name','n','text','autocomplete="name" required')}${fld('Email','e','email',`autocomplete="username" required ${inv.email?`value="${esc2(inv.email)}" readonly`:''}`)}${fld('Choose a password (8+ characters)','p','password','autocomplete="new-password" required minlength="8"')}<button data-x="join" style="${btnS}">Create account</button><small class="err" style="color:#b3362c"></small>`);
-        box.querySelector('[data-x=join]').onclick = async()=>{ const n=box.querySelector('[name=n]').value.trim(), e=box.querySelector('[name=e]').value.trim(), p=box.querySelector('[name=p]').value; const err=box.querySelector('.err');
-          if(!n){ err.textContent='Enter your name.'; return; } err.textContent='Creating your account…';
-          try{ await sbFn('accept-invite', {code:join, email:e, password:p, name:n}); }catch(x){ err.textContent=x.message; return; }
-          const { error } = await sb.auth.signInWithPassword({email:e, password:p}); if(error){ err.textContent=error.message; return; }
-          // remember the name for emails/history and drop the code from the address bar
-          history.replaceState(null,'',location.pathname+location.hash);
-          await afterSignIn(); };
-      }
-      (async()=>{
-        if(join) return showJoin();
-        const { data:{ session } } = await sb.auth.getSession();
-        if(session) return afterSignIn(); showLogin();
-      })();
-    });
-  }
-  async function sbStart(){
-    if(!window.supabase?.createClient) throw new Error('Could not load the sign-in library. Check your connection and reload.');
-    sb = window.supabase.createClient(SB.url, SB.key, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:false}});
-    sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_OUT' && sbReady) location.reload(); });
-    await sbGate();
-    replaceAll(await sbAll());
-    sbSubscribe(); sbReady=true;
-  }
-
-  /* ---------- Users screen (Settings → Users) ---------- */
-  function siteLink(code){ return location.origin + location.pathname + '?join=' + code; }
-  function usersView(){
-    const admin = sbRole==='admin';
-    const meId = sbUser?.id;
-    const rows = sbMembers.map(m=>`<tr><td><b>${esc2(m.name||'—')}</b>${m.user_id===meId?' <span class="pill">You</span>':''}<br><small style="color:var(--muted)">${esc2(m.email)}</small></td><td>${admin&&m.user_id!==meId?`<select data-pdu-role="${m.user_id}" style="width:auto"><option value="member"${m.role==='member'?' selected':''}>Member</option><option value="admin"${m.role==='admin'?' selected':''}>Admin</option></select>`:(m.role==='admin'?'Admin':'Member')}</td><td><small style="color:var(--muted)">${new Date(m.created_at).toLocaleDateString()}</small></td><td style="white-space:nowrap">${admin&&m.user_id!==meId?`<button class="btn sm" data-pdu="pw" data-id="${m.user_id}">Set temporary password</button> <button class="btn sm" data-pdu="rm" data-id="${m.user_id}">Remove</button>`:''}</td></tr>`).join('');
-    const inv = sbInvites.map(i=>`<tr><td>${esc2(i.email||'Anyone with the link')}</td><td>${i.role==='admin'?'Admin':'Member'}</td><td><small style="color:var(--muted)">expires ${new Date(i.expires_at).toLocaleDateString()}</small></td><td style="white-space:nowrap"><button class="btn sm" data-pdu="copy" data-code="${i.code}">Copy link</button> <button class="btn sm" data-pdu="mail" data-code="${i.code}" data-email="${esc2(i.email||'')}">Email it</button> <button class="btn sm" data-pdu="unv" data-code="${i.code}">Cancel</button></td></tr>`).join('');
-    return `${admin?`<section class="sec"><header><h3>Invite someone</h3></header><div class="bd stack"><div class="fields"><label class="f">Their email<input type="email" id="pduEmail" placeholder="name@company.com"></label><label class="f">Role<select id="pduRole"><option value="member">Member: works on every project</option><option value="admin">Admin: also manages people and settings</option></select></label><div style="align-self:end"><button class="btn pri" data-pdu="invite">Create invite</button></div></div><small style="color:var(--muted)">You'll get a sign-up link to send them. They open it, choose a password and they're in. Links work once and expire after 14 days.</small><div id="pduNew"></div></div></section>`:''}
-    <section class="sec"><header><h3>People · ${sbMembers.length}</h3></header><div class="bd"><table><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></section>
-    ${admin&&sbInvites.length?`<section class="sec"><header><h3>Invites waiting · ${sbInvites.length}</h3></header><div class="bd"><table><tbody>${inv}</tbody></table></div></section>`:''}
-    <section class="sec"><header><h3>Your password</h3></header><div class="bd fields"><label class="f">New password (8+ characters)<input type="password" id="pduMyPw" autocomplete="new-password"></label><div style="align-self:end"><button class="btn" data-pdu="mypw">Change my password</button></div></div></section>
-    <div id="pduPanel"></div>`;
-  }
-  function mailFor(code, email){
-    const link = siteLink(code);
-    const subject = 'You\'re invited to Permit Desk';
-    const body = `Hi,\n\nI've added you to Permit Desk, our permit and filing tracker.\n\nOpen this link to create your account (it works once and expires in 14 days):\n${link}\n\nAfter that, sign in any time at ${location.origin+location.pathname}\n\nThanks`;
-    return `mailto:${encodeURIComponent(email||'')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }
-  const say = (m)=> (window.toast ? window.toast(m) : console.log(m));
-  async function copy(text){ try{ await navigator.clipboard.writeText(text); say('Link copied'); }catch(e){ window.prompt('Copy this link:', text); } }
-  document.addEventListener('click', async e=>{
-    const b = e.target.closest('[data-pdu]'); if(!b || MODE!=='supabase') return; e.preventDefault();
-    const a = b.dataset.pdu; const panel = document.getElementById('pduPanel');
-    try{
-      if(a==='invite'){
-        const email = (document.getElementById('pduEmail').value||'').trim().toLowerCase() || null;
-        if(email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ say('That email doesn\'t look right.'); return; }
-        const role = document.getElementById('pduRole').value;
-        const { data, error } = await sb.from('invites').insert({email, role, invited_by: sbUser.id}).select('code').single();
-        if(error) throw error;
-        await sbRefreshPeople(); window.render?.();
-        const link = siteLink(data.code);
-        const box = document.getElementById('pduNew');
-        if(box) box.innerHTML = `<div class="card stack"><b>Invite ready${email?` for ${esc2(email)}`:''}</b><input type="text" readonly value="${esc2(link)}" onclick="this.select()"><div class="row"><a class="btn pri" href="${mailFor(data.code,email)}">Email it from my mail app</a><button class="btn" data-pdu="copy" data-code="${data.code}">Copy link</button></div></div>`;
-      }
-      if(a==='copy') await copy(siteLink(b.dataset.code));
-      if(a==='mail') location.href = mailFor(b.dataset.code, b.dataset.email);
-      if(a==='unv'){ const { error } = await sb.from('invites').delete().eq('code', b.dataset.code); if(error) throw error; await sbRefreshPeople(); window.render?.(); say('Invite cancelled'); }
-      if(a==='pw'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id); const temp = Array.from(crypto.getRandomValues(new Uint8Array(6)),x=>'abcdefghjkmnpqrstuvwxyz23456789'[x%31]).join('')+'-'+(100+crypto.getRandomValues(new Uint16Array(1))[0]%900);
-        await sbFn('admin-users', {action:'set-password', user_id:b.dataset.id, password:temp});
-        if(panel) panel.innerHTML = `<div class="card stack"><b>Temporary password for ${esc2(m?.name||m?.email)}</b><input type="text" readonly value="${esc2(temp)}" onclick="this.select()"><small style="color:var(--muted)">Send it to them. They can change it under Settings → Users → Your password.</small></div>`; }
-      if(a==='rm'){ const m = sbMembers.find(x=>x.user_id===b.dataset.id);
-        if(b.dataset.sure!=='1'){ b.dataset.sure='1'; b.textContent='Click again to remove'; setTimeout(()=>{ b.dataset.sure=''; b.textContent='Remove'; },4000); return; }
-        await sbFn('admin-users', {action:'remove', user_id:b.dataset.id}); await sbRefreshPeople(); window.render?.(); say(`Removed ${m?.name||m?.email}`); }
-      if(a==='mypw'){ const p=document.getElementById('pduMyPw').value; if(p.length<8){ say('Use at least 8 characters.'); return; } const { error } = await sb.auth.updateUser({password:p}); if(error) throw error; document.getElementById('pduMyPw').value=''; say('Password changed'); }
-    }catch(x){ say('Could not do that: '+(x.message||x)); }
-  }, true);
-  document.addEventListener('change', async e=>{
-    const sel = e.target.closest('[data-pdu-role]'); if(!sel || MODE!=='supabase') return;
-    const { error } = await sb.from('members').update({role: sel.value}).eq('user_id', sel.dataset.pduRole);
-    if(error){ say('Could not change the role: '+error.message); }
-    else say('Role updated');
-    await sbRefreshPeople(); window.render?.();
-  }, true);
-
-  function replaceAll(obj){ docs.clear(); Object.entries(obj).forEach(([p,d])=>docs.set(p,d)); }
-  async function remoteLoad(){
-    if(MODE==='supabase') return sbStart();
-    const res = await api('GET'); version=res.version; replaceAll(res.docs);
-    setInterval(async()=>{ if(document.hidden) return; try{ const res=await api('GET'); if(res.docs && res.version!==version){ version=res.version; replaceAll(res.docs); emitAll(); } }catch(e){} }, MODE==='github'?20000:15000);
-  }
-  let queue = Promise.resolve();
-  function write(ops){
-    applyOps(ops); emit(ops.map(o=>o.path));
-    if(MODE==='local'){ version++; localSave(); return Promise.resolve(); }
-    const p = queue.then(()=>api('POST',{ops})).then(res=>{ version=res.version; });
-    queue = p.catch(()=>{});
-    return p.catch(e=>{ alert('Your last change was not saved online: '+e.message+'\nReloading to show what is saved.'); location.reload(); throw e; });
-  }
-
-  /* ---------- Firestore-like surface used by the app ---------- */
-  const db = {
-    doc(path){ return {
-      onSnapshot(cb, err){ ready.then(()=>cb(snapDoc(path)), err); if(!docL.has(path)) docL.set(path,new Set()); docL.get(path).add(cb); return ()=>docL.get(path).delete(cb); },
-      async get(){ await ready; return snapDoc(path); },
-      async set(data){ await ready; return write([{op:'set',path,data}]); },
-      async update(data){ await ready; return write([{op:'update',path,data}]); },
-      async delete(){ await ready; return write([{op:'delete',path}]); }
-    }; },
-    collection(c){ return {
-      onSnapshot(cb, err){ ready.then(()=>cb(snapCol(c)), err); if(!colL.has(c)) colL.set(c,new Set()); colL.get(c).add(cb); return ()=>colL.get(c).delete(cb); }
-    }; }
-  };
-  const me = () => MODE==='local' ? {id:'me', name:'You'} : MODE==='supabase' ? {id:sbUser?.id||'user', name:(sbMembers.find(x=>x.user_id===sbUser?.id)?.name)||sbUser?.email||'User'} : (auth()||{id:'user',name:'User'});
-  const user = {
-    async id(){ await ready; return me().id; }, async can(){ return true; }, async canEdit(){ await ready; return MODE==='supabase' ? sbRole==='admin' : true; },
-    async profiles(ids){ const o={}; ids.forEach(i=>{ const p=docs.get(`data/users/${i}/profile`); const mm = sbMembers.find(x=>x.user_id===i); o[i]={name:p?.name || mm?.name || (i===me().id?me().name:i.replace(/^u-/,'').replace(/-/g,' '))}; }); return o; }
-  };
-  const downloads = { async save({filename,data}){ const b=new Blob([data],{type:/\.csv$/i.test(filename)?'text/csv':'application/octet-stream'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); return {status:'saved'}; } };
-
-  window.PD_STORE = {
-    mode: MODE,
-    exportAll(){ const obj={}; docs.forEach((d,p)=>obj[p]=d); return {app:'Permit Desk', exportedAt:new Date().toISOString(), docs:obj}; },
-    async importAll(obj){ if(!obj||!obj.docs) throw new Error('Not a Permit Desk backup file');
-      if(MODE==='local'){ replaceAll(obj.docs); version++; localSave(); emitAll(); return; }
-      const res = await api('POST',{replace:obj.docs}); version=res.version; replaceAll(obj.docs); emitAll(); },
-    logout(){ if(MODE==='supabase'){ sb.auth.signOut(); return; } localStorage.removeItem('permitdesk-login'); location.reload(); },
-    usersView, get role(){ return sbRole; }
-  };
-
-  function loginGate(){
-    return new Promise(resolve=>{
-      if(auth()) return resolve();
-      const isGh = MODE==='github';
-      const box=document.createElement('div');
-      box.innerHTML=`<div style="position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#f3f4f2;font:15px -apple-system,Segoe UI,Arial,sans-serif">
-        <form style="background:#fff;border:1px solid #d5d9d2;border-radius:8px;padding:24px;width:min(400px,92vw);display:flex;flex-direction:column;gap:12px">
-          <h2 style="margin:0;font-size:20px">Permit Desk</h2>
-          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">Your name<input name="n" required autocomplete="name" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
-          <label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#5d665f">${isGh?'GitHub access key':'Password'}<input name="p" type="password" required autocomplete="off" style="font:inherit;padding:8px;border:1px solid #b8beb4;border-radius:6px"></label>
-          ${isGh?`<small style="color:#5d665f;line-height:1.4">A fine-grained GitHub token with read and write access to <b>${GH.owner}/${GH.repo}</b> (Contents). It stays in this browser and is only sent to GitHub.</small>`:''}
-          <button style="font:inherit;padding:9px;border:0;border-radius:6px;background:#1f3b57;color:#fff;cursor:pointer">Sign in</button>
-          <small class="err" style="color:#b3362c"></small></form></div>`;
-      document.body.appendChild(box);
-      box.querySelector('form').onsubmit=async e=>{ e.preventDefault(); const f=e.target; const name=f.n.value.trim(), pass=f.p.value.trim(); const err=f.querySelector('.err'); err.textContent='Checking…';
-        try{
-          if(isGh){
-            const r=await gh('', {}, pass);
-            if(r.status===401){ err.textContent='GitHub did not accept that key.'; return; }
-            if(r.status===404){ err.textContent=`GitHub didn't accept that key for ${GH.owner}/${GH.repo}. Check you copied the whole key and gave it access to that repository.`; return; }
-            const j=await r.json(); if(j.permissions && !j.permissions.push){ err.textContent='That key can read but not save. Give it Contents: Read and write.'; return; }
-          } else {
-            const r=await fetch('/api/data?check=1',{headers:{'x-pd-pass':pass},cache:'no-store'});
-            if(r.status===401){ err.textContent='That password is not right.'; return; }
-          }
-        }catch(x){ err.textContent='Could not reach '+(isGh?'GitHub':'the server')+'. Check your connection.'; return; }
-        localStorage.setItem('permitdesk-login', JSON.stringify({name, pass, id:'u-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}));
-        box.remove(); resolve(); };
-    });
-  }
-
-  ready = (async()=>{ if(MODE==='supabase') await sbStart(); else if(MODE==='remote'||MODE==='github'){ await loginGate(); await remoteLoad(); } else await localLoad(); })();
-  ready.catch(e=>{ document.body.insertAdjacentHTML('afterbegin', `<p style="padding:16px;color:#b3362c">Could not load your data: ${String(e.message||e)}</p>`); });
-  window.claude = { use: async name => name==='db'?db : name==='user'?user : name==='downloads'?downloads : null };
-})();
-
-</script>
 <script>
 // ---------- constants ----------
 const FIELDS = [
@@ -671,6 +847,24 @@ function filtered(F=S.F){
 }
 function goRecords(patch){ S.F={project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:'',...patch}; S.sel=null; nav('records'); }
 
+
+// ---------- shell (sidebar, top bar, theme) ----------
+document.addEventListener('click',e=>{
+  const t=e.target; const app=$('#app');
+  const sp=t.closest('[data-sbproj]'); if(sp){ e.preventDefault(); app.classList.remove('open'); nav('projects',{projId:sp.dataset.sbproj}); return; }
+  if(t.closest('[data-sbnew]')){ e.preventDefault(); app.classList.remove('open'); nav('projects',{newProject:true}); return; }
+  if(t.closest('.brand2')){ e.preventDefault(); app.classList.remove('open'); nav('dashboard'); return; }
+  if(t.closest('#nav [data-nav]')) app.classList.remove('open');
+  if(t.closest('#sbToggle')){ if(matchMedia('(max-width:900px)').matches) app.classList.toggle('open'); else { app.classList.toggle('collapsed'); try{localStorage.setItem('pd.sb',app.classList.contains('collapsed')?'0':'1');}catch(_){} } return; }
+  if(t.closest('#scrim')){ app.classList.remove('open'); return; }
+  const kb=t.closest('#kitSeg button'); if(kb){ document.documentElement.dataset.kit=kb.dataset.kit; try{localStorage.setItem('pd.kit',kb.dataset.kit);}catch(_){} renderTop(); return; }
+  if(t.closest('#modeBtn')){ const d=document.documentElement; d.dataset.mode=d.dataset.mode==='dark'?'light':'dark'; try{localStorage.setItem('pd.mode',d.dataset.mode);}catch(_){} renderTop(); return; }
+});
+document.addEventListener('change',e=>{ if(e.target.id!=='tbProj') return; const v=e.target.value;
+  if(S.view==='projects') nav('projects',v?{projId:v}:{});
+  else goRecords(v?{project:[v]}:{}); });
+try{ if(localStorage.getItem('pd.sb')==='0') $('#app').classList.add('collapsed'); }catch(_){}
+
 // ---------- db ----------
 async function boot(){
   renderNav(); render();
@@ -709,13 +903,38 @@ async function saveCsv(name, header, rows){
 const VIEWS=[['dashboard','Dashboard'],['records','Records'],['projects','Projects'],['catalog','Catalog'],['companies','Companies'],['contacts','Contacts'],['reports','Reports'],['admin','Settings'],['help','Help']];
 function nav(v,extra={}){ if(S.dirty && !confirmLeave()) return; Object.assign(S,{view:v,recId:null,projId:null,typeId:null,newProject:false,email:null,...extra}); S.dirty=false; S.pending=false; if(location.hash!=='#'+v) history.replaceState(null,'','#'+v); renderNav(); render(); window.scrollTo(0,0); }
 function confirmLeave(){ if(S.leaveAsk){ S.leaveAsk=false; return true; } S.leaveAsk=true; toast('You have unsaved changes. Click again to leave without saving.'); setTimeout(()=>S.leaveAsk=false,4000); return false; }
-function renderNav(){ $('#nav').innerHTML=VIEWS.map(([k,l])=>`<a href="#${k}" data-nav="${k}"${S.view===k?' aria-current="page"':''}>${l}</a>`).join(''); }
+const ICO={dashboard:'<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',records:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',projects:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>',reports:'<path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/>',catalog:'<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>',companies:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',contacts:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',admin:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>',plus:'<path d="M12 5v14M5 12h14"/>',dot:'<circle cx="12" cy="12" r="3"/>',moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',chev:'<path d="m6 9 6 6 6-6"/>'};
+const ico=k=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICO[k]||ICO.dot}</svg>`;
+const VLABEL=Object.fromEntries(VIEWS);
+function renderNav(){
+  const it=k=>`<a class="it" href="#${k}" data-nav="${k}"${S.view===k&&!(k==='projects'&&S.projId)?' aria-current="page"':''}>${ico(k)}<span>${VLABEL[k]}</span></a>`;
+  const projs=Object.entries(S.projects||{}).filter(([,p])=>p&&p.status!=='Archived').sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
+  const cnt={}; for(const r of Object.values(S.records||{})){ if(r&&r.projectId) cnt[r.projectId]=(cnt[r.projectId]||0)+1; }
+  $('#nav').innerHTML=`<div class="lab">Views</div>${['dashboard','records','projects','reports'].map(it).join('')}
+  <div class="lab">Projects<button type="button" data-sbnew title="New project" aria-label="New project">${ico('plus')}</button></div>
+  ${projs.length?projs.map(([id,p])=>`<a class="it" href="#projects" data-sbproj="${id}"${S.view==='projects'&&S.projId===id?' aria-current="page"':''}>${ico('dot')}<span>${esc(p.name||'Untitled')}</span><span class="n">${cnt[id]||0}</span></a>`).join(''):`<div class="hint">No projects yet</div>`}
+  <div class="lab">Library</div>${['catalog','companies','contacts'].map(it).join('')}
+  <div class="lab">Desk</div>${['admin','help'].map(it).join('')}`;
+  renderTop();
+}
+function renderTop(){
+  const pk=$('#tbPick'); if(!pk) return;
+  if(S.view==='projects'||S.view==='records'){
+    const projs=Object.entries(S.projects||{}).filter(([,p])=>p&&p.status!=='Archived').sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||''));
+    const cur=S.view==='projects'?(S.projId||''):((S.F&&S.F.project&&S.F.project.length===1)?S.F.project[0]:'');
+    pk.innerHTML=`<select id="tbProj" aria-label="Project"><option value="">${S.view==='projects'?'All projects':'All projects · Records'}</option>${projs.map(([id,p])=>`<option value="${id}"${id===cur?' selected':''}>${esc(p.name||'Untitled')}</option>`).join('')}</select><span class="chev">${ico('chev')}</span>`;
+  } else pk.innerHTML=`<span style="padding:4px">${VLABEL[S.view]||'Permit Desk'}</span>`;
+  $('#tbDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const d=document.documentElement; $('#modeBtn').innerHTML=ico(d.dataset.mode==='dark'?'sun':'moon');
+  document.querySelectorAll('#kitSeg button').forEach(b=>b.classList.toggle('on',b.dataset.kit===d.dataset.kit));
+  const src=$('#sbSrc'); if(src){ const m=window.PD_STORE?.mode||'local'; src.textContent=m==='supabase'?'Live · shared with your team':m==='local'?'Saved in this browser':'Live'; }
+}
 window.addEventListener('hashchange',()=>{ const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v) && v!==S.view) nav(v); });
 { const v=location.hash.slice(1); if(VIEWS.some(x=>x[0]===v)) S.view=v; }
 
 function render(){
   const m=$('#main'); const ae=document.activeElement; const fid=ae&&ae.id&&m.contains(ae)?ae.id:null; const ss=fid&&ae.selectionStart!=null?[ae.selectionStart,ae.selectionEnd]:null;
-  m.innerHTML=view(); renderBell(); renderBanner();
+  m.innerHTML=view(); renderBell(); renderBanner(); try{renderNav();}catch(e){}
   if(fid){ const el=document.getElementById(fid); if(el){ el.focus(); if(ss&&el.setSelectionRange) try{el.setSelectionRange(ss[0],ss[1]);}catch(e){} } }
 }
 function renderBanner(){ const b=$('#pendingNote'); if(b) b.hidden=!S.pending; }
