@@ -1607,6 +1607,14 @@ async function recUpdate(id,patch,hist){
   const history=capHist([...(r.history||[]),...hist]);
   await put('records',id,{...patch,history,...stamp()},true);
 }
+// The filings a job type needs: every active catalog type ticked for that project type (Catalog → type → Applicable project types).
+// Ones already on the project are skipped, so changing the type only adds what's missing.
+async function addForJobType(pid,type){
+  if(!type) return 0;
+  const have=new Set(recs().filter(r=>r.projectId===pid).map(r=>r.catalogCode).filter(Boolean));
+  const codes=Object.entries(S.catalog).filter(([c,t])=>t && t.active!==false && (t.projectTypes||[]).includes(type) && !have.has(c)).map(([c])=>c).sort();
+  return codes.length ? await addToSlate(pid,codes) : 0;
+}
 async function addToSlate(pid,codes){
   let made=0;
   for(const code of codes){
@@ -1753,7 +1761,8 @@ M.addEventListener('submit',async e=>{
   try{
   if(k==='rec') return await saveRecord(f);
   if(k==='proj'||k==='projEdit'){ const d={}; f.querySelectorAll('[data-p]').forEach(el=>d[el.dataset.p]=el.value.trim()); if(!d.name){ toast('Name the project.'); return; }
-    S.dirty=false; if(k==='proj'){ const id=uidGen(); if(await put('projects',id,{...d,status:'Active',team:[],createdAt:new Date().toISOString(),...stamp()})){ S.newProject=false; S.projId=id; render(); toast('Project created. Add its team and slate.'); } } else { if(await put('projects',S.projId,{...d,...stamp()},true)) toast('Project saved'); } return; }
+    S.dirty=false; if(k==='proj'){ const id=uidGen(); if(await put('projects',id,{...d,status:'Active',team:[],createdAt:new Date().toISOString(),...stamp()})){ S.newProject=false; S.projId=id; const n=await addForJobType(id,d.type); render(); toast(n?`Project created with the ${n} filings for ${d.type}.`:'Project created. Add its team and slate.'); } }
+    else { const before=S.projects[S.projId]?.type||''; if(await put('projects',S.projId,{...d,...stamp()},true)){ const n=d.type&&d.type!==before?await addForJobType(S.projId,d.type):0; render(); toast(n?`Project saved. Added ${n} filings for ${d.type}.`:'Project saved'); } } return; }
   if(k==='type'){ const isNew=S.typeId==='__new'; const t0=isNew?{}:S.catalog[S.typeId]; const d={}; f.querySelectorAll('[data-t]').forEach(el=>{ let v=el.value.trim(); if(el.type==='number') v=v===''?null:+v; d[el.dataset.t]=v; });
     if(!d.name){ toast('Name the type.'); return; } if(!d.agency){ toast('Pick an agency.'); return; }
     const fields=FIELDS.filter(x=>x[4]||f.querySelector(`[data-tf=${x[0]}]`)?.checked).map(x=>x[0]);
