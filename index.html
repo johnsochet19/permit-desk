@@ -1,4 +1,19 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.bell{display:inline-flex;align-items:center;gap:6px}.bell .ico{width:15px;height:15px}
+.pop .nf-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}.pop .nf-head span{display:flex;gap:10px}
+.nf-tabs{display:flex;border-bottom:1px solid var(--line)}.nf-tabs button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:8px;cursor:pointer;color:var(--muted);font:inherit;font-size:13px}.nf-tabs button[aria-selected=true]{color:var(--ink,inherit);border-bottom-color:var(--accent);font-weight:600}
+.nf-ctl{padding:8px 12px;display:grid;gap:6px;border-bottom:1px solid var(--line)}.nf-page .nf-ctl{padding:0 0 10px}
+.nf-chips{display:flex;flex-wrap:wrap;gap:4px}.nf-chip{border:1px solid var(--line);background:var(--surface);color:inherit;border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}.nf-chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.nf-sel{display:flex;gap:6px;flex-wrap:wrap}.nf-sel select{flex:1;min-width:110px;font-size:12px;padding:3px 6px}
+.nf-day{padding:6px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--sunk);border-bottom:1px solid var(--line)}
+.nf-it{display:flex;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer}.nf-it:hover{background:var(--sunk)}
+.nf-dot{flex:0 0 8px;height:8px;border-radius:50%;margin-top:6px;background:var(--muted)}.nf-it[data-k=status] .nf-dot{background:#2f6fde}.nf-it[data-k=dob] .nf-dot{background:#d97706}.nf-it[data-k=new] .nf-dot{background:#16a34a}.nf-it[data-k=notes] .nf-dot{background:#7c3aed}.nf-it[data-k=due] .nf-dot{background:#dc2626}
+.nf-it.unread{background:color-mix(in srgb,var(--accent) 7%,transparent)}.nf-it.unread .nf-what::after{content:"New";margin-left:6px;font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase}
+.nf-body{min-width:0;flex:1}.nf-what{font-size:13px}.nf-from{color:var(--muted);text-decoration:line-through}.nf-note{color:var(--muted)}.nf-rec{font-size:12.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nf-meta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.nf-empty{padding:14px 12px;color:var(--muted);margin:0}.nf-more,.nf-foot{padding:10px 12px;margin:0;text-align:center}.nf-sum{color:var(--muted);font-size:12.5px;margin:0 0 8px}
+.nf-page .nf-list{border:1px solid var(--line);border-radius:var(--r)}
+#pop{width:min(420px,calc(100vw - 32px))}
+@media (max-width:720px){.bell-l{display:none}}
+</style></head><body>
 <title>Permit Desk</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <script>(function(){var d=document.documentElement,k,m;try{k=localStorage.getItem('pd.kit2');m=localStorage.getItem('pd.mode');}catch(e){}
@@ -778,7 +793,7 @@ html[data-kit] .bell b{background:var(--accent);color:var(--on-accent);font-fami
 @media (max-width:760px){.look span{display:none}}
 </style>
 
-<header class="top"><a class="brand" id="brandHome" href="#dashboard" title="All-projects dashboard"><i aria-hidden="true"></i>Permit Desk</a><nav id="nav" aria-label="Main"></nav><div class="who"><button class="bell" id="bell" type="button" aria-label="Alerts">Alerts<b id="bellN" hidden></b></button><span id="whoName"></span><label class="look"><span>Style</span><select id="kitSel" aria-label="Style"><option value="original">Original</option><option value="modern">Modern</option><option value="classic">Classic</option></select></label><button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button></div></header>
+<header class="top"><a class="brand" id="brandHome" href="#dashboard" title="All-projects dashboard"><i aria-hidden="true"></i>Permit Desk</a><nav id="nav" aria-label="Main"></nav><div class="who"><button class="bell" id="bell" type="button" aria-label="Notifications" title="Notifications"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-l">Notifications</span><b id="bellN" hidden></b></button><span id="whoName"></span><label class="look"><span>Style</span><select id="kitSel" aria-label="Style"><option value="original">Original</option><option value="modern">Modern</option><option value="classic">Classic</option></select></label><button class="ibtn" id="modeBtn" type="button" aria-label="Light or dark"></button></div></header>
 <div id="pop" class="pop" hidden></div>
 <main id="main"><p class="empty">Loading your permit desk…</p></main>
 <div id="toast" class="toast" hidden></div>
@@ -1058,7 +1073,7 @@ let histReady=false;
 function syncHistory(){ const h=pageHash(); const url=location.pathname+location.search+h;
   if(!histReady){ histReady=true; if(location.hash!==h) history.replaceState(null,'',url); return; }
   if(location.hash!==h) history.pushState(null,'',url); }
-function applyHash(){ const [v,raw]=location.hash.slice(1).split('/'); if(!VIEWS.some(x=>x[0]===v)) return false;
+function applyHash(){ const [v,raw]=location.hash.slice(1).split('/'); if(!VIEWS.some(x=>x[0]===v)&&v!=='notifications') return false;
   const id=raw?decodeURIComponent(raw):'';
   const st={view:v,recId:null,projId:null,typeId:null,newProject:false,email:null};
   if(v==='records'&&id){ st.recId=id; st.recTab='details'; }
@@ -1083,7 +1098,7 @@ function view(){
   if(!S.cfg) return `<div class="card"><h2>Nothing set up yet</h2><p class="lede">The master catalog and dropdown lists haven't been loaded. Restore a backup file in Settings → People & access.</p></div>`;
   const ro=!canWrite?`<p class="note info" style="margin-bottom:12px">You can view this tracker but not change it.</p>`:'';
   const pend=`<p class="note info" id="pendingNote" hidden style="margin-bottom:12px">Someone else changed this data while you were editing. Save or discard your changes to see their update.</p>`;
-  const fn={dashboard:vDashboard,records:vRecords,projects:vProjects,catalog:vCatalog,companies:vCompanies,contacts:vContacts,reports:vReports,admin:vSettings,help:vHelp}[S.view]||vDashboard;
+  const fn={dashboard:vDashboard,records:vRecords,projects:vProjects,catalog:vCatalog,companies:vCompanies,contacts:vContacts,reports:vReports,admin:vSettings,help:vHelp,notifications:vNotifications}[S.view]||vDashboard;
   return ro+pend+fn();
 }
 // ---------- dashboard ----------
@@ -1718,15 +1733,89 @@ function vHelp(){
 }
 
 // ---------- bell ----------
+// ---------- notifications ----------
+// Everything that happens to a record is already written to its history. Notifications read that history
+// and show it newest first, filtered by time (Today, Yesterday, Last 7 / 30 days, All), type, project and person.
+const NF_RANGES=[['today','Today'],['yesterday','Yesterday'],['7d','Last 7 days'],['30d','Last 30 days'],['all','All time']];
+const NF_TYPES=[['all','All updates'],['status','Status changes'],['dob','From DOB / NYC data'],['new','New items'],['notes','Notes, emails & inspections'],['edit','Edits & setup']];
+const NF_WHO=[['all','Everyone'],['others','Other people'],['me','Me']];
+S.nf=Object.assign({range:'7d',type:'all',proj:'',who:'all',tab:'act',limit:80},(()=>{ try{ return JSON.parse(localStorage.getItem('pd.nf')||'{}'); }catch(e){ return {}; } })());
+function nfSave(){ try{ const {range,type,proj,who}=S.nf; localStorage.setItem('pd.nf',JSON.stringify({range,type,proj,who})); }catch(e){} }
+function nfSeen(){ let s=''; try{ s=localStorage.getItem('pd.notifSeen')||''; }catch(e){} if(!s){ const d=new Date(); d.setHours(0,0,0,0); s=d.toISOString(); try{ localStorage.setItem('pd.notifSeen',s); }catch(e){} } return s; }
+function nfMarkRead(){ try{ localStorage.setItem('pd.notifSeen',new Date().toISOString()); }catch(e){} }
+function nfKinds(h){ const n=h.note||''; const k=[];
+  if(h.type==='Status changed'||(h.type==='Changed'&&h.field==='currentStatus')) k.push('status');
+  if(/DOB NOW|NYC Open Data/i.test(n)) k.push('dob');
+  if(h.type==='Created') k.push('new');
+  if(/^(Note|Email drafted|Inspection)/.test(h.type||'')) k.push('notes');
+  if(!k.length) k.push('edit'); return k; }
+function nfWindow(r){ const d=new Date(); d.setHours(0,0,0,0); const back=n=>{ const x=new Date(d); x.setDate(x.getDate()-n); return x.toISOString(); };
+  if(r==='today') return [d.toISOString(),''];
+  if(r==='yesterday') return [back(1),d.toISOString()];
+  if(r==='7d') return [back(6),''];
+  if(r==='30d') return [back(29),''];
+  return ['','']; }
+function activity(f=S.nf){ const [A,B]=nfWindow(f.range); const out=[];
+  recs().forEach(r=>{ if(f.proj&&r.projectId!==f.proj) return;
+    (r.history||[]).forEach((h,i)=>{ if(!h||!h.at) return; if(A&&h.at<A) return; if(B&&h.at>=B) return;
+      const ks=nfKinds(h); if(f.type&&f.type!=='all'&&!ks.includes(f.type)) return;
+      if(f.who==='me'&&!(uid&&h.by===uid)) return; if(f.who==='others'&&uid&&h.by===uid) return;
+      out.push({r,h,k:ks[0],key:r.id+':'+i}); }); });
+  return out.sort((x,y)=>y.h.at.localeCompare(x.h.at)); }
+function nfUnread(){ const s=nfSeen(); let n=0; recs().forEach(r=>(r.history||[]).forEach(h=>{ if(h&&h.at>s&&!(uid&&h.by===uid)) n++; })); return n; }
+function nfText(h){ const lab=f=>f==='recordStatus'?'Visibility':f==='currentStatus'?'Status':(FD[f]?.label||f);
+  if(h.field) return `${lab(h.field)}: <span class="nf-from">${esc(h.from||'—')}</span> → <b>${esc(h.to||'—')}</b>`+(h.note&&!/^DOB NOW:/.test(h.note)?` <span class="nf-note">· ${esc(h.note)}</span>`:'');
+  if(h.type==='Created') return /NYC Open Data|DOB NOW/i.test(h.note||'')?`New from DOB NOW <span class="nf-note">· ${esc((h.note||'').replace(/^From NYC Open Data \(DOB NOW\):\s*/,''))}</span>`:`Added`+(h.note?` <span class="nf-note">· ${esc(h.note)}</span>`:'');
+  return `${esc(h.type||'Update')}`+(h.note?` <span class="nf-note">· ${esc(h.note)}</span>`:''); }
+function nfWho(by){ if(!by) return 'Imported'; if(uid&&by===uid) return 'You'; return S.names[by]||'…'; }
+function nfAgo(at){ const s=(Date.now()-new Date(at).getTime())/1000; if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+'m ago'; if(s<86400) return Math.floor(s/3600)+'h ago';
+  return new Date(at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+function nfDay(at){ const d=new Date(at); d.setHours(0,0,0,0); const t=new Date(); t.setHours(0,0,0,0); const diff=Math.round((t-d)/864e5);
+  return diff===0?'Today':diff===1?'Yesterday':d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:d.getFullYear()===t.getFullYear()?undefined:'numeric'}); }
+function nfControls(full){ const f=S.nf; const projs=Object.entries(S.projects).filter(([,p])=>p.status!=='Archived').sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  return `<div class="nf-ctl"><div class="nf-chips" role="group" aria-label="When">${NF_RANGES.map(([k,l])=>`<button type="button" class="nf-chip" data-nf="range" data-v="${k}" aria-pressed="${f.range===k}">${l}</button>`).join('')}</div>
+  <div class="nf-sel"><select data-nf="type" aria-label="Type">${NF_TYPES.map(([k,l])=>`<option value="${k}"${f.type===k?' selected':''}>${l}</option>`).join('')}</select>
+  <select data-nf="proj" aria-label="Project"><option value="">All projects</option>${projs.map(([id,p])=>`<option value="${esc(id)}"${f.proj===id?' selected':''}>${esc(p.name)}</option>`).join('')}</select>
+  ${full||user?`<select data-nf="who" aria-label="Who">${NF_WHO.map(([k,l])=>`<option value="${k}"${f.who===k?' selected':''}>${l}</option>`).join('')}</select>`:''}</div></div>`; }
+function nfList(items,limit,seen){ if(!items.length) return `<p class="nf-empty">Nothing in this time range. Try a longer range like “Last 30 days”.</p>`;
+  const ids=[...new Set(items.slice(0,limit).map(x=>x.h.by).filter(b=>b&&!S.names[b]))]; if(ids.length) resolveNames(ids);
+  let day=''; return items.slice(0,limit).map(({r,h,k,key})=>{ const d=nfDay(h.at); const head=d!==day?`<div class="nf-day">${d}</div>`:''; day=d;
+    return head+`<div class="nf-it${h.at>seen&&!(uid&&h.by===uid)?' unread':''}" data-open="${esc(r.id)}" data-k="${k}" title="${esc(fmtDT(h.at))}"><i class="nf-dot" aria-hidden="true"></i><div class="nf-body"><div class="nf-what">${nfText(h)}</div><div class="nf-rec"><span class="code">${esc(r.code||'')}</span> ${esc(r.name||'')}</div><div class="nf-meta">${esc(projName(r.projectId)||'')}${projName(r.projectId)?' · ':''}${esc(nfWho(h.by))} · ${nfAgo(h.at)}</div></div></div>`; }).join('')
+    +(items.length>limit?`<div class="nf-more">${full_more(items.length-limit)}</div>`:''); }
+function full_more(n){ return S.view==='notifications'?`<button class="btn" data-nf="more">Show ${Math.min(n,100)} more</button>`:`<button class="btn link" data-nf="page">See all ${n+0} more on the Notifications page</button>`; }
+function nfDeadlines(){ const a=myAlerts(); const n=a?a.length:0;
+  return a===null?`<p class="nf-empty">Your login isn't linked to a contact yet, so no deadlines are routed to you. <button class="btn link" data-nf="goPeople">Link it in Settings</button></p>`
+    :n?a.map(({r,d})=>`<div class="nf-it" data-open="${esc(r.id)}" data-k="due"><i class="nf-dot" aria-hidden="true"></i><div class="nf-body"><div class="nf-what">${esc(DEADLINES.find(x=>x[0]===d[0])[1])} · ${fmtD(d[1])}</div><div class="nf-rec"><span class="code">${esc(r.code)}</span> ${esc(r.name)}</div><div class="nf-meta">${esc(projName(r.projectId)||'')}</div></div></div>`).join('')
+    :`<p class="nf-empty">No deadlines need you right now.</p>`; }
 function renderBell(){
-  const a=myAlerts(); const n=a?a.length:0; const b=$('#bellN'); b.hidden=!n; b.textContent=n;
+  const u=nfUnread(); const b=$('#bellN'); b.hidden=!u; b.textContent=u>99?'99+':u; $('#bell').setAttribute('aria-label',`Notifications${u?`, ${u} new`:''}`);
   $('#whoName').textContent=S.me.name||'';
   const p=$('#pop'); if(p.hidden) return;
-  p.innerHTML=`<h4>Alerts · ${n}</h4>`+(a===null?`<p class="it" style="cursor:default">Your login isn't linked to a contact yet, so nothing is routed to you. <button class="btn link" data-act="goPeople">Link it in Settings</button></p>`:n?a.map(({r,d})=>`<div class="it" data-open="${r.id}"><span class="code">${esc(r.code)}</span> ${esc(r.name)}<br><small style="color:var(--muted)">${esc(DEADLINES.find(x=>x[0]===d[0])[1])} · ${fmtD(d[1])}</small></div>`).join(''):`<p class="it" style="cursor:default">Nothing needs you right now.</p>`)+`<p class="it" style="cursor:default"><button class="btn link" data-act="goComms">Choose alert types</button></p>`;
+  const f=S.nf; const a=myAlerts(); const dn=a?a.length:0; const seen=nfSeen(); const items=f.tab==='act'?activity():[];
+  p.innerHTML=`<div class="nf-head"><b>Notifications</b><span><button class="btn link" data-nf="read"${u?'':' disabled'}>Mark all read</button><button class="btn link" data-nf="page">Open full page</button></span></div>
+  <div class="nf-tabs" role="tablist"><button role="tab" data-nf="tab" data-v="act" aria-selected="${f.tab==='act'}">Activity${f.tab==='act'?` · ${items.length}`:''}</button><button role="tab" data-nf="tab" data-v="due" aria-selected="${f.tab==='due'}">My deadlines${dn?` · ${dn}`:''}</button></div>
+  ${f.tab==='act'?nfControls(false)+`<div class="nf-list">${nfList(items,40,seen)}</div>`:`<div class="nf-list">${nfDeadlines()}</div><p class="nf-foot"><button class="btn link" data-nf="goComms">Choose deadline alert types</button></p>`}`;
 }
+function vNotifications(){ const f=S.nf; const items=activity(); const seen=nfSeen(); const u=nfUnread();
+  const counts={}; items.forEach(x=>counts[x.k]=(counts[x.k]||0)+1);
+  return `<div class="row" style="justify-content:space-between"><div><h1>Notifications</h1><p class="lede">Everything that changed on your records, newest first. Pick a time range to see only what's recent.</p></div><div><button class="btn" data-nf="read"${u?'':' disabled'}>Mark all read${u?` (${u})`:''}</button></div></div>
+  <section class="sec nf-page"><div class="bd">${nfControls(true)}
+  <p class="nf-sum">${items.length} update${items.length===1?'':'s'} · ${NF_RANGES.find(x=>x[0]===f.range)[1]}${Object.keys(counts).length?' — '+NF_TYPES.filter(([k])=>counts[k]).map(([k,l])=>`${counts[k]} ${l.toLowerCase()}`).join(', '):''}</p>
+  <div class="nf-list">${nfList(items,f.limit,seen)}</div></div></section>`; }
 $('#bell').addEventListener('click',e=>{ e.stopPropagation(); const p=$('#pop'); p.hidden=!p.hidden; renderBell(); });
-document.addEventListener('click',e=>{ const p=$('#pop'); if(!p.hidden && !p.contains(e.target) && e.target.id!=='bell') p.hidden=true; });
-$('#pop').addEventListener('click',e=>{ const o=e.target.closest('[data-open]'); if(o){ $('#pop').hidden=true; openRec(o.dataset.open); } const a=e.target.closest('[data-act]'); if(a){ $('#pop').hidden=true; S.setTab=a.dataset.act==='goPeople'?'people':'comms'; nav('admin'); } });
+document.addEventListener('click',e=>{ const p=$('#pop'); if(!p.hidden && !p.contains(e.target) && !e.target.closest('#bell')) p.hidden=true; });
+function nfAct(el,e){ const k=el.dataset.nf; const f=S.nf; const inPop=!!el.closest('#pop');
+  if(k==='range'){ f.range=el.dataset.v; f.limit=80; nfSave(); }
+  else if(k==='tab'){ f.tab=el.dataset.v; }
+  else if(k==='read'){ nfMarkRead(); }
+  else if(k==='more'){ f.limit+=100; }
+  else if(k==='page'){ $('#pop').hidden=true; f.limit=80; nav('notifications'); return; }
+  else if(k==='goPeople'||k==='goComms'){ $('#pop').hidden=true; S.setTab=k==='goPeople'?'people':'comms'; nav('admin'); return; }
+  else return;
+  if(inPop){ e.stopPropagation(); renderBell(); } else render(); }
+document.addEventListener('click',e=>{ const el=e.target.closest('button[data-nf]'); if(!el) return; e.preventDefault(); nfAct(el,e); },true);
+document.addEventListener('change',e=>{ const el=e.target.closest('select[data-nf]'); if(!el) return; S.nf[el.dataset.nf]=el.value; S.nf.limit=80; nfSave(); if(el.closest('#pop')) renderBell(); else render(); },true);
+$('#pop').addEventListener('click',e=>{ if(e.target.closest('[data-nf]')) return; const o=e.target.closest('[data-open]'); if(o){ $('#pop').hidden=true; openRec(o.dataset.open); } });
 // ---------- actions ----------
 function openRec(id){ if(!id) return; if(S.dirty&&!confirmLeave()) return; S.dirty=false; S.pending=false; Object.assign(S,{view:'records',recId:id,recTab:'details',email:null,projId:null,typeId:null}); renderNav(); render(); window.scrollTo(0,0); }
 function nextCode(pid,prefix){ let mx=0; recs().forEach(r=>{ if(r.projectId===pid){ const m=(r.code||'').match(new RegExp('^'+prefix+'-(\\d+)$')); if(m) mx=Math.max(mx,+m[1]); }}); return prefix+'-'+String(mx+1).padStart(3,'0'); }
