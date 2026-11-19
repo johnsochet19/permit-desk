@@ -651,7 +651,8 @@ html[data-kit] body::before{background:var(--sidebar)}
 .car:hover{background:var(--line);color:var(--fg)}
 .car0{flex:0 0 26px}
 .cnt{display:inline-block;margin-left:8px;min-width:20px;padding:0 6px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;text-align:center;line-height:18px}
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;margin-bottom:12px;align-items:start}
+.cgrid{columns:360px;column-gap:12px;margin-bottom:12px}
+.cgrid .ccard{break-inside:avoid;margin-bottom:12px;display:block}
 .ccard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .ccard header{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--sunk) 55%,var(--surface))}
 .ccard header[data-type]{cursor:pointer}
