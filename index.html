@@ -685,6 +685,73 @@ html[data-kit] body::before{background:var(--sidebar)}
 .srow span:first-child{flex:1}
 .srow:hover{background:var(--sunk)}
 @media (max-width:820px){.ohead,.otree .orow{grid-template-columns:minmax(0,1fr) 70px}.ocat,.ocode,.ohead>div:nth-child(5),.otree .orow>div:nth-child(5){display:none}.split{grid-template-columns:1fr}.sdet{position:static}}
+/* agency rim: every catalog item carries a colored left edge for its agency */
+.otree .orow,.spane .orow{box-shadow:inset 3px 0 0 hsl(var(--h) var(--s) 55%)}
+.otree .orow.dim,.spane .orow.dim{box-shadow:inset 3px 0 0 color-mix(in srgb,hsl(var(--h) var(--s) 55%) 35%,transparent)}
+.ccard{box-shadow:var(--shadow-card);border-color:var(--card-line,var(--line));border-top:3px solid hsl(var(--h,215) var(--s,10%) 55%)}
+.ccard.solo{border-top-color:var(--line-strong)}
+.chain .ci,.ccard.solo .ci{border:1px solid var(--line);border-left:3px solid hsl(var(--h) var(--s) 55%);background:var(--surface);margin:5px 0;padding:6px 8px}
+.chain .ci:hover,.ccard.solo .ci:hover{border-color:var(--line-strong);border-left-color:hsl(var(--h) var(--s) 50%);background:var(--sunk)}
+.chain>li>.ci{background:color-mix(in srgb,var(--sunk) 45%,var(--surface))}
+.chain ol{margin-left:10px;padding-left:12px}
+.ccard.solo .sgrid{gap:0 10px}
+.sdet{box-shadow:var(--shadow-card)}
+.srow{border-left:3px solid hsl(var(--h) var(--s) 55%)}
+.spane .orow{border-bottom:1px solid var(--line)}
+.spane .orow.sel{box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px var(--accent)}
+.clist tbody tr.crow td:first-child{box-shadow:inset 3px 0 0 hsl(var(--h) var(--s) 55%)}
+.clist tbody tr.crow:nth-child(even){background:color-mix(in srgb,var(--sunk) 40%,var(--surface))}
+/* what this job needs */
+.jsum{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:color-mix(in srgb,var(--sunk) 45%,var(--surface))}
+.jsum>div:first-child{min-width:220px;flex:1}
+.jstat{display:flex;gap:6px;flex-wrap:wrap}
+.jhead,.jtree .jrow{display:grid;grid-template-columns:minmax(0,1fr) 84px 190px 170px;gap:10px;align-items:center;padding:0 12px}
+.jhead{font-size:12px;color:var(--muted);background:var(--sunk);padding-top:7px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+.jrow{min-height:38px;border-bottom:1px solid var(--line);box-shadow:inset 3px 0 0 hsl(var(--h) var(--s) 55%)}
+.jrow:last-child{border-bottom:0}
+.jrow.root .nm{font-weight:600}
+.jrow.ctx{opacity:.55}
+.jrow.st-miss{background:color-mix(in srgb,var(--bad-soft) 55%,var(--surface))}
+.jrow.st-na .nm{text-decoration:line-through;color:var(--muted)}
+.jrow .req{margin-left:8px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--bad)}
+.jst .jrec{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--fg)}
+.jst small{color:var(--muted)}
+.jact{display:flex;gap:4px;justify-content:flex-end}
+.jobneeds .seg{flex-wrap:wrap}
+/* records: cards and board */
+.rgroups{display:flex;flex-direction:column;gap:14px;max-height:78vh;overflow:auto;padding-right:2px}
+.rgrp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-card);overflow:hidden}
+.rgrp>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--sunk) 55%,var(--surface));position:sticky;top:0;z-index:1}
+.rgrp>header small{color:var(--muted);margin-left:8px}
+.rmix{display:flex;width:180px;height:8px;border-radius:4px;overflow:hidden;background:var(--sunk)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;padding:12px}
+.rtile{display:flex;flex-direction:column;gap:6px;padding:10px 12px 10px 14px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--bc);border-radius:8px;cursor:pointer;min-width:0;transition:border-color .12s,box-shadow .12s}
+.rtile:hover{border-color:var(--line-strong);border-left-color:var(--bc);box-shadow:var(--shadow-card)}
+.rtile.sel{border-color:var(--accent);border-left-color:var(--bc);box-shadow:0 0 0 2px var(--accent-soft)}
+.rtile.arch{opacity:.55}
+.rt1{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rt1 .code{color:var(--muted);font-size:11.5px}
+.rtn{font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.rt2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rt2 .code{color:var(--muted);font-size:11.5px}
+.rst{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:color-mix(in srgb,var(--bc) 75%,var(--fg))}
+.rst::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--bc)}
+.rprog{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.rprog i{height:4px;border-radius:2px;background:var(--sunk)}
+.rprog i.d{background:var(--bc)}
+.rprog i.c{background:color-mix(in srgb,var(--bc) 40%,var(--sunk))}
+.rt3{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.rt3 span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rt3 .over{color:var(--bad);font-weight:600;white-space:nowrap}
+.rt3 .soon{color:var(--warn);font-weight:600;white-space:nowrap}
+.rtx{font-size:12px;color:var(--ink-soft,var(--muted));border-top:1px dashed var(--line);padding-top:6px}
+.rboard{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:10px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.rcol{background:color-mix(in srgb,var(--sunk) 60%,var(--surface));border:1px solid var(--line);border-top:3px solid var(--bc);border-radius:var(--r);display:flex;flex-direction:column;max-height:76vh}
+.rcol>header{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line)}
+.rcol>header i{width:9px;height:9px;border-radius:50%;background:var(--bc)}
+.rcol>header span{margin-left:auto;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:0 7px}
+.rcolb{display:flex;flex-direction:column;gap:8px;padding:8px;overflow:auto}
+@media (max-width:820px){.jhead,.jtree .jrow{grid-template-columns:minmax(0,1fr) 120px}.jhead>div:nth-child(2),.jtree .jrow>div:nth-child(2),.jhead>div:nth-child(4){display:none}.jtree .jact{grid-column:1/-1;justify-content:flex-start;padding-bottom:6px}}
 
 html[data-kit] .pop{border-color:var(--line);border-radius:var(--radius-lg);box-shadow:0 10px 30px rgba(16,24,40,.12)}
 html[data-kit] .pop h4{font-size:11px;font-weight:var(--label-fw);text-transform:var(--label-tt);letter-spacing:var(--label-ls);color:var(--muted)}
@@ -916,7 +983,7 @@ const S = {cfg:null,catalog:{},projects:{},records:{},companies:{},contacts:{},r
   F:{project:[],agency:[],category:[],status:[],bic:[],priority:[],show:['Active'],check:'',deadline:''},
   sort:{col:'dTarget',dir:1}, cols:null, groupAgency:false, dirty:false, pending:false, recTab:'details',
   report:'status', rp:{project:'',agency:'',status:'',group:'',show:'Active',from:'',to:''}, setTab:'vocab', vocab:'Agency',
-  catF:{agency:'',category:'',template:'',q:'',retired:false}, catOpen:new Set(), catSel:null, catView:(()=>{try{return localStorage.getItem('pd.catView')||'outline'}catch(e){return 'outline'}})(), slateSel:new Set(), slateF:{agency:'',category:'',q:''},
+  catF:{agency:'',category:'',template:'',q:'',retired:false}, catOpen:new Set(), catSel:null, jobF:'needed', jobClosed:new Set(), recView:(()=>{try{return localStorage.getItem('pd.recView')||'cards'}catch(e){return 'cards'}})(), catView:(()=>{try{return localStorage.getItem('pd.catView')||'outline'}catch(e){return 'outline'}})(), slateSel:new Set(), slateF:{agency:'',category:'',q:''},
   dirQ:'', dirInactive:false, scope:'', ctSel:new Set(), ctDelAsk:null, openRow:null, email:null, noDb:false, offline:false};
 let db=null,user=null,uid=null,canWrite=true,canEditCfg=false,downloads=null;
 const COLS_DEFAULT=['name','agency','category','currentStatus','bic','nextAction','priority','dTarget','updated'];
@@ -1450,7 +1517,7 @@ function msFilter(key,label,items){
 function sortedRows(rows){ const d=COLDEFS[S.sort.col]; if(!d) return rows; return rows.slice().sort((a,b)=>{const x=d[2](a),y=d[2](b); return (x>y?1:x<y?-1:0)*S.sort.dir;}); }
 function vRecords(){
   if(S.recId) return vRecord();
-  const F=S.F; const rows=sortedRows(filtered()); const {map}=computed();
+  const F=S.F; const rows=sortedRows(filtered()); const {map}=computed(); const RV=S.recView;
   const qn=recs().filter(r=>(r.recordStatus||'Queued')==='Queued').length;
   const cols=S.cols.filter(c=>COLDEFS[c]);
   const head=`<tr><th style="width:28px"></th>${cols.map(c=>`<th class="sort rh" data-sort="${c}">${COLDEFS[c][0]}${S.sort.col===c?(S.sort.dir>0?' ↑':' ↓'):''}<span class="colrs" data-colrs="${c}" title="Drag to resize · double-click to reset"></span></th>`).join('')}</tr>`;
@@ -1469,15 +1536,30 @@ function vRecords(){
     ${F.bicCompany||F.bicPerson?`<p class="note info">Ball-in-court: ${esc(coName(F.bicCompany)||ctName(F.bicPerson))} <button class="btn link" data-act="clearBicF">remove</button></p>`:''}
    </aside>
    <div class="vsplit" data-split="rail" title="Drag to resize · double-click to reset"></div>
-   <section style="min-width:0"><div class="row" style="justify-content:space-between;margin-bottom:8px"><div><h1 style="margin:0">Records</h1><span class="lede">${rows.length} records · ${cols.length} columns</span></div></div>
-    <div class="row" style="margin-bottom:10px"><button class="btn" data-act="groupAg">${S.groupAgency?'Ungroup':'Group by agency'}</button>
-     <details class="ms" style="min-width:150px"><summary>Columns (${cols.length})</summary><div class="opts" style="max-height:360px">${COLGROUPS.map(([g,ks])=>`<div class="flab" style="margin-top:6px">${g}</div>`+ks.map(k=>`<label class="chk"><input type="checkbox" data-col="${k}"${S.cols.includes(k)?' checked':''}> ${COLDEFS[k][0]}</label>`).join('')).join('')}<button class="btn sm" data-act="colReset" style="margin-top:6px">Reset</button></div></details>
+   <section style="min-width:0"><div class="row" style="justify-content:space-between;margin-bottom:8px"><div><h1 style="margin:0">Records</h1><span class="lede">${rows.length} records${RV==='table'?` · ${cols.length} columns`:''}</span></div></div>
+    <div class="row" style="margin-bottom:10px"><div class="seg" role="tablist" aria-label="Records view">${[['cards','Cards'],['board','Board'],['table','Table']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${RV===k}" class="${RV===k?'on':''}" data-act="recView" data-v="${k}">${l}</button>`).join('')}</div>${RV==='table'?`<button class="btn" data-act="groupAg">${S.groupAgency?'Ungroup':'Group by agency'}</button>
+     <details class="ms" style="min-width:150px"><summary>Columns (${cols.length})</summary><div class="opts" style="max-height:360px">${COLGROUPS.map(([g,ks])=>`<div class="flab" style="margin-top:6px">${g}</div>`+ks.map(k=>`<label class="chk"><input type="checkbox" data-col="${k}"${S.cols.includes(k)?' checked':''}> ${COLDEFS[k][0]}</label>`).join('')).join('')}<button class="btn sm" data-act="colReset" style="margin-top:6px">Reset</button></div></details>`:''}
      <button class="btn" data-act="exportGrid">Export to CSV (Excel)</button><button class="btn pri" data-nav="projects">Add a record</button></div>
-    ${rows.length?`<div class="tbl-wrap rsz" id="recTblWrap" style="${S.lay.tblH?`height:${S.lay.tblH}px`:'max-height:72vh'}" title=""><table class="fixed">${colgroup}<thead>${head}</thead><tbody>${body}</tbody></table></div>`:`<div class="card empty">${F.show.length===1&&F.show[0]==='Active'&&qn?`Nothing active. ${qn} records are queued. <button class="btn link" data-go='${esc(JSON.stringify({show:['Queued']}))}'>Pick what you're working on</button>`:'No records match these filters.'}</div>`}
+    ${rows.length?RV==='cards'?recCards(rows,map):RV==='board'?recBoard(rows,map):`<div class="tbl-wrap rsz" id="recTblWrap" style="${S.lay.tblH?`height:${S.lay.tblH}px`:'max-height:72vh'}" title=""><table class="fixed">${colgroup}<thead>${head}</thead><tbody>${body}</tbody></table></div>`:`<div class="card empty">${F.show.length===1&&F.show[0]==='Active'&&qn?`Nothing active. ${qn} records are queued. <button class="btn link" data-go='${esc(JSON.stringify({show:['Queued']}))}'>Pick what you're working on</button>`:'No records match these filters.'}</div>`}
    </section>
    <div class="vsplit" data-split="side" title="Drag to resize · double-click to reset"></div>
    <aside class="side card">${sel?recSummary(sel):`<p class="empty">Pick a row to see its status, who has it and what happens next.</p>`}</aside></div>`;
 }
+// ---------- records: cards and board views ----------
+function recTile(r,map){ const b=DASH_BUCKETS.find(x=>x.k===bucketOf(r))||DASH_BUCKETS[0]; const dl=map[r.id].dl; const over=dl.some(d=>d[0]==='overdue'), soon=!over&&dl.some(d=>d[0]!=='stale'); const p=progress(r); const ref=r.officialId||r.jobNo;
+  return `<div class="rtile${S.sel===r.id?' sel':''}${r.recordStatus==='Archived'?' arch':''}" style="--bc:${b.c};${agVar(r.agency)}" data-sel="${r.id}" tabindex="0">
+   <div class="rt1">${agChip(r.agency)}<span class="code">${esc(r.code)}</span>${r.kind==='Document'?'<span class="pill">Document</span>':''}${r.priority==='Critical'||r.priority==='High'?`<span class="pill ${r.priority==='Critical'?'bad':'warn'}">${esc(r.priority)}</span>`:''}${map[r.id].checks.length?'<span class="dot" title="Open data check"></span>':''}</div>
+   <div class="rtn">${esc(r.name)}</div>
+   <div class="rt2"><span class="rst">${esc(r.currentStatus||'Not Started')}</span>${ref&&!String(r.name).includes(ref)?`<span class="code">${esc(ref)}</span>`:''}</div>
+   <div class="rprog" title="${p.done} of 7 stages: ${esc(STAGES.join(' → '))}">${STAGES.map((x,i)=>`<i class="${i<p.done?'d':i===p.cur?'c':''}"></i>`).join('')}</div>
+   <div class="rt3"><span title="Ball-in-court">${esc(bicLabel(r)||'Nobody has the ball')}</span>${r.dTarget?`<span class="${over?'over':soon?'soon':''}">${over?'Overdue · ':'Due '}${fmtD(r.dTarget)}</span>`:''}</div>
+   ${r.nextAction?`<div class="rtx"><b>Next:</b> ${esc(r.nextAction)}</div>`:''}
+  </div>`; }
+function recCards(rows,map){ const g={}; rows.forEach(r=>(g[r.projectId]=g[r.projectId]||[]).push(r));
+  return `<div class="rgroups">${Object.entries(g).sort((a,b)=>projName(a[0]).localeCompare(projName(b[0]))).map(([pid,rs])=>{ const done=rs.filter(r=>bucketOf(r)==='done').length; const cnt={}; rs.forEach(r=>{const k=bucketOf(r); cnt[k]=(cnt[k]||0)+1;});
+    return `<section class="rgrp"><header><div><b>${esc(projName(pid)||'No project')}</b><small>${rs.length} record${rs.length===1?'':'s'} · ${done} done</small></div><div class="rmix" title="${esc(DASH_BUCKETS.filter(b=>cnt[b.k]).map(b=>b.l+' '+cnt[b.k]).join(' · '))}">${DASH_BUCKETS.filter(b=>cnt[b.k]).map(b=>`<span style="flex:${cnt[b.k]};background:${b.c}"></span>`).join('')}</div></header><div class="rgrid">${rs.map(r=>recTile(r,map)).join('')}</div></section>`; }).join('')}</div>`; }
+function recBoard(rows,map){ const g={}; rows.forEach(r=>{const k=bucketOf(r); (g[k]=g[k]||[]).push(r);});
+  return `<div class="rboard">${DASH_BUCKETS.map(b=>`<section class="rcol" style="--bc:${b.c}"><header><i></i><b>${b.l}</b><span>${(g[b.k]||[]).length}</span></header><div class="rcolb">${(g[b.k]||[]).map(r=>recTile(r,map)).join('')||'<p class="empty" style="padding:10px">Nothing here.</p>'}</div></section>`).join('')}</div>`; }
 function recSummary(r){
   const {map}=computed(); const p=progress(r); const c=map[r.id].checks;
   return `<div class="stack"><div><span class="code">${esc(r.code)}</span> <span class="pill ${r.recordStatus==='Active'?'a':'q'}">${esc(r.recordStatus)}</span><h2 style="margin:4px 0 0">${esc(r.name)}</h2><small style="color:var(--muted)">${esc(projName(r.projectId))} · ${esc(r.agency)} · ${esc(r.category)}</small></div>
@@ -1587,6 +1669,43 @@ function vNewProject(){
   return `<button class="btn link" data-act="projBack">← Projects</button><h1>New project</h1><p class="lede">Name the job. The next screen is where you set its team and pick its permit slate.</p>
   <form id="projForm" data-form="proj" class="card fields" style="max-width:900px"><label class="f">Project name<input id="np_name" type="text" data-p="name" data-cap="1" required></label><label class="f">Address<input id="np_addr" type="text" data-p="address" data-cap="1"></label><label class="f">Borough<select id="np_bor" data-p="borough">${opts(lists('Borough'),'')}</select></label><label class="f">Project type<select id="np_type" data-p="type">${opts(lists('Project Type'),'')}</select></label>${personFields()}<label class="f wide">Notes<textarea id="np_notes" data-p="notes"></textarea></label><div><button class="btn pri" type="submit">Create project</button></div></form>`;
 }
+// ---------- what this job needs (catalog tree filtered by the project's job type) ----------
+function jobNeedsData(p,rs){
+  const jt=p.type, C=S.catalog; const A=new Set(Object.values(C).filter(t=>t.active!==false&&(jt==='Other'||(t.projectTypes||[]).includes(jt))).map(t=>t.code));
+  const on={}; rs.forEach(r=>{ if(r.catalogCode&&C[r.catalogCode]&&r.recordStatus!=='Archived') (on[r.catalogCode]=on[r.catalogCode]||[]).push(r); }); Object.keys(on).forEach(c=>A.add(c));
+  const na=new Set(p.naTypes||[]); const req=c=>(C[c].requiredFor||[]).includes(jt);
+  const st=c=>on[c]?'on':na.has(c)?'na':req(c)?'miss':'opt';
+  const ep=c=>{ let x=C[c].parent; const seen=new Set(); while(x&&C[x]&&!A.has(x)&&!seen.has(x)){ seen.add(x); x=C[x].parent; } return x&&A.has(x)&&x!==c?x:''; };
+  const K={}; A.forEach(c=>{ const e=ep(c); (K[e]=K[e]||[]).push(c); }); Object.values(K).forEach(l=>l.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})));
+  return {A,on,na,req,st,K};
+}
+function jobNeeds(id,p,rs,dis){
+  if(!p.type) return `<section class="sec"><header><h3>What this job needs</h3></header><div class="bd"><p class="note info" style="margin:0">Set the job type under <b>Project details</b> and this shows every filing, permit, inspection and sign-off that job type calls for.</p></div></section>`;
+  const C=S.catalog; const {A,on,req,st,K}=jobNeedsData(p,rs); const F=S.jobF||'needed';
+  const all=[...A]; const nReq=all.filter(req).length, nReqOn=all.filter(c=>req(c)&&on[c]).length, nMiss=all.filter(c=>st(c)==='miss').length, nOn=all.filter(c=>on[c]).length, nNa=all.filter(c=>st(c)==='na').length, nOpt=all.filter(c=>st(c)==='opt').length;
+  const want=c=>F==='all'||(F==='missing'?st(c)==='miss':F==='onslate'?st(c)==='on':F==='maybe'?st(c)==='opt':st(c)==='on'||st(c)==='miss');
+  const vm={}; const vis=c=>c in vm?vm[c]:(vm[c]=want(c)||(K[c]||[]).some(vis));
+  const closed=S.jobClosed;
+  const row=(c,g,last,d)=>{ const t=C[c]; const s=st(c); const ch=(K[c]||[]).filter(vis); const o=!closed.has(id+'|'+c); const ctx=!want(c);
+    const pre=g.map(v=>`<i class="tg${v?' v':''}"></i>`).join('')+(d?`<i class="tg ${last?'end':'tee'}"></i>`:'');
+    const car=ch.length?`<button type="button" class="car" data-act="jobTog" data-code="${esc(c)}" aria-expanded="${o}" aria-label="${o?'Collapse':'Expand'} ${esc(t.name)}">${o?'▾':'▸'}</button>`:'<i class="car0"></i>';
+    const rr=on[c]||[];
+    const stc=s==='on'?`<a href="#records" class="jrec" data-open="${rr[0].id}"><span class="pill ${CLOSED.includes(rr[0].currentStatus)?'good':rr[0].currentStatus==='Not Started'?'q':'a'}">${esc(rr[0].currentStatus||'Not Started')}</span>${rr.length>1?`<small>+${rr.length-1} more</small>`:''}</a>`
+      :s==='miss'?'<span class="pill bad">Missing</span>':s==='na'?'<span class="pill">Not needed</span>':'<span class="pill q">If triggered</span>';
+    const act=dis?'':s==='on'?'':s==='na'?`<button class="btn sm" data-act="jobNA" data-code="${esc(c)}">Undo</button>`:`<button class="btn sm${s==='miss'?' pri':''}" data-act="jobAdd" data-code="${esc(c)}">Add</button><button class="btn sm link" data-act="jobNA" data-code="${esc(c)}">Not needed</button>`;
+    let h=`<div class="jrow st-${s}${d?'':' root'}${ctx?' ctx':''}" style="${agVar(t.agency)}"><div class="onm">${pre}${car}<span class="nm">${esc(t.name)}</span>${req(c)?'<span class="req">Required</span>':''}</div><div>${agChip(t.agency)}</div><div class="jst">${stc}</div><div class="jact">${act}</div></div>`;
+    if(o) ch.forEach((k,i)=>h+=row(k,d?[...g,!last]:g,i===ch.length-1,d+1));
+    return h; };
+  const roots=(K['']||[]).filter(vis);
+  const pct=nReq?Math.round(nReqOn/nReq*100):100;
+  return `<section class="sec jobneeds"><header><h3>What this job needs · ${esc(p.type)}</h3><small style="color:var(--muted)">The catalog for this job type, arranged by what triggers what. Change the job type under Project details.</small></header><div class="bd stack">
+   <div class="jsum"><div><b>${nReqOn} of ${nReq}</b> required items on the slate<div class="bar" style="margin-top:6px"><span style="width:${pct}%;background:var(--good)"></span></div></div>
+    <div class="jstat"><span class="pill bad">${nMiss} missing</span><span class="pill a">${nOn} on the slate</span><span class="pill q">${nOpt} if triggered</span><span class="pill">${nNa} not needed</span></div>
+    ${!dis&&nMiss?`<button class="btn pri" data-act="jobAddReq">Add the ${nMiss} missing</button>`:''}</div>
+   <div class="row" style="gap:8px"><div class="seg" role="tablist" aria-label="Show">${[['needed','Needed'],['missing','Missing'],['onslate','On the slate'],['maybe','If triggered'],['all','Everything']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${F===k}" class="${F===k?'on':''}" data-act="jobF" data-v="${k}">${l}</button>`).join('')}</div><button class="btn sm" data-act="jobAll" data-v="">Expand all</button><button class="btn sm" data-act="jobAll" data-v="1">Collapse all</button></div>
+   ${roots.length?`<div class="otree jtree"><div class="jhead"><div>Item</div><div>Agency</div><div>On this job</div><div></div></div>${roots.map(c=>row(c,[],true,0)).join('')}</div>`:`<p class="empty">${F==='missing'?'Nothing required is missing.':'Nothing to show here.'}</p>`}
+  </div></section>`;
+}
 function vProject(){
   const id=S.projId, p=S.projects[id]; if(!p) return `<p class="empty">Project not found. <button class="btn link" data-act="projBack">Back</button></p>`;
   const team=p.team||[]; const rs=recs().filter(r=>r.projectId===id).sort((a,b)=>a.code.localeCompare(b.code)); const dis=!canWrite;
@@ -1604,11 +1723,12 @@ function vProject(){
   <section class="sec"><header><h3>Project team</h3><small style="color:var(--muted)">Default consultants by discipline. Nobody is filled in automatically; on a permit you choose to drop them in.</small></header><div class="bd stack">
    ${team.length?`<table><tbody>${team.map((m,i)=>`<tr><td><b>${esc(m.discipline)}</b></td><td>${esc(coName(m.companyId))}${m.contactId?' · '+esc(ctName(m.contactId)):''}</td><td>${esc(m.role||'')}</td><td>${m.isDefault?'<span class="pill a">Default</span>':''}</td><td>${dis?'':`<button class="btn link" data-act="teamDel" data-i="${i}">Remove</button>`}</td></tr>`).join('')}</tbody></table>`:`<p class="note info">No team yet. Add at least the architect and the expediter; those are the two the catalog reaches for most.</p>`}
    ${dis?'':`<div class="fields"><label class="f">Discipline<select id="tmDisc">${opts(lists('Discipline'),'','Pick…')}</select></label><label class="f">Company<select id="tmCo">${opts(activeCos().map(([i,c])=>[i,c.name]),'')}</select></label><label class="f">Person<select id="tmCt">${opts(activeCts().map(([i,c])=>[i,c.name+' · '+coName(c.companyId)]),'')}</select></label><label class="f">Role label<select id="tmRole">${opts(lists('Project Role'),'')}</select></label><label class="chk" style="align-self:end"><input type="checkbox" id="tmDef" checked> Default for this discipline</label><div style="align-self:end"><button class="btn" data-act="teamAdd">Add</button></div></div>`}</div></section>
-  ${dis?'':`<section class="sec"><header><h3>Build the slate · ${S.slateSel.size} selected</h3><small style="color:var(--muted)">Narrow the catalog, then check off everything this job needs in one pass. Selected types land as Queued, Not Started records.</small></header><div class="bd stack">
+  ${jobNeeds(id,p,rs,dis)}
+  ${dis?'':`<details class="sec"><summary style="padding:10px 14px;cursor:pointer"><b>Pick anything from the full catalog</b> <small style="color:var(--muted)">· ${S.slateSel.size} selected</small></summary><section><header style="display:none"><h3>Build the slate · ${S.slateSel.size} selected</h3><small style="color:var(--muted)">Narrow the catalog, then check off everything this job needs in one pass. Selected types land as Queued, Not Started records.</small></header><div class="bd stack">
    <div class="row"><label class="f" style="width:180px">Agency<select id="slAg" data-sf="agency">${opts(lists('Agency'),sf.agency,'All')}</select></label><label class="f" style="width:200px">Category<select id="slCat" data-sf="category">${opts(lists('Permit Category').filter(c=>catScopeOK(c,sf.agency)),sf.category,'All')}</select></label><label class="f" style="width:150px">Group by<select id="slGrp" data-sf="group">${opts([['agency','Agency'],['category','Category'],['discipline','Discipline']],groupBy,null)}</select></label><label class="f" style="flex:1;min-width:180px">Search<input id="slQ" type="search" data-sf="q" value="${esc(sf.q)}" placeholder="Name, code or description"></label></div>
    <div class="row" style="font-size:12.5px;color:var(--muted)">${types.length} of ${Object.keys(S.catalog).length} types · ${Object.entries(counts).map(([a,n])=>`${esc(a)} ${n}`).join(' · ')}</div>
    <div class="picker">${Object.entries(g).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,ts])=>`<div class="grp">${esc(k)} · ${ts.length}</div>`+ts.sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name)).map(t=>`<label><input type="checkbox" data-slate="${esc(t.code)}"${S.slateSel.has(t.code)?' checked':''}><span class="code">${esc(t.code)}</span><span>${esc(t.name)}<small>${esc(t.description||t.category)}</small></span><span class="row" style="gap:4px">${onSlate[t.code]?`<span class="pill a">On slate${onSlate[t.code]>1?' ('+onSlate[t.code]+')':''}</span>`:''}<span class="pill ${t.review==='reviewed'?'good':'acc'}">${t.review==='reviewed'?'Reviewed':'Auto'}</span></span></label>`).join('')).join('')||'<p class="empty">No types match.</p>'}</div>
-   <div class="row"><button class="btn pri" data-act="slateAdd"${S.slateSel.size?'':' disabled'}>Add ${S.slateSel.size||''} to the slate</button>${S.slateSel.size?`<button class="btn" data-act="slateClear">Clear selection</button>`:''}</div></div></section>`}
+   <div class="row"><button class="btn pri" data-act="slateAdd"${S.slateSel.size?'':' disabled'}>Add ${S.slateSel.size||''} to the slate</button>${S.slateSel.size?`<button class="btn" data-act="slateClear">Clear selection</button>`:''}</div></div></section></details>`}
   <section class="sec"><header><h3>The slate</h3><small style="color:var(--muted)">${rs.length} items · ${rs.filter(r=>r.currentStatus==='Not Started').length} not started · ${rs.filter(r=>r.recordStatus==='Active').length} active. Starting an item moves it out of Not Started.</small></header><div class="bd">
    ${rs.length?`<p class="note info" style="margin:0 0 8px">Untick <b>Show</b> to hide an item from this project's Records, dashboard and alerts. Tick it again to bring it back.</p>`:''}
    ${rs.length?[...rs].sort((a,b)=>(a.recordStatus==='Archived')-(b.recordStatus==='Archived')).map(r=>`<div class="slate-item${r.recordStatus==='Archived'?' hid':''}"><label class="chk show" title="Show this item"><input type="checkbox" data-show="${r.id}"${r.recordStatus!=='Archived'?' checked':''}${dis?' disabled':''}><span>Show</span></label><span class="code">${esc(r.code)}</span><span><a href="#records" data-open="${r.id}">${esc(r.name)}</a><br><small style="color:var(--muted)">${esc(r.agency)}${r.kind==='Document'?' · Document':''}</small></span>${r.currentStatus==='Not Started'||dis?`<span class="pill ${r.currentStatus==='Not Started'?'q':'a'}">${esc(r.currentStatus)}</span>`:`<select id="ss_${r.id}" data-slstat="${r.id}">${opts(stOpts,r.currentStatus,null)}</select>`}<span>${r.currentStatus==='Not Started'&&!dis?`<button class="btn sm acc" data-act="start" data-id="${r.id}">Start</button>`:''}</span></div>`).join(''):'<p class="empty">Nothing on the slate yet.</p>'}</div></section>
@@ -1623,6 +1743,7 @@ function vProject(){
 function catKids(){ const C=S.catalog; const k={}; Object.values(C).forEach(t=>{ let p=t.parent&&C[t.parent]&&t.parent!==t.code?t.parent:''; (k[p]=k[p]||[]).push(t); }); Object.values(k).forEach(l=>l.sort((a,b)=>a.code.localeCompare(b.code,undefined,{numeric:true}))); return k; }
 function catDesc(code){ const k=catKids(); const out=new Set(); const w=c=>(k[c]||[]).forEach(t=>{ if(!out.has(t.code)){ out.add(t.code); w(t.code);} }); w(code); return out; }
 function catPath(code){ const C=S.catalog; const p=[]; let c=C[code]?.parent; const seen=new Set(); while(c&&C[c]&&!seen.has(c)){ seen.add(c); p.unshift(C[c]); c=C[c].parent; } return p; }
+function agVar(a){ const H={DOB:222,DOT:28,DEP:192,FDNY:2,DOHMH:150,Parks:110,Landmarks:282,MTA:46,Utilities:258,'TR (Special Inspections)':330}; const h=H[a]; return `--h:${h??215};--s:${h==null?'10%':'62%'}`; }
 function agChip(a){ const H={DOB:222,DOT:28,DEP:192,FDNY:2,DOHMH:150,Parks:110,Landmarks:282,MTA:46,Utilities:258,'TR (Special Inspections)':330}; const h=H[a]; const lab=a==='TR (Special Inspections)'?'TR':a==='Other Agencies'?'Other':a; return `<span class="agc" style="--h:${h??215};--s:${h==null?'10%':'62%'}" title="${esc(a)}">${esc(lab||'—')}</span>`; }
 function tplPill(t){ return `<span class="pill ${t.review==='reviewed'?'good':t.review==='auto'?'acc':''}">${t.review==='reviewed'?'Reviewed':t.review==='auto'?'Auto':'Unreviewed'}</span>`; }
 function vCatalog(){
@@ -1644,8 +1765,8 @@ function vCatalog(){
     const car=ch.length?`<button type="button" class="car" data-act="catTog" data-code="${esc(t.code)}" aria-label="${o?'Collapse':'Expand'} ${esc(t.name)}" aria-expanded="${o}">${o?'▾':'▸'}</button>`:'<i class="car0"></i>';
     const cls=`orow${d?'':' root'}${M.has(t.code)?'':' dim'}${split&&S.catSel===t.code?' sel':''}`;
     const tag=split?`data-act="catSel" data-code="${esc(t.code)}"`:`data-type="${esc(t.code)}"`;
-    let h=split?`<div class="${cls}" ${tag}><div class="onm">${pre}${car}<span class="nm">${esc(t.name)}</span>${cnt?`<span class="cnt">${cnt}</span>`:''}</div></div>`
-      :`<div class="${cls}" ${tag}><div class="onm">${pre}${car}<span class="nm">${esc(t.name)}</span>${cnt?`<span class="cnt" title="${cnt} type${cnt>1?'s':''} sit under this">${cnt}</span>`:''}${t.active===false?' <span class="pill">Retired</span>':''}</div><div>${agChip(t.agency)}</div><div class="ocat">${esc(t.category)}</div><div class="ocode"><span class="code">${esc(t.code)}</span></div><div>${tplPill(t)}</div></div>`;
+    let h=split?`<div class="${cls}" style="${agVar(t.agency)}" ${tag}><div class="onm">${pre}${car}<span class="nm">${esc(t.name)}</span>${cnt?`<span class="cnt">${cnt}</span>`:''}</div></div>`
+      :`<div class="${cls}" style="${agVar(t.agency)}" ${tag}><div class="onm">${pre}${car}<span class="nm">${esc(t.name)}</span>${cnt?`<span class="cnt" title="${cnt} type${cnt>1?'s':''} sit under this">${cnt}</span>`:''}${t.active===false?' <span class="pill">Retired</span>':''}</div><div>${agChip(t.agency)}</div><div class="ocat">${esc(t.category)}</div><div class="ocode"><span class="code">${esc(t.code)}</span></div><div>${tplPill(t)}</div></div>`;
     if(o) ch.forEach((k,i)=>h+=oRow(k,d?[...g,!last]:g,i===ch.length-1,d+1,split));
     return h; };
   const bar=`<div class="row catbar"><div class="seg" role="tablist" aria-label="Catalog view">${[['outline','Outline'],['cards','Cards'],['split','Split'],['list','List']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${V===k}" class="${V===k?'on':''}" data-act="catView" data-v="${k}">${l}</button>`).join('')}</div>
@@ -1653,14 +1774,14 @@ function vCatalog(){
     <small style="color:var(--muted);margin-left:auto">${V==='list'?`Showing ${rows.length} of ${all.length}.`:`${rows.length} of ${all.length} types · ${roots.length} starting point${roots.length===1?'':'s'}${filt?' · matches shown with the types above them':''}`}</small></div>`;
   let body='';
   if(V==='list'){ let lastAg=null;
-    body=`<div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Agency</th><th>Category</th><th class="num">Fields</th><th>Template</th></tr></thead><tbody>${rows.map(t=>{let pre='';if(F.group&&t.agency!==lastAg){lastAg=t.agency;pre=`<tr><td colspan="6" style="background:var(--sunk);font-weight:600">${esc(t.agency)}</td></tr>`;}const p=S.catalog[t.parent];return pre+`<tr class="click" data-type="${esc(t.code)}"><td><span class="code">${esc(t.code)}</span></td><td>${esc(t.name)}${t.active===false?' <span class="pill">Retired</span>':''}${p?`<div><small style="color:var(--muted)">under ${esc(p.name)}</small></div>`:''}</td><td>${agChip(t.agency)}</td><td>${esc(t.category)}</td><td class="num">${(t.fields||[]).length}</td><td>${tplPill(t)}</td></tr>`}).join('')}</tbody></table></div>`; }
+    body=`<div class="tbl-wrap clist"><table><thead><tr><th>Code</th><th>Name</th><th>Agency</th><th>Category</th><th class="num">Fields</th><th>Template</th></tr></thead><tbody>${rows.map(t=>{let pre='';if(F.group&&t.agency!==lastAg){lastAg=t.agency;pre=`<tr><td colspan="6" style="background:var(--sunk);font-weight:600">${esc(t.agency)}</td></tr>`;}const p=S.catalog[t.parent];return pre+`<tr class="click crow" style="${agVar(t.agency)}" data-type="${esc(t.code)}"><td><span class="code">${esc(t.code)}</span></td><td>${esc(t.name)}${t.active===false?' <span class="pill">Retired</span>':''}${p?`<div><small style="color:var(--muted)">under ${esc(p.name)}</small></div>`:''}</td><td>${agChip(t.agency)}</td><td>${esc(t.category)}</td><td class="num">${(t.fields||[]).length}</td><td>${tplPill(t)}</td></tr>`}).join('')}</tbody></table></div>`; }
   else if(V==='outline'){
     body=roots.length?`<div class="otree"><div class="ohead"><div>Type</div><div>Agency</div><div class="ocat">Category</div><div class="ocode">Code</div><div>Template</div></div>${roots.map(t=>oRow(t,[],true,0,false)).join('')}</div>`:'<p class="empty">No types match.</p>'; }
   else if(V==='cards'){
-    const li=c=>vk(c).map(k=>`<li class="${M.has(k.code)?'':'dim'}"><div class="ci" data-type="${esc(k.code)}"><span class="nm">${esc(k.name)}</span>${agChip(k.agency)}<small>${esc(k.category)}</small></div>${vk(k.code).length?`<ol>${li(k.code)}</ol>`:''}</li>`).join('');
+    const li=c=>vk(c).map(k=>`<li class="${M.has(k.code)?'':'dim'}"><div class="ci" style="${agVar(k.agency)}" data-type="${esc(k.code)}"><span class="nm">${esc(k.name)}</span>${agChip(k.agency)}<small>${esc(k.category)}</small></div>${vk(k.code).length?`<ol>${li(k.code)}</ol>`:''}</li>`).join('');
     const big=roots.filter(t=>vk(t.code).length), solo=roots.filter(t=>!vk(t.code).length);
-    body=`<div class="cgrid">${big.map(t=>`<section class="ccard"><header data-type="${esc(t.code)}" class="${M.has(t.code)?'':'dim'}"><div class="row" style="gap:8px;flex-wrap:nowrap">${agChip(t.agency)}<b>${esc(t.name)}</b></div><small>${esc(t.category)} · <span class="code">${esc(t.code)}</span> · ${desc(t.code)} under it</small></header><ol class="chain">${li(t.code)}</ol></section>`).join('')}</div>
-    ${solo.length?`<section class="ccard solo"><header><b>Standalone types</b><small>${solo.length} types with nothing under them yet</small></header><div class="sgrid">${solo.map(t=>`<div class="ci ${M.has(t.code)?'':'dim'}" data-type="${esc(t.code)}"><span class="nm">${esc(t.name)}</span>${agChip(t.agency)}</div>`).join('')}</div></section>`:''}
+    body=`<div class="cgrid">${big.map(t=>`<section class="ccard" style="${agVar(t.agency)}"><header data-type="${esc(t.code)}" class="${M.has(t.code)?'':'dim'}"><div class="row" style="gap:8px;flex-wrap:nowrap">${agChip(t.agency)}<b>${esc(t.name)}</b></div><small>${esc(t.category)} · <span class="code">${esc(t.code)}</span> · ${desc(t.code)} under it</small></header><ol class="chain">${li(t.code)}</ol></section>`).join('')}</div>
+    ${solo.length?`<section class="ccard solo"><header><b>Standalone types</b><small>${solo.length} types with nothing under them yet</small></header><div class="sgrid">${solo.map(t=>`<div class="ci ${M.has(t.code)?'':'dim'}" style="${agVar(t.agency)}" data-type="${esc(t.code)}"><span class="nm">${esc(t.name)}</span>${agChip(t.agency)}</div>`).join('')}</div></section>`:''}
     ${roots.length?'':'<p class="empty">No types match.</p>'}`; }
   else { // split
     const sel=S.catalog[S.catSel]||roots[0]; if(sel) S.catSel=sel.code;
@@ -1668,7 +1789,7 @@ function vCatalog(){
     const det=sel?`<div class="sdet"><div class="crumbs">${path.length?path.map(x=>`<a href="#" data-act="catSel" data-code="${esc(x.code)}">${esc(x.name)}</a>`).join(' <span>›</span> ')+' <span>›</span>':'<span>Starting point</span>'}</div>
       <h2>${esc(sel.name)}</h2><div class="row" style="gap:8px">${agChip(sel.agency)}<span class="pill">${esc(sel.category||'—')}</span><span class="code">${esc(sel.code)}</span>${tplPill(sel)}</div>
       ${sel.trigger?`<div><div class="flab">When it's needed</div><p>${esc(sel.trigger)}</p></div>`:''}${sel.description?`<div><div class="flab">Scope</div><p>${esc(sel.description)}</p></div>`:''}
-      <div><div class="flab">${ch.length?`Triggers ${ch.length}`:'Triggers'}</div>${ch.length?`<div class="stack" style="gap:4px">${ch.map(x=>`<a href="#" class="srow" data-act="catSel" data-code="${esc(x.code)}"><span>${esc(x.name)}</span>${agChip(x.agency)}${desc(x.code)?`<span class="cnt">${desc(x.code)}</span>`:''}</a>`).join('')}</div>`:'<p style="color:var(--muted)">Nothing sits under this type.</p>'}</div>
+      <div><div class="flab">${ch.length?`Triggers ${ch.length}`:'Triggers'}</div>${ch.length?`<div class="stack" style="gap:4px">${ch.map(x=>` <a href="#" class="srow" style="${agVar(x.agency)}" data-act="catSel" data-code="${esc(x.code)}"><span>${esc(x.name)}</span>${agChip(x.agency)}${desc(x.code)?`<span class="cnt">${desc(x.code)}</span>`:''}</a>`).join('')}</div>`:'<p style="color:var(--muted)">Nothing sits under this type.</p>'}</div>
       <div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:10px"><small style="color:var(--muted)">${(sel.fields||[]).length} fields · used by ${recs().filter(r=>r.catalogCode===sel.code).length} records</small><button class="btn" data-type="${esc(sel.code)}">Open type</button></div></div>`:'<p class="empty">No types match.</p>';
     body=`<div class="split"><div class="spane">${roots.map(t=>oRow(t,[],true,0,true)).join('')}</div>${det}</div>`; }
   return `  <div class="row" style="justify-content:space-between"><div><h1>Master catalog</h1><p class="lede">Author a permit type once: its agency, its fields, its defaults. Every record created from it inherits the lot.</p></div>${canWrite?`<button class="btn pri" data-act="typeNew">Add a permit type</button>`:''}</div>
@@ -1696,7 +1817,8 @@ function vType(){
    <label class="f wide">Triggered by (parent type)<select id="ty_par" data-t="parent"${dis?' disabled':''}><option value="">— None (top level)</option>${(()=>{const bad=isNew?new Set():catDesc(t.code); if(!isNew) bad.add(t.code); return Object.values(S.catalog).filter(x=>!bad.has(x.code)).sort((a,b)=>a.code.localeCompare(b.code,undefined,{numeric:true})).map(x=>`<option value="${esc(x.code)}"${x.code===t.parent?' selected':''}>${esc(x.code)} · ${esc(x.name)} (${esc(x.agency)})</option>`).join('');})()}</select></label>
    <label class="f wide">Description / scope<textarea id="ty_desc" data-t="description"${dis?' disabled':''}>${esc(t.description)}</textarea></label>
    <div class="wide"><div class="flab">Disciplines</div><div class="row">${lists('Discipline').map(d=>`<label class="chk"><input type="checkbox" data-tdisc="${esc(d)}"${(t.disciplines||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div>
-   <div class="wide"><div class="flab">Applicable project types</div><div class="row">${lists('Project Type').map(d=>`<label class="chk"><input type="checkbox" data-tpt="${esc(d)}"${(t.projectTypes||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div></div></section>
+   <div class="wide"><div class="flab">Always needed for <small style="color:var(--muted);font-weight:400">· added to a project's slate automatically when its job type is set</small></div><div class="row">${lists('Project Type').map(d=>`<label class="chk"><input type="checkbox" data-treq="${esc(d)}"${(t.requiredFor||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div>
+   <div class="wide"><div class="flab">Applicable project types <small style="color:var(--muted);font-weight:400">· may be needed, depending on scope</small></div><div class="row">${lists('Project Type').map(d=>`<label class="chk"><input type="checkbox" data-tpt="${esc(d)}"${(t.projectTypes||[]).includes(d)?' checked':''}${dis?' disabled':''}> ${esc(d)}</label>`).join('')}</div></div></div></section>
   <section class="sec"><header><h3>Lifecycle stages</h3><small style="color:var(--muted)">Shortcuts: each ticks or unticks its field group below. The field list is what governs the record.</small></header><div class="bd row" style="gap:14px">${Object.keys(STAGE_FIELDS).map(k=>`<label class="chk"><input type="checkbox" data-stage="${k}"${stageOn(k)?' checked':''}${dis||(k==='renewal'&&!expOn)?' disabled':''}> ${STAGE_LABEL[k]} <small style="color:var(--muted)">${k==='renewal'?'only while expiry is on · ':''}${STAGE_FIELDS[k].length?STAGE_FIELDS[k].length+' field'+(STAGE_FIELDS[k].length>1?'s':''):''}</small></label>`).join('')}</div></section>
   <section class="sec"><header><h3>Field set · ${fs.size} of 45 fields</h3><small style="color:var(--muted)">Core fields are always on. A person always brings their company.</small></header><div class="bd stack">${GROUPS.map(g=>`<div><div class="flab">${g}</div><div class="row" style="gap:12px">${FIELDS.filter(f=>f[3]===g).filter(f=>!(['dRenewalNotice','dRenewalDue'].includes(f[0])&&!expOn)).map(f=>`<label class="chk"><input type="checkbox" data-tf="${f[0]}"${fs.has(f[0])||f[4]?' checked':''}${f[4]||dis?' disabled':''}> ${f[1]}${f[4]?' <span class="pill">Core</span>':''}</label>`).join('')}</div></div>`).join('')}</div></section>
   <section class="sec"><header><h3>Responsibility, fees & timing</h3></header><div class="bd fields">
@@ -1940,7 +2062,7 @@ async function recUpdate(id,patch,hist){
 async function addForJobType(pid,type){
   if(!type) return 0;
   const have=new Set(recs().filter(r=>r.projectId===pid).map(r=>r.catalogCode).filter(Boolean));
-  const codes=Object.entries(S.catalog).filter(([c,t])=>t && t.active!==false && (t.projectTypes||[]).includes(type) && !have.has(c)).map(([c])=>c).sort();
+  const codes=Object.entries(S.catalog).filter(([c,t])=>t && t.active!==false && (t.requiredFor||[]).includes(type) && !have.has(c) && !(S.projects[pid]?.naTypes||[]).includes(c)).map(([c])=>c).sort();
   return codes.length ? await addToSlate(pid,codes) : 0;
 }
 async function addToSlate(pid,codes){
@@ -2015,6 +2137,13 @@ const ACT={
   async docAdd(){ const name=$('#dlName').value.trim(); if(!name){ toast('Name the document.'); return; } const id=uidGen(); const fields=['code','name','agency','category','kind','recordStatus','description','dTarget','dActual','currentStatus','priority','bicCategory','bicCompany','bicPerson','respCompany','respPerson','actionOwner','nextAction','docLink','folder','comments','issues'];
     await put('records',id,{projectId:S.projId,catalogCode:'',code:nextCode(S.projId,'DOC'),name:smartCap(name),agency:$('#dlAg').value,category:$('#dlCat').value,kind:'Document',recordStatus:'Queued',currentStatus:'Not Started',fields,setup:{required:true},inspections:[],deps:[],history:[H('Created',{note:'Document line item'})],createdAt:new Date().toISOString(),...stamp()}); toast('Document added'); },
   catGroup(){ S.catF.group=!S.catF.group; render(); },
+  jobF(el){ S.jobF=el.dataset.v; render(); },
+  recView(el){ S.recView=el.dataset.v; try{localStorage.setItem('pd.recView',S.recView)}catch(e){} render(); },
+  jobTog(el){ const k=S.projId+'|'+el.dataset.code; S.jobClosed.has(k)?S.jobClosed.delete(k):S.jobClosed.add(k); render(); },
+  jobAll(el){ const p=S.projects[S.projId]; if(!p) return; const {K}=jobNeedsData(p,recs().filter(r=>r.projectId===S.projId)); [...S.jobClosed].filter(k=>k.startsWith(S.projId+'|')).forEach(k=>S.jobClosed.delete(k)); if(el.dataset.v) Object.keys(K).filter(c=>c).forEach(c=>S.jobClosed.add(S.projId+'|'+c)); render(); },
+  async jobAdd(el){ const n=await addToSlate(S.projId,[el.dataset.code]); if(n) toast('Added to the slate as Not Started'); },
+  async jobAddReq(){ const p=S.projects[S.projId]; const {A,st}=jobNeedsData(p,recs().filter(r=>r.projectId===S.projId)); const codes=[...A].filter(c=>st(c)==='miss').sort(); const n=codes.length?await addToSlate(S.projId,codes):0; toast(`Added ${n} item${n===1?'':'s'} to the slate as Not Started`); },
+  async jobNA(el){ const p=S.projects[S.projId]; const c=el.dataset.code; const x=new Set(p.naTypes||[]); x.has(c)?x.delete(c):x.add(c); await put('projects',S.projId,{naTypes:[...x],...stamp()},true); },
   catTog(el){ const c=el.dataset.code; S.catOpen.has(c)?S.catOpen.delete(c):S.catOpen.add(c); render(); },
   catAll(el){ const k=catKids(); S.catOpen=new Set(el.dataset.v?Object.keys(k).filter(c=>c):[]); render(); },
   catView(el){ S.catView=el.dataset.v; try{localStorage.setItem('pd.catView',S.catView)}catch(e){} render(); },
@@ -2039,7 +2168,7 @@ const ACT={
 const M=$('#main');
 M.addEventListener('click',async e=>{
   const t=e.target;
-  const a=t.closest('[data-act]'); if(a&&a.tagName!=='INPUT'){ e.preventDefault(); const f=ACT[a.dataset.act]; if(f){ if(!canWrite && !['clearF','clearBicF','groupAg','colReset','exportGrid','exportReport','recBack','recDiscard','emClose','projBack','slateClear','catGroup','catTog','catAll','catView','catSel','typeBack','toggleRet','emailOpen','emDel','emAdd','emCopy'].includes(a.dataset.act)){ toast('You can view this tracker but not change it.'); return; } a.disabled=true; try{ await f(a); } finally{ a.disabled=false; } } return; }
+  const a=t.closest('[data-act]'); if(a&&a.tagName!=='INPUT'){ e.preventDefault(); const f=ACT[a.dataset.act]; if(f){ if(!canWrite && !['clearF','clearBicF','groupAg','colReset','exportGrid','exportReport','recBack','recDiscard','emClose','projBack','slateClear','catGroup','catTog','catAll','catView','catSel','jobF','jobTog','jobAll','recView','typeBack','toggleRet','emailOpen','emDel','emAdd','emCopy'].includes(a.dataset.act)){ toast('You can view this tracker but not change it.'); return; } a.disabled=true; try{ await f(a); } finally{ a.disabled=false; } } return; }
   const nv=t.closest('[data-nav]'); if(nv){ e.preventDefault(); nav(nv.dataset.nav); return; }
   const dp=t.closest('[data-dashproj]'); if(dp){ e.preventDefault(); S.dash={...(S.dash||{}),project:dp.dataset.dashproj}; render(); window.scrollTo(0,0); return; }
   const de=t.closest('[data-dashedit]'); if(de){ e.preventDefault(); nav('projects',{projId:de.dataset.dashedit}); setTimeout(()=>document.getElementById('nycSec')?.scrollIntoView({block:'start'}),50); return; }
@@ -2103,7 +2232,7 @@ M.addEventListener('submit',async e=>{
   if(k==='type'){ const isNew=S.typeId==='__new'; const t0=isNew?{}:S.catalog[S.typeId]; const d={}; f.querySelectorAll('[data-t]').forEach(el=>{ let v=el.value.trim(); if(el.type==='number') v=v===''?null:+v; d[el.dataset.t]=v; });
     if(!d.name){ toast('Name the type.'); return; } if(!d.agency){ toast('Pick an agency.'); return; }
     const fields=FIELDS.filter(x=>x[4]||f.querySelector(`[data-tf=${x[0]}]`)?.checked).map(x=>x[0]);
-    d.fields=fields; d.disciplines=[...f.querySelectorAll('[data-tdisc]:checked')].map(x=>x.dataset.tdisc); d.projectTypes=[...f.querySelectorAll('[data-tpt]:checked')].map(x=>x.dataset.tpt);
+    d.fields=fields; d.disciplines=[...f.querySelectorAll('[data-tdisc]:checked')].map(x=>x.dataset.tdisc); d.projectTypes=[...f.querySelectorAll('[data-tpt]:checked')].map(x=>x.dataset.tpt); d.requiredFor=[...f.querySelectorAll('[data-treq]:checked')].map(x=>x.dataset.treq); d.requiredFor.forEach(x=>{ if(!d.projectTypes.includes(x)) d.projectTypes.push(x); });
     d.testing=!!f.querySelector('[data-stage=testing]')?.checked;
     const rev=$('#ty_reviewed').checked; d.review=rev?'reviewed':(t0.review==='reviewed'?'auto':(t0.review||'unreviewed')); d.active=$('#ty_active').checked;
     let code=isNew?(d.code||''):S.typeId; if(isNew){ if(!code){ let mx=0; Object.keys(S.catalog).forEach(c=>{const m=c.match(/^CAT-(\d+)$/); if(m) mx=Math.max(mx,+m[1]);}); code='CAT-'+String(mx+1).padStart(3,'0'); } if(S.catalog[code]){ toast('That catalog code is already used.'); return; } if(!/^[A-Za-z0-9_\-.]+$/.test(code)){ toast('Codes use letters, digits and dashes.'); return; } }
