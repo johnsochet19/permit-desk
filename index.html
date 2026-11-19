@@ -778,6 +778,8 @@ body{font-size:14.5px}
 .layout3.rs.nosel{grid-template-columns:var(--railw,220px) 10px minmax(0,1fr) 0 0}
 .layout3.rs.nosel>.side,.layout3.rs.nosel>.vsplit[data-split=side]{display:none}
 .layout3.rs.nof.nosel{grid-template-columns:0 0 minmax(0,1fr) 0 0}
+@media (min-width:1101px){.layout3.rs>.rail{grid-column:1}.layout3.rs>.vsplit[data-split=rail]{grid-column:2}.layout3.rs>section{grid-column:3;grid-row:1}.layout3.rs>.vsplit[data-split=side]{grid-column:4;grid-row:1}.layout3.rs>.side{grid-column:5;grid-row:1}}
+@media (max-width:1100px){.layout3.rs.nof,.layout3.rs.nof.nosel{grid-template-columns:minmax(0,1fr)}.layout3.rs.nosel:not(.nof){grid-template-columns:var(--railw,200px) 10px minmax(0,1fr)}}
 .btn.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .ptable td{vertical-align:middle;padding:9px 12px}
 .ptable .preq{display:flex;align-items:center;gap:8px;min-width:150px}.ptable .preq .bar{flex:1}
